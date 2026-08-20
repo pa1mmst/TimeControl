@@ -1,228 +1,291 @@
+﻿"""
+Модели данных (SQLAlchemy 2.0).
+
+Ключевые принципы из SPEC.md:
+- бригада НЕ бизнес-сущность: task_groups — только механизм группового ввода;
+- учёт всегда индивидуальный: групповой ввод = N строк в work_entries;
+- work_entries никогда не удаляются; изменение = UPDATE + запись в audit_log;
+- rate_snapshot фиксирует ставку в момент записи (смена ставки не трогает историю);
+- Task <-> Location = many-to-many через task_locations;
+- pay_type — задел под сдельную оплату (сейчас всегда 'hourly').
+"""
+import enum
+from datetime import datetime, date
+
 from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Text,
-    Numeric,
-    Boolean,
-    DateTime,
-    Date,
-    ForeignKey,
-    Table,
-    UniqueConstraint,
+    ForeignKey, String, Text, Numeric, Enum, UniqueConstraint, func,
 )
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .db import Base
+from app.db import Base
 
 
-# Many-to-many association table: Task <-> Location
-task_locations = Table(
-    "task_locations",
-    Base.metadata,
-    Column("task_id", Integer, ForeignKey("tasks.id"), primary_key=True),
-    Column("location_id", Integer, ForeignKey("locations.id"), primary_key=True),
-)
+# ---------- Перечисления (Enum) ----------
 
+class TaskStatus(str, enum.Enum):
+    draft = "draft"          # черновик — работники ещё не видят
+    active = "active"        # выполняется
+    done = "done"            # завершено
+    cancelled = "cancelled"  # отменено
+
+
+class PayType(str, enum.Enum):
+    hourly = "hourly"        # почасовая (единственный тип в v1)
+    # piecework = "piecework"  # задел под сдельную — раскомментировать позже
+
+
+class PayoutStatus(str, enum.Enum):
+    accrued = "accrued"      # начислено
+    pending = "pending"      # ожидает выплаты
+    paid = "paid"            # выплачено
+
+
+class Lang(str, enum.Enum):
+    ru = "ru"
+    uk = "uk"
+    es = "es"
+
+
+# ---------- Пользователи ----------
 
 class User(Base):
+    """
+    Один пользователь = один человек. Роли — флаги, не отдельные типы:
+    руководитель может одновременно быть работником (SPEC п.1).
+    Учётчик (бывш. "бригадир") — НЕ здесь: это флаг в TaskGroup.reporter_id,
+    роль привязана к конкретному заданию, а не к человеку.
+    """
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    tg_id = Column(Integer, unique=True, index=True, nullable=False)
-    name = Column(String(255), nullable=False)
-    phone = Column(String(50), nullable=True)
-    lang = Column(String(10), nullable=False, default="ru")  # ru / uk / es
-    hourly_rate = Column(Numeric(10, 2), nullable=False, default=0)
-    is_manager = Column(Boolean, nullable=False, default=False)
-    is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # tg_id nullable: сотрудника можно завести до того, как он зашёл в бота
+    tg_id: Mapped[int | None] = mapped_column(unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    phone: Mapped[str | None] = mapped_column(String(32))
+    lang: Mapped[Lang] = mapped_column(Enum(Lang), default=Lang.ru)
+    # Numeric, не Float: деньги нельзя хранить во float (ошибки округления)
+    hourly_rate: Mapped[float] = mapped_column(Numeric(8, 2), default=0)
+    is_manager: Mapped[bool] = mapped_column(default=False)
+    is_active: Mapped[bool] = mapped_column(default=True)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
-    # relationships
-    created_tasks = relationship("Task", foreign_keys="Task.created_by", back_populates="creator")
-    entered_work_entries = relationship("WorkEntry", foreign_keys="WorkEntry.entered_by", back_populates="entered_by_user")
-    work_entries = relationship("WorkEntry", foreign_keys="WorkEntry.user_id", back_populates="user")
-    advances = relationship("Advance", back_populates="user")
-    payouts = relationship("Payout", back_populates="user")
-    inventory_items = relationship("InventoryItem", foreign_keys="InventoryItem.holder_id", back_populates="holder")
-    assignments = relationship("TaskAssignment", back_populates="user")
-    reported_groups = relationship("TaskGroup", foreign_keys="TaskGroup.reporter_id", back_populates="reporter")
+    work_entries: Mapped[list["WorkEntry"]] = relationship(
+        back_populates="user", foreign_keys="WorkEntry.user_id"
+    )
+    inventory: Mapped[list["InventoryItem"]] = relationship(
+        back_populates="holder"
+    )
 
+
+# ---------- Заказчики и локации ----------
 
 class Client(Base):
     __tablename__ = "clients"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), nullable=False)
-    notes = Column(Text, nullable=True)
-    is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(160))
+    notes: Mapped[str | None] = mapped_column(Text)
+    is_active: Mapped[bool] = mapped_column(default=True)
 
-    locations = relationship("Location", back_populates="client")
-    tasks = relationship("Task", back_populates="client")
+    locations: Mapped[list["Location"]] = relationship(back_populates="client")
 
 
 class Location(Base):
     __tablename__ = "locations"
 
-    id = Column(Integer, primary_key=True, index=True)
-    client_id = Column(Integer, ForeignKey("clients.id"), nullable=False, index=True)
-    name = Column(String(255), nullable=False)
-    address = Column(String(255), nullable=True)
-    lat = Column(Numeric(10, 7), nullable=True)  # future GPS support
-    lon = Column(Numeric(10, 7), nullable=True)
-    is_active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    client_id: Mapped[int] = mapped_column(ForeignKey("clients.id"))
+    name: Mapped[str] = mapped_column(String(160))
+    address: Mapped[str | None] = mapped_column(Text)
+    # lat/lon nullable — задел под GPS (SPEC п.23), сейчас не используются
+    lat: Mapped[float | None]
+    lon: Mapped[float | None]
 
-    client = relationship("Client", back_populates="locations")
-    tasks = relationship("Task", secondary=task_locations, back_populates="locations")
+    client: Mapped["Client"] = relationship(back_populates="locations")
 
+
+# ---------- Задания ----------
 
 class Task(Base):
     __tablename__ = "tasks"
 
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    client_id = Column(Integer, ForeignKey("clients.id"), nullable=False, index=True)
-    status = Column(String(50), nullable=False, default="draft")  # draft/active/done/cancelled
-    date_start = Column(Date, nullable=True)
-    date_end = Column(Date, nullable=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str | None] = mapped_column(Text)
+    client_id: Mapped[int] = mapped_column(ForeignKey("clients.id"))
+    status: Mapped[TaskStatus] = mapped_column(
+        Enum(TaskStatus), default=TaskStatus.draft
+    )
+    date_start: Mapped[date | None]
+    date_end: Mapped[date | None]
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
-    client = relationship("Client", back_populates="tasks")
-    creator = relationship("User", foreign_keys=[created_by], back_populates="created_tasks")
-    locations = relationship("Location", secondary=task_locations, back_populates="tasks")
-    groups = relationship("TaskGroup", back_populates="task", cascade="all, delete-orphan")
-    assignments = relationship("TaskAssignment", back_populates="task", cascade="all, delete-orphan")
-    work_entries = relationship("WorkEntry", back_populates="task")
+    client: Mapped["Client"] = relationship()
+    # many-to-many: одно задание — несколько локаций (SPEC п.2, п.18)
+    locations: Mapped[list["Location"]] = relationship(
+        secondary="task_locations"
+    )
+    groups: Mapped[list["TaskGroup"]] = relationship(back_populates="task")
+    assignments: Mapped[list["TaskAssignment"]] = relationship(
+        back_populates="task"
+    )
+
+
+class TaskLocation(Base):
+    """Связка задание <-> локация. Отдельная таблица — чтобы не зашивать 1:1."""
+    __tablename__ = "task_locations"
+
+    task_id: Mapped[int] = mapped_column(
+        ForeignKey("tasks.id"), primary_key=True
+    )
+    location_id: Mapped[int] = mapped_column(
+        ForeignKey("locations.id"), primary_key=True
+    )
+    # Флаг из SPEC п.4: отправлять ли локацию учётчику в уведомлении
+    send_to_reporter: Mapped[bool] = mapped_column(default=True)
 
 
 class TaskGroup(Base):
-    """A group of workers inside one task. The reporter is the contact person
-    who enters hours on behalf of the group."""
-
+    """
+    Группа внутри задания — механизм массового ввода часов, НЕ бизнес-сущность.
+    reporter_id — учётчик группы (контактное лицо, вводит часы за всех).
+    Несколько групп на одном задании — норма (SPEC п.11).
+    """
     __tablename__ = "task_groups"
 
-    id = Column(Integer, primary_key=True, index=True)
-    task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False, index=True)
-    reporter_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    name = Column(String(255), nullable=True)  # optional group label
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"))
+    reporter_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
-    task = relationship("Task", back_populates="groups")
-    reporter = relationship("User", foreign_keys=[reporter_id], back_populates="reported_groups")
-    assignments = relationship("TaskAssignment", back_populates="group")
+    task: Mapped["Task"] = relationship(back_populates="groups")
+    reporter: Mapped["User"] = relationship()
+    members: Mapped[list["TaskAssignment"]] = relationship(
+        back_populates="group"
+    )
 
 
 class TaskAssignment(Base):
-    """A user assigned to a task. If group_id is null, the user works alone."""
-
+    """
+    Назначение человека на задание.
+    group_id = NULL означает "работает сам по себе" (одиночка при бригаде —
+    SPEC п.3, п.11). Один человек не может быть назначен на задание дважды.
+    """
     __tablename__ = "task_assignments"
     __table_args__ = (
-        UniqueConstraint("task_id", "user_id", name="uq_task_assignment"),
+        UniqueConstraint("task_id", "user_id", name="uq_task_user"),
     )
 
-    id = Column(Integer, primary_key=True, index=True)
-    task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    group_id = Column(Integer, ForeignKey("task_groups.id"), nullable=True)
-    is_reporter = Column(Boolean, nullable=False, default=False)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    group_id: Mapped[int | None] = mapped_column(ForeignKey("task_groups.id"))
 
-    task = relationship("Task", back_populates="assignments")
-    user = relationship("User", back_populates="assignments")
-    group = relationship("TaskGroup", back_populates="assignments")
+    task: Mapped["Task"] = relationship(back_populates="assignments")
+    user: Mapped["User"] = relationship()
+    group: Mapped["TaskGroup"] = relationship(back_populates="members")
 
+
+# ---------- Учёт времени ----------
 
 class WorkEntry(Base):
-    """Individual work record: one user + one day. Hours are individual even
-    when entered by a reporter for a whole group."""
-
+    """
+    Одна запись = один человек + один день + одно задание (SPEC п.7).
+    Если человек в один день работал на двух заданиях — будет две записи;
+    сумма по дню собирается запросом.
+    Групповой ввод учётчика создаёт N таких строк с одинаковым entered_by.
+    Записи НИКОГДА не удаляются: правки только через UPDATE + AuditLog.
+    """
     __tablename__ = "work_entries"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False, index=True)
-    location_id = Column(Integer, ForeignKey("locations.id"), nullable=True)
-    work_date = Column(Date, nullable=False, index=True)
-    hours = Column(Numeric(10, 2), nullable=False)
-    rate_snapshot = Column(Numeric(10, 2), nullable=False)  # copy of user's rate at entry time
-    pay_type = Column(String(50), nullable=False, default="hourly")  # hourly / piecework (future)
-    entered_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
+    location_id: Mapped[int | None] = mapped_column(ForeignKey("locations.id"))
+    work_date: Mapped[date] = mapped_column(index=True)
+    hours: Mapped[float] = mapped_column(Numeric(4, 2))  # напр. 7.50
+    # Снимок ставки на момент записи — смена ставки не меняет историю (SPEC п.16)
+    rate_snapshot: Mapped[float] = mapped_column(Numeric(8, 2))
+    pay_type: Mapped[PayType] = mapped_column(
+        Enum(PayType), default=PayType.hourly
+    )
+    # Кто фактически создал запись: сам работник или учётчик за группу (SPEC п.8)
+    entered_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
-    user = relationship("User", foreign_keys=[user_id], back_populates="work_entries")
-    task = relationship("Task", back_populates="work_entries")
-    location = relationship("Location")
-    entered_by_user = relationship("User", foreign_keys=[entered_by], back_populates="entered_work_entries")
+    user: Mapped["User"] = relationship(
+        back_populates="work_entries", foreign_keys=[user_id]
+    )
+    task: Mapped["Task"] = relationship()
+    location: Mapped["Location"] = relationship()
 
+
+# ---------- Деньги ----------
 
 class Advance(Base):
-    """An advance payment made to a user."""
-
+    """Аванс — вычитается при расчёте периода (SPEC п.17)."""
     __tablename__ = "advances"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    amount = Column(Numeric(10, 2), nullable=False)
-    date = Column(Date, nullable=False)
-    comment = Column(Text, nullable=True)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-
-    user = relationship("User", back_populates="advances")
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    amount: Mapped[float] = mapped_column(Numeric(10, 2))
+    date: Mapped[date]
+    comment: Mapped[str | None] = mapped_column(Text)
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
 
 class Payout(Base):
-    """Calculated payout for a period."""
-
+    """
+    Расчёт за период для одного сотрудника.
+    gross/advances_total/net сохраняются как числа на момент расчёта,
+    чтобы выплата не "поплыла", если потом исправят часы задним числом.
+    """
     __tablename__ = "payouts"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    period_start = Column(Date, nullable=False)
-    period_end = Column(Date, nullable=False)
-    gross = Column(Numeric(10, 2), nullable=False, default=0)
-    advances_total = Column(Numeric(10, 2), nullable=False, default=0)
-    net = Column(Numeric(10, 2), nullable=False, default=0)
-    status = Column(String(50), nullable=False, default="accrued")  # accrued/pending/paid
-    paid_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    period_start: Mapped[date]
+    period_end: Mapped[date]
+    gross: Mapped[float] = mapped_column(Numeric(10, 2))          # начислено
+    advances_total: Mapped[float] = mapped_column(Numeric(10, 2)) # авансы
+    net: Mapped[float] = mapped_column(Numeric(10, 2))            # к выплате
+    status: Mapped[PayoutStatus] = mapped_column(
+        Enum(PayoutStatus), default=PayoutStatus.accrued
+    )
+    paid_at: Mapped[datetime | None]
 
-    user = relationship("User", back_populates="payouts")
 
+# ---------- Инвентарь ----------
 
 class InventoryItem(Base):
-    """A simple register of which worker currently holds an item."""
-
+    """Простейший учёт: предмет + у кого. holder_id = NULL значит "на складе"."""
     __tablename__ = "inventory_items"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), nullable=False)
-    holder_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # null = in storage
-    notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(160))
+    holder_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+    notes: Mapped[str | None] = mapped_column(Text)
 
-    holder = relationship("User", foreign_keys=[holder_id], back_populates="inventory_items")
+    holder: Mapped["User"] = relationship(back_populates="inventory")
 
+
+# ---------- Аудит ----------
 
 class AuditLog(Base):
-    """Immutable audit trail for changes to important fields."""
-
+    """
+    Журнал изменений (SPEC п.9, п.25). Каждое исправление часов/денег
+    обязано создавать запись здесь — это делает сервисный слой, не модель.
+    entity + entity_id — универсальная ссылка: "work_entries", 17.
+    old/new_value хранятся строками, чтобы одна таблица покрывала любые поля.
+    """
     __tablename__ = "audit_log"
 
-    id = Column(Integer, primary_key=True, index=True)
-    actor_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    entity = Column(String(100), nullable=False)   # e.g. "work_entries"
-    entity_id = Column(Integer, nullable=False)
-    field = Column(String(100), nullable=False)    # e.g. "hours"
-    old_value = Column(Text, nullable=True)
-    new_value = Column(Text, nullable=True)
-    reason = Column(Text, nullable=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-
-    actor = relationship("User")
+    id: Mapped[int] = mapped_column(primary_key=True)
+    actor_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    entity: Mapped[str] = mapped_column(String(60), index=True)
+    entity_id: Mapped[int] = mapped_column(index=True)
+    field: Mapped[str] = mapped_column(String(60))
+    old_value: Mapped[str | None] = mapped_column(Text)
+    new_value: Mapped[str | None] = mapped_column(Text)
+    reason: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())

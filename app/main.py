@@ -1,4 +1,4 @@
-"""Time Control — FastAPI application entry point.
+﻿"""Time Control — FastAPI application entry point.
 
 This is a minimal, dependency-light skeleton. It:
 
@@ -167,7 +167,7 @@ def health(db: Session = Depends(get_db)) -> dict:
     }
 
 
-@app.get("/")
+@app.get("/", response_model=None)
 def index() -> FileResponse | JSONResponse:
     """Serve the Mini App, or a small JSON intro when webapp/ is absent."""
     index_file = WEBAPP_DIR / "index.html"
