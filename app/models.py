@@ -97,6 +97,9 @@ class Location(Base):
     client_id: Mapped[int] = mapped_column(ForeignKey("clients.id"))
     name: Mapped[str] = mapped_column(String(160))
     address: Mapped[str | None] = mapped_column(Text)
+    # Ссылка на Google Maps (руководитель вставляет из "Поделиться").
+    # На телефоне откроется в приложении карт автоматически.
+    map_url: Mapped[str | None] = mapped_column(Text)
     # lat/lon nullable — задел под GPS (SPEC п.23), сейчас не используются
     lat: Mapped[float | None]
     lon: Mapped[float | None]
