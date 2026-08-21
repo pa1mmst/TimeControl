@@ -1,1 +1,25 @@
-﻿{}
+{
+  "ask_contact": "Para vincular su cuenta, pulse el botón y comparta su número de teléfono.",
+  "contact_button": "📱 Enviar mi número",
+  "contact_not_found": "Su número no está en el sistema. Contacte con el encargado: debe darle de alta con este número de teléfono.",
+  "linked_ok": "¡Listo, {name}! Cuenta vinculada. Recibirá notificaciones de las tareas.",
+  "already_linked": "Ya está en el sistema, {name}. Si no hay internet en la aplicación, puede registrar las horas aquí: envíe un número, por ejemplo: 8",
+  "hours_help": "No he entendido el mensaje. Para registrar las horas de hoy, envíe un número, por ejemplo: 8 o 7.5",
+  "hours_bad_value": "Las horas deben ser un número entre 0 y 24, por ejemplo: 8 o 7.5",
+  "no_active_work": "No tiene tareas activas, no hay dónde registrar horas. Contacte con el encargado.",
+  "choose_target": "Tiene varias tareas activas. Indique dónde registrar {hours} h — envíe un comando de la lista:",
+  "target_group_line": "{hours} /g{id} — por el grupo ({members} pers.), tarea «{task}»",
+  "target_self_line": "{hours} /t{id} — por usted, tarea «{task}»",
+  "target_not_found": "No tiene esa tarea o grupo. Envíe solo un número y le mostraré la lista.",
+  "saved_self": "✅ Registrado: {hours} h del {date}, tarea «{task}».",
+  "saved_group": "✅ Registrado al grupo: {hours} h del {date}, tarea «{task}». Registros creados: {created}.",
+  "saved_group_skipped": "Omitidos (ya tienen registro de ese día): {skipped}.",
+  "entry_error": "⚠️ No se pudo: {detail}",
+  "notif_new_task": "🆕 Nueva tarea: «{title}»\nCliente: {client}\nFechas: {dates}",
+  "notif_task_changed": "✏️ La tarea «{title}» ha cambiado: {what}",
+  "notif_you_are_reporter": "Usted es el encargado del grupo en esta tarea: registra las horas de todos los participantes.",
+  "notif_location": "📍 Ubicación: {name}\n{details}",
+  "notif_hours_corrected": "✏️ El jefe ha modificado sus horas del {date}, tarea «{task}»: {old} h → {new} h.\nMotivo: {reason}",
+  "no_reason": "no indicado",
+  "no_dates": "sin definir"
+}

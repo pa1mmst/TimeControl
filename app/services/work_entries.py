@@ -20,6 +20,7 @@ from app.models import (
     User, WorkEntry,
 )
 from app.services.audit import log_change, history_for
+from app.bot.notifications import notify_hours_corrected
 
 ENTITY = "work_entries"
 
@@ -217,6 +218,9 @@ def update_hours(
     )
     db.commit()  # запись и аудит фиксируются атомарно
     db.refresh(entry)
+    # Сотрудник должен видеть, что часы изменили (SPEC п.9).
+    # Уведомление не может завалить операцию — send_message глотает ошибки.
+    notify_hours_corrected(db, entry, old, new_hours, reason)
     return entry
 
 

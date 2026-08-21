@@ -9,6 +9,7 @@ API заданий: создание, назначение людей, груп�
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.bot.notifications import notify_task_assigned, notify_task_changed
 from app.db import get_db
 from app.models import (
     Task, TaskLocation, TaskGroup, TaskAssignment,
@@ -88,6 +89,7 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
 @router.patch("/{task_id}", response_model=TaskOut)
 def update_task(task_id: int, data: TaskUpdate, db: Session = Depends(get_db)):
     task = _get_task(task_id, db)
+    old_status = task.status
     payload = data.model_dump(exclude_unset=True)
     location_ids = payload.pop("location_ids", None)
     for field, value in payload.items():
@@ -96,6 +98,14 @@ def update_task(task_id: int, data: TaskUpdate, db: Session = Depends(get_db)):
         _set_locations(task, location_ids, db)
     db.commit()
     db.refresh(task)
+    # Уведомления (SPEC п.21): после commit, чтобы не ломать операцию
+    if old_status != TaskStatus.active and task.status == TaskStatus.active:
+        notify_task_assigned(db, task)
+    elif task.status == TaskStatus.active:
+        changed = ", ".join(
+            f"{k}: {v}" for k, v in payload.items() if k != "status"
+        ) or "данные задания"
+        notify_task_changed(db, task, changed)
     return task
 
 
