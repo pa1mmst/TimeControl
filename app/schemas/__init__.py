@@ -7,7 +7,7 @@ from datetime import datetime, date
 from decimal import Decimal
 from pydantic import BaseModel, ConfigDict
 
-from app.models import Lang, TaskStatus
+from app.models import Lang, TaskStatus, PayoutStatus
 
 
 # ---------- Сотрудники ----------
@@ -187,3 +187,89 @@ class TaskOut(BaseModel):
     locations: list[LocationOut] = []
     groups: list[GroupOut] = []
     assignments: list[AssignmentOut] = []
+
+
+# ---------- Модуль 8: авансы, выплаты, инвентарь ----------
+
+class AdvanceCreate(BaseModel):
+    user_id: int
+    amount: Decimal
+    date: date
+    comment: str | None = None
+    created_by: int
+
+
+class AdvanceUpdate(BaseModel):
+    """Исправление аванса. Деньги не удаляются — только правка с аудитом."""
+    amount: Decimal | None = None
+    comment: str | None = None
+    actor_id: int
+    reason: str | None = None
+
+
+class AdvanceOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    amount: Decimal
+    date: date
+    comment: str | None
+    created_by: int
+
+
+class PayrollRow(BaseModel):
+    """Строка таблицы из SPEC п.17: Сотрудник | Часы | Начислено | Аванс | К выплате."""
+    user_id: int
+    name: str
+    hours: Decimal
+    gross: Decimal
+    advances_total: Decimal
+    net: Decimal
+
+
+class PayrollClose(BaseModel):
+    period_start: date
+    period_end: date
+    created_by: int
+
+
+class PayoutOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user_id: int
+    period_start: date
+    period_end: date
+    gross: Decimal
+    advances_total: Decimal
+    net: Decimal
+    status: PayoutStatus
+    paid_at: datetime | None
+
+
+class PayoutStatusUpdate(BaseModel):
+    status: PayoutStatus
+    actor_id: int
+
+
+class InventoryCreate(BaseModel):
+    name: str
+    holder_id: int | None = None   # null = на складе
+    notes: str | None = None
+
+
+class InventoryUpdate(BaseModel):
+    name: str | None = None
+    holder_id: int | None = None   # прислать null = вернуть на склад
+    notes: str | None = None
+
+
+class InventoryOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    holder_id: int | None
+    holder: UserShort | None
+    notes: str | None
