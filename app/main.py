@@ -1,7 +1,7 @@
 """Главный файл приложения. Подключает все модули (роутеры)."""
 from fastapi import FastAPI
 
-from app.routers import users, clients, tasks
+from app.routers import users, clients, tasks, work_entries
 
 app = FastAPI(title="AgroWork")
 
