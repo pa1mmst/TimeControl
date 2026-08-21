@@ -1,13 +1,13 @@
-﻿"""Главный файл приложения. Подключает все модули (роутеры)."""
+"""Главный файл приложения. Подключает все модули (роутеры)."""
 from fastapi import FastAPI
 
-from app.routers import clients, users
+from app.routers import users, clients, tasks
 
 app = FastAPI(title="AgroWork")
 
 app.include_router(users.router)
 app.include_router(clients.router)
-
+app.include_router(tasks.router)
 
 @app.get("/")
 def health():

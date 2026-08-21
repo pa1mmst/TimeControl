@@ -3,11 +3,11 @@ Pydantic-схемы: формат данных, которые API приним�
 Отделены от models.py: модели — это база данных, схемы — это "анкеты"
 для входящих и исходящих запросов.
 """
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 from pydantic import BaseModel, ConfigDict
 
-from app.models import Lang
+from app.models import Lang, TaskStatus
 
 
 # ---------- Сотрудники ----------
@@ -97,3 +97,93 @@ class LocationUpdate(BaseModel):
     map_url: str | None = None
     lat: float | None = None
     lon: float | None = None
+
+
+# ---------- Задания (модуль 4) ----------
+
+class UserShort(BaseModel):
+    """Короткая карточка человека для вложенных списков."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+
+
+class TaskCreate(BaseModel):
+    title: str
+    description: str | None = None
+    client_id: int
+    # Список id локаций этого заказчика. Может быть пустым:
+    # локация не всегда важна (SPEC п.2).
+    location_ids: list[int] = []
+    date_start: date | None = None
+    date_end: date | None = None
+    created_by: int  # временно вручную; после авторизации возьмётся из Telegram
+
+
+class TaskUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    status: TaskStatus | None = None
+    date_start: date | None = None
+    date_end: date | None = None
+    # Если прислать список — состав локаций полностью заменится на него
+    location_ids: list[int] | None = None
+
+
+class AssignmentCreate(BaseModel):
+    user_id: int
+
+
+class AssignmentUpdate(BaseModel):
+    """Перемещение человека: в группу (id) или в одиночки (null)."""
+    group_id: int | None = None
+
+
+class GroupCreate(BaseModel):
+    reporter_id: int          # учётчик — должен быть назначен на задание
+    member_ids: list[int] = []  # участники; учётчик добавится сам
+
+
+class AssignmentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    user: UserShort
+    group_id: int | None
+
+
+class GroupOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    reporter: UserShort
+
+
+class TaskShortOut(BaseModel):
+    """Для списка заданий."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    status: TaskStatus
+    client_id: int
+    date_start: date | None
+    date_end: date | None
+
+
+class TaskOut(BaseModel):
+    """Полная карточка задания."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    title: str
+    description: str | None
+    status: TaskStatus
+    client_id: int
+    date_start: date | None
+    date_end: date | None
+    created_by: int
+    locations: list[LocationOut] = []
+    groups: list[GroupOut] = []
+    assignments: list[AssignmentOut] = []
