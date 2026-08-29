@@ -13,7 +13,7 @@ from app.bot.notifications import notify_task_assigned, notify_task_changed
 from app.db import get_db
 from app.models import (
     Task, TaskLocation, TaskGroup, TaskAssignment,
-    Client, Location, User, WorkEntry,
+    Client, Location, User, WorkEntry, TaskStatus,
 )
 from app.schemas import (
     TaskCreate, TaskUpdate, TaskOut, TaskShortOut,
