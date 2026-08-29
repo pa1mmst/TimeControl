@@ -1,4 +1,8 @@
 """Главный файл приложения. Подключает все модули (роутеры)."""
+from dotenv import load_dotenv
+
+load_dotenv()  # читает .env из рабочей папки (BOT_TOKEN и т.д.)
+
 from fastapi import FastAPI
 
 from app.bot.router import router as bot_router
