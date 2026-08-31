@@ -26,17 +26,25 @@ def _check_signature(init_data: str) -> dict:
         raise HTTPException(401, "Сервер не настроен: нет BOT_TOKEN")
 
     try:
-        pairs = dict(parse_qsl(init_data, keep_blank_values=True))
+        pairs_list = parse_qsl(init_data, keep_blank_values=True)
     except ValueError:
         raise HTTPException(401, "Некорректный initData")
 
+    pairs = dict(pairs_list)
     received_hash = pairs.pop("hash", "")
     if not received_hash:
         raise HTTPException(401, "Нет подписи в initData")
 
-    # Строка для проверки: все поля кроме hash, отсортированные, через \n
+    # ВАЖНО: строка для проверки подписи собирается из значений В ТОМ ВИДЕ,
+    # как их прислал Telegram (URL-закодированных), а не декодированных.
+    # parse_qsl декодирует, поэтому берём сырые пары из исходной строки.
+    raw_pairs = [
+        (k, v) for k, v in
+        (item.split("=", 1) for item in init_data.split("&") if "=" in item)
+        if k != "hash"
+    ]
     data_check_string = "\n".join(
-        f"{k}={v}" for k, v in sorted(pairs.items())
+        f"{k}={v}" for k, v in sorted(raw_pairs)
     )
     secret_key = hmac.new(b"WebAppData", bot_token.encode(), hashlib.sha256).digest()
     calculated = hmac.new(
