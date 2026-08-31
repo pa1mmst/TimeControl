@@ -1,9 +1,13 @@
 """Главный файл приложения. Подключает все модули (роутеры)."""
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()  # читает .env из рабочей папки (BOT_TOKEN и т.д.)
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.bot.router import router as bot_router
 from app.bot.telegram import setup_webhook
@@ -23,6 +27,16 @@ app.include_router(bot_router)
 @app.on_event("startup")
 def _bot_webhook():
     setup_webhook()  # no-op, если BOT_TOKEN/BOT_WEBHOOK_URL не заданы
+
+# ---- Telegram Mini App (статика) ----
+_WEBAPP_DIR = Path(__file__).resolve().parent.parent / "webapp"
+
+@app.get("/app")
+def mini_app():
+    """Главная страница Mini App."""
+    return FileResponse(_WEBAPP_DIR / "index.html")
+
+app.mount("/app/static", StaticFiles(directory=str(_WEBAPP_DIR)), name="webapp")
 
 @app.get("/")
 def health():

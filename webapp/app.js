@@ -220,4 +220,64 @@
 
         // Placeholder endpoint bindings — real logic comes later.
         getMe() { return this.request('/users/me'); },
-        getTasks() { return this.request('/tasks
+        getTasks() { return this.request('/tasks'); },
+        getHours() { return this.request('/work-entries'); }
+    };
+
+    /* ========================================================
+     * 7. Rendering helpers
+     * ======================================================== */
+    const $ = (sel) => document.querySelector(sel);
+
+    function showScreen(name) {
+        document.querySelectorAll('.screen').forEach((s) => {
+            s.hidden = s.getAttribute('data-screen-name') !== name;
+        });
+        document.querySelectorAll('.nav-item').forEach((b) => {
+            b.classList.toggle('is-active', b.getAttribute('data-nav-target') === name);
+        });
+        state.view = name;
+    }
+
+    function applyI18n() {
+        document.querySelectorAll('[data-i18n]').forEach((el) => {
+            el.textContent = t(el.getAttribute('data-i18n'));
+        });
+    }
+
+    function renderHome(user) {
+        $('#screenLoading').hidden = true;
+        $('#screenDashboard').hidden = false;
+        const hello = $('#statActiveTasks');
+        if (hello) hello.textContent = user && user.full_name ? user.full_name : '';
+    }
+
+    function renderError(message) {
+        $('#screenLoading').hidden = true;
+        $('#screenLogin').hidden = false;
+        $('#screenLogin').querySelector('[data-i18n="loginSubtitle"]').textContent = message;
+    }
+
+    /* ========================================================
+     * 8. Startup
+     * ======================================================== */
+    async function init() {
+        applyI18n();
+        showScreen('loading');
+
+        if (!tg || !tg.initData) {
+            renderError(t('profile.notAuth'));
+            return;
+        }
+
+        try {
+            const me = await api.getMe();
+            state.user = me;
+            renderHome(me);
+        } catch (err) {
+            renderError(err.message || t('network.error'));
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+})();
