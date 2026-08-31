@@ -11,10 +11,11 @@ from fastapi.staticfiles import StaticFiles
 
 from app.bot.router import router as bot_router
 from app.bot.telegram import setup_webhook
-from app.routers import users, clients, tasks, work_entries, payroll, reports, inventory
+from app.routers import users, clients, tasks, work_entries, payroll, reports, inventory, miniapp
 
 app = FastAPI(title="AgroWork")
 
+app.include_router(miniapp.router)
 app.include_router(users.router)
 app.include_router(clients.router)
 app.include_router(tasks.router)

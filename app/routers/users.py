@@ -27,6 +27,13 @@ def list_users(include_inactive: bool = False, db: Session = Depends(get_db)):
     return q.order_by(User.name).all()
 
 
+@router.get("/me", include_in_schema=False)
+def me_reserved():
+    """Резерв: /api/users/me обслуживает miniapp.py (проверка подписи initData).
+    miniapp включён в main.py раньше, поэтому до сюда выполнение не доходит."""
+    raise HTTPException(404, "Reserved for miniapp")
+
+
 @router.get("/{user_id}", response_model=UserOut)
 def get_user(user_id: int, db: Session = Depends(get_db)):
     user = db.get(User, user_id)

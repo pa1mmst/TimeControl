@@ -1,378 +1,85 @@
-/* ============================================================
- * Time Control — Telegram Mini App
- * File: webapp/styles.css
- * Mobile-first, поддерживает светлую/тёмную тему Telegram
- * через data-theme на <html>.
- * ============================================================ */
+/* Time Control — Telegram Mini App. Тема следует за настройками Telegram. */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-    --bg: #f4f6f5;
-    --surface: #ffffff;
-    --text: #1c2420;
-    --text-muted: #6b7770;
-    --primary: #2b7a4b;
-    --primary-dark: #22603b;
-    --primary-soft: #e3f2e9;
-    --border: #e0e5e2;
-    --danger: #c0392b;
-    --radius: 14px;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-html[data-theme="dark"] {
-    --bg: #17212b;
-    --surface: #1f2b36;
-    --text: #e8edf1;
-    --text-muted: #8fa0ad;
-    --primary: #4caf7d;
-    --primary-dark: #3d9468;
-    --primary-soft: #243b30;
-    --border: #2c3a47;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-html, body {
-    height: 100%;
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --text: var(--tg-theme-text-color, #000000);
+    --hint: var(--tg-theme-hint-color, #999999);
+    --link: var(--tg-theme-link-color, #2481cc);
+    --button: var(--tg-theme-button-color, #2481cc);
+    --button-text: var(--tg-theme-button-text-color, #ffffff);
+    --secondary-bg: var(--tg-theme-secondary-bg-color, #f0f0f0);
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background: var(--bg);
     color: var(--text);
     font-size: 16px;
-    line-height: 1.45;
-    -webkit-tap-highlight-color: transparent;
+    line-height: 1.4;
 }
 
-#app {
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
-}
+#app { padding: 16px; max-width: 640px; margin: 0 auto; }
 
-/* ============ Шапка ============ */
-.app-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    background: var(--primary);
-    color: #fff;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
+.loading { text-align: center; color: var(--hint); padding: 40px 0; }
 
-.app-title {
-    font-size: 20px;
-    font-weight: 700;
-}
+/* ---- Экраны ---- */
+.screen { display: none; }
+.screen.active { display: block; }
 
-.lang-select {
-    background: rgba(255, 255, 255, 0.15);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    border-radius: 8px;
-    padding: 4px 8px;
-    font-size: 14px;
-}
+h2 { font-size: 20px; margin-bottom: 12px; }
+h3 { font-size: 16px; margin: 16px 0 8px; color: var(--hint); text-transform: uppercase; font-size: 13px; }
 
-.lang-select option {
-    color: #1c2420;
-}
-
-/* ============ Строка состояния ============ */
-.status-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 12px 16px 0;
-    padding: 8px 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    box-shadow: var(--shadow);
-    font-size: 14px;
-}
-
-.status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #2ecc71;
-    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
-    flex-shrink: 0;
-}
-
-.status-text {
-    color: var(--text-muted);
-}
-
-.status-text strong {
-    color: var(--text);
-    font-weight: 700;
-}
-
-/* ============ Контент ============ */
-.app-content {
-    flex: 1;
-    padding: 16px;
-    padding-bottom: 90px; /* место под нижнюю навигацию */
-}
-
-.screen[hidden] {
-    display: none;
-}
-
-.screen h2 {
-    font-size: 20px;
-    margin-bottom: 14px;
-}
-
-.screen-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-}
-
-.screen-header h2 {
-    margin-bottom: 0;
-}
-
-.screen-message {
-    color: var(--text-muted);
-    text-align: center;
-    margin-top: 12px;
-}
-
-/* ============ Загрузка ============ */
-.loader {
-    width: 36px;
-    height: 36px;
-    margin: 60px auto 0;
-    border: 4px solid var(--primary-soft);
-    border-top-color: var(--primary);
-    border-radius: 50%;
-    animation: spin 0.9s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* ============ Карточки статистики ============ */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-}
-
-.stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 14px 10px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.stat-value {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--primary);
-}
-
-.stat-label {
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-/* ============ Списки и карточки ============ */
-.list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.list-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
+/* ---- Карточки ---- */
+.card {
+    background: var(--secondary-bg);
+    border-radius: 12px;
     padding: 14px;
-}
-
-.list-card .card-title {
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.list-card .card-sub {
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-.list-card .card-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-}
-
-.badge {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 600;
-    background: var(--primary-soft);
-    color: var(--primary-dark);
-}
-
-.badge.badge-muted {
-    background: var(--border);
-    color: var(--text-muted);
-}
-
-/* ============ Кнопки ============ */
-.btn {
-    display: inline-block;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 16px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    background: var(--border);
-    color: var(--text);
-}
-
-.btn[hidden] {
-    display: none;
-}
-
-.btn-primary {
-    background: var(--primary);
-    color: #fff;
-}
-
-.btn-primary:active {
-    background: var(--primary-dark);
-}
-
-.btn-back {
-    background: transparent;
-    color: var(--primary);
-    padding-left: 0;
     margin-bottom: 10px;
 }
+.card .title { font-weight: 600; }
+.card .sub { color: var(--hint); font-size: 14px; margin-top: 2px; }
+.card .amount { font-weight: 600; margin-top: 6px; }
 
-.detail-content {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-}
-
-.detail-content dl {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 6px 12px;
-    font-size: 15px;
-}
-
-.detail-content dt {
-    color: var(--text-muted);
-}
-
-.detail-content dd {
-    text-align: right;
-}
-
-/* ============ Нижняя навигация ============ */
-.app-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
-    z-index: 10;
-}
-
-.nav-item {
+/* ---- Статистика ---- */
+.stats { display: flex; gap: 10px; margin-bottom: 16px; }
+.stat {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    background: none;
+    background: var(--secondary-bg);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+}
+.stat .num { font-size: 20px; font-weight: 700; }
+.stat .label { font-size: 12px; color: var(--hint); margin-top: 2px; }
+
+/* ---- Кнопки ---- */
+.btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
     border: none;
-    color: var(--text-muted);
-    font-size: 11px;
-    cursor: pointer;
-    padding: 6px 2px;
-}
-
-.nav-item .nav-icon {
-    font-size: 20px;
-}
-
-.nav-item.is-active {
-    color: var(--primary);
+    border-radius: 12px;
+    background: var(--button);
+    color: var(--button-text);
+    font-size: 16px;
     font-weight: 600;
-}
-
-.nav-item[hidden] {
-    display: none;
-}
-
-/* ============ Меню «Ещё» ============ */
-.more-menu {
-    position: fixed;
-    bottom: 70px;
-    right: 12px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
-    min-width: 180px;
-    z-index: 20;
-}
-
-.more-menu[hidden] {
-    display: none;
-}
-
-.more-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: none;
-    border: none;
-    padding: 10px 12px;
-    font-size: 15px;
-    color: var(--text);
-    border-radius: 10px;
     cursor: pointer;
-    text-align: left;
+    margin-bottom: 10px;
 }
+.btn:active { opacity: 0.8; }
 
-.more-menu-item:active {
-    background: var(--primary-soft);
+/* ---- Списки ---- */
+.list-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--secondary-bg);
 }
+.list-item:last-child { border-bottom: none; }
+.list-item .right { color: var(--hint); }
+
+/* ---- Прочее ---- */
+.hint { color: var(--hint); font-size: 14px; }
+.error { color: #e53935; font-size: 14px; margin: 8px 0; }
+.back { margin-bottom: 12px; }
