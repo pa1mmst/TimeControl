@@ -31,14 +31,15 @@ def _bot_webhook():
 # ---- Telegram Mini App (статика) ----
 _WEBAPP_DIR = Path(__file__).resolve().parent.parent / "webapp"
 
+@app.get("/")
 @app.get("/app")
 def mini_app():
-    """Главная страница Mini App."""
+    """Главная страница Mini App (одна и та же на / и /app)."""
     return FileResponse(_WEBAPP_DIR / "index.html")
 
 app.mount("/app/static", StaticFiles(directory=str(_WEBAPP_DIR)), name="webapp")
 
-@app.get("/")
+@app.get("/health")
 def health():
-    """Проверка, что сервер жив."""
+    """Проверка, что сервер жив (для мониторинга/скриптов)."""
     return {"status": "ok"}

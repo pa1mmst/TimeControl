@@ -87,6 +87,38 @@ body {
     color: #1c2420;
 }
 
+/* ============ Строка состояния ============ */
+.status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 16px 0;
+    padding: 8px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    font-size: 14px;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #2ecc71;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
+    flex-shrink: 0;
+}
+
+.status-text {
+    color: var(--text-muted);
+}
+
+.status-text strong {
+    color: var(--text);
+    font-weight: 700;
+}
+
 /* ============ Контент ============ */
 .app-content {
     flex: 1;
