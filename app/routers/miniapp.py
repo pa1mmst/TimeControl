@@ -7,7 +7,9 @@ Telegram передаёт initData — подписанную строку с д
 """
 import hashlib
 import hmac
+import logging
 import os
+import time
 from urllib.parse import parse_qsl
 
 from fastapi import APIRouter, Depends, Header, HTTPException
@@ -15,6 +17,8 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import User
+
+logger = logging.getLogger("miniapp")  # причины отказа 401 — видно в journalctl
 
 router = APIRouter(prefix="/api/users", tags=["miniapp"])
 
@@ -35,16 +39,14 @@ def _check_signature(init_data: str) -> dict:
     if not received_hash:
         raise HTTPException(401, "Нет подписи в initData")
 
-    # ВАЖНО: строка для проверки подписи собирается из значений В ТОМ ВИДЕ,
-    # как их прислал Telegram (URL-закодированных), а не декодированных.
-    # parse_qsl декодирует, поэтому берём сырые пары из исходной строки.
-    raw_pairs = [
-        (k, v) for k, v in
-        (item.split("=", 1) for item in init_data.split("&") if "=" in item)
-        if k != "hash"
-    ]
+    # ВАЖНО: по документации Telegram data_check_string собирается из
+    # ДЕКОДИРОВАННЫХ значений (key=value через \n, отсортировано по ключу),
+    # а поле hash из исходной строки исключается. parse_qsl как раз
+    # возвращает декодированные пары — используем их.
+    # (Ранее здесь использовались сырые URL-закодированные значения —
+    # из-за этого подпись не сходилась ни у одного пользователя.)
     data_check_string = "\n".join(
-        f"{k}={v}" for k, v in sorted(raw_pairs)
+        f"{k}={v}" for k, v in sorted(pairs_list) if k != "hash"
     )
     secret_key = hmac.new(b"WebAppData", bot_token.encode(), hashlib.sha256).digest()
     calculated = hmac.new(
@@ -52,14 +54,15 @@ def _check_signature(init_data: str) -> dict:
     ).hexdigest()
 
     if not hmac.compare_digest(calculated, received_hash):
+        logger.warning("initData: подпись не совпала (user_raw=%s)", pairs.get("user", "")[:80])
         raise HTTPException(401, "Подпись initData не совпадает")
 
     # Защита от повторов: initData старше суток не принимаем
     auth_date = pairs.get("auth_date")
     if auth_date:
-        import time
         try:
             if time.time() - int(auth_date) > 86400:
+                logger.warning("initData: устарел (auth_date=%s)", auth_date)
                 raise HTTPException(401, "initData устарел")
         except ValueError:
             raise HTTPException(401, "Некорректный auth_date")
@@ -89,6 +92,7 @@ def me(
 
     user = db.query(User).filter(User.tg_id == tg_id).first()
     if not user or not user.is_active:
+        logger.warning("me: tg_id=%s не найден в базе или деактивирован", tg_id)
         raise HTTPException(401, "Пользователь не зарегистрирован или деактивирован")
 
     # Часы/заработок — из отчёта по пользователю (та же логика, что /api/reports/user)
