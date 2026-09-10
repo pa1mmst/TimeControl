@@ -19,8 +19,14 @@ except OSError:
 from fastapi.testclient import TestClient
 from app.main import app
 import app.bot.notifications as notif_mod
-from app.db import SessionLocal
+from app.db import SessionLocal, engine, Base
 from app.models import TaskLocation
+
+# --- Создание таблиц в чистой тестовой базе ---
+# Раньше таблицы создавались отдельным скриптом (python -m app.create_tables),
+# рабочая база agrowork.db уже их содержала. Тестовая база чистая —
+# создаём схему здесь (импорт app.models выше регистрирует все модели).
+Base.metadata.create_all(bind=engine)
 
 client = TestClient(app)
 SENT = []  # перехват "отправки в Telegram"
