@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.deps import get_actor, require_manager
 from app.models import User
 from app.schemas import UserCreate, UserUpdate, UserOut
 
@@ -10,7 +11,15 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 
 
 @router.post("", response_model=UserOut)
-def create_user(data: UserCreate, db: Session = Depends(get_db)):
+def create_user(
+    data: UserCreate,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
+):
+    # require_manager ТОЛЬКО при подписанном initData (actor is not None).
+    # Без заголовка — старое поведение без проверок (e2e-скрипт, старые клиенты).
+    if actor is not None:
+        require_manager(actor)
     user = User(**data.model_dump())
     db.add(user)
     db.commit()
@@ -43,12 +52,19 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/{user_id}", response_model=UserOut)
-def update_user(user_id: int, data: UserUpdate, db: Session = Depends(get_db)):
+def update_user(
+    user_id: int,
+    data: UserUpdate,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
+):
     """
     Изменение сотрудника, в т.ч. ставки.
     Смена ставки безопасна для истории: старые work_entries хранят
     rate_snapshot и не пересчитываются (SPEC п.16).
     """
+    if actor is not None:
+        require_manager(actor)
     user = db.get(User, user_id)
     if not user:
         raise HTTPException(404, "Сотрудник не найден")
@@ -61,11 +77,17 @@ def update_user(user_id: int, data: UserUpdate, db: Session = Depends(get_db)):
 
 
 @router.delete("/{user_id}", response_model=UserOut)
-def deactivate_user(user_id: int, db: Session = Depends(get_db)):
+def deactivate_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
+):
     """
     НЕ удаляем: у сотрудника есть история часов и денег.
     Деактивация скрывает его из списков (SPEC п.14).
     """
+    if actor is not None:
+        require_manager(actor)
     user = db.get(User, user_id)
     if not user:
         raise HTTPException(404, "Сотрудник не найден")

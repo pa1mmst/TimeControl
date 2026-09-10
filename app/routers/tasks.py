@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.bot.notifications import notify_task_assigned, notify_task_changed
 from app.db import get_db
+from app.deps import get_actor, require_manager
 from app.models import (
     Task, TaskLocation, TaskGroup, TaskAssignment,
     Client, Location, User, WorkEntry, TaskStatus,
@@ -50,10 +51,19 @@ def _set_locations(task: Task, location_ids: list[int], db: Session):
 # ---------- Задания ----------
 
 @router.post("", response_model=TaskOut)
-def create_task(data: TaskCreate, db: Session = Depends(get_db)):
+def create_task(
+    data: TaskCreate,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
+):
+    # actor из initData приоритетен; без initData — старое поведение:
+    # created_by из тела, никаких manager-проверок.
+    created_by = actor.id if actor else data.created_by
+    if actor is not None:
+        require_manager(actor)
     if not db.get(Client, data.client_id):
         raise HTTPException(404, "Заказчик не найден")
-    if not db.get(User, data.created_by):
+    if not db.get(User, created_by):
         raise HTTPException(404, "Автор (created_by) не найден")
 
     task = Task(
@@ -62,7 +72,7 @@ def create_task(data: TaskCreate, db: Session = Depends(get_db)):
         client_id=data.client_id,
         date_start=data.date_start,
         date_end=data.date_end,
-        created_by=data.created_by,
+        created_by=created_by,
     )
     db.add(task)
     db.flush()  # получаем task.id до коммита, чтобы привязать локации
@@ -87,7 +97,16 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
 
 
 @router.patch("/{task_id}", response_model=TaskOut)
-def update_task(task_id: int, data: TaskUpdate, db: Session = Depends(get_db)):
+def update_task(
+    task_id: int,
+    data: TaskUpdate,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
+):
+    # Руководительские действия: initData-actor обязан быть is_manager;
+    # без initData — старое поведение: никаких проверок.
+    if actor is not None:
+        require_manager(actor)
     task = _get_task(task_id, db)
     old_status = task.status
     payload = data.model_dump(exclude_unset=True)
@@ -112,7 +131,14 @@ def update_task(task_id: int, data: TaskUpdate, db: Session = Depends(get_db)):
 # ---------- Назначения людей ----------
 
 @router.post("/{task_id}/assignments", response_model=AssignmentOut)
-def assign_user(task_id: int, data: AssignmentCreate, db: Session = Depends(get_db)):
+def assign_user(
+    task_id: int,
+    data: AssignmentCreate,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
+):
+    if actor is not None:
+        require_manager(actor)
     task = _get_task(task_id, db)
     user = db.get(User, data.user_id)
     if not user or not user.is_active:
@@ -135,8 +161,11 @@ def assign_user(task_id: int, data: AssignmentCreate, db: Session = Depends(get_
 def move_assignment(
     task_id: int, user_id: int, data: AssignmentUpdate,
     db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
 ):
     """Переместить человека в группу (group_id) или сделать одиночкой (null)."""
+    if actor is not None:
+        require_manager(actor)
     a = (
         db.query(TaskAssignment)
         .filter_by(task_id=task_id, user_id=user_id)
@@ -188,7 +217,14 @@ def unassign_user(task_id: int, user_id: int, db: Session = Depends(get_db)):
 # ---------- Группы ----------
 
 @router.post("/{task_id}/groups", response_model=GroupOut)
-def create_group(task_id: int, data: GroupCreate, db: Session = Depends(get_db)):
+def create_group(
+    task_id: int,
+    data: GroupCreate,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
+):
+    if actor is not None:
+        require_manager(actor)
     task = _get_task(task_id, db)
     # Учётчик автоматически считается участником группы
     member_ids = set(data.member_ids) | {data.reporter_id}

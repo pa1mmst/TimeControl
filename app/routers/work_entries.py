@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 # Если зависимости в вашем каркасе лежат не в app.deps — поправьте импорт.
-from app.deps import get_db, get_current_user
+from app.deps import get_db, get_current_user, get_actor
 from app.models import User
 from app.schemas.work_entries import (
     AuditRecordOut, GroupEntryCreate, GroupEntryResult, TaskSummaryOut,
@@ -29,10 +29,11 @@ def create_entry(
     payload: WorkEntryCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    actor: User | None = Depends(get_actor),
 ):
     """Индивидуальная запись: работник за себя, руководитель — за любого."""
     return _handle(
-        svc.create_entry, db, actor=current_user,
+        svc.create_entry, db, actor=actor or current_user,
         task_id=payload.task_id, work_date=payload.work_date,
         hours=payload.hours, location_id=payload.location_id,
         user_id=payload.user_id,
@@ -44,10 +45,11 @@ def create_group_entries(
     payload: GroupEntryCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    actor: User | None = Depends(get_actor),
 ):
     """Групповой ввод учётчика: одно действие -> запись каждому участнику."""
     created, skipped = _handle(
-        svc.create_group_entries, db, actor=current_user,
+        svc.create_group_entries, db, actor=actor or current_user,
         group_id=payload.group_id, work_date=payload.work_date,
         hours=payload.hours, location_id=payload.location_id,
         exclude_user_ids=payload.exclude_user_ids,
@@ -61,10 +63,11 @@ def update_hours(
     payload: WorkEntryUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    actor: User | None = Depends(get_actor),
 ):
     """Правка часов: только руководитель, изменение фиксируется в AuditLog."""
     return _handle(
-        svc.update_hours, db, actor=current_user,
+        svc.update_hours, db, actor=actor or current_user,
         entry_id=entry_id, new_hours=payload.hours, reason=payload.reason,
     )
 

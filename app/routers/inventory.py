@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.deps import get_actor, require_manager
 from app.models import InventoryItem, User
 from app.schemas import InventoryCreate, InventoryUpdate, InventoryOut
 
@@ -17,7 +18,15 @@ def _check_holder(holder_id: int | None, db: Session):
 
 
 @router.post("", response_model=InventoryOut)
-def create_item(data: InventoryCreate, db: Session = Depends(get_db)):
+def create_item(
+    data: InventoryCreate,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
+):
+    # require_manager ТОЛЬКО при подписанном initData (actor is not None).
+    # Без заголовка — старое поведение без проверок (e2e-скрипт, старые клиенты).
+    if actor is not None:
+        require_manager(actor)
     _check_holder(data.holder_id, db)
     item = InventoryItem(**data.model_dump())
     db.add(item)
@@ -41,9 +50,16 @@ def list_items(
 
 
 @router.patch("/{item_id}", response_model=InventoryOut)
-def update_item(item_id: int, data: InventoryUpdate, db: Session = Depends(get_db)):
+def update_item(
+    item_id: int,
+    data: InventoryUpdate,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
+):
     """Переименовать, передать другому человеку или вернуть на склад
     (прислать "holder_id": null)."""
+    if actor is not None:
+        require_manager(actor)
     item = db.get(InventoryItem, item_id)
     if not item:
         raise HTTPException(404, "Предмет не найден")
@@ -58,8 +74,14 @@ def update_item(item_id: int, data: InventoryUpdate, db: Session = Depends(get_d
 
 
 @router.delete("/{item_id}")
-def delete_item(item_id: int, db: Session = Depends(get_db)):
+def delete_item(
+    item_id: int,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
+):
     """Списать предмет (сломался/потерян). История по SPEC п.20 не нужна."""
+    if actor is not None:
+        require_manager(actor)
     item = db.get(InventoryItem, item_id)
     if not item:
         raise HTTPException(404, "Предмет не найден")

@@ -1,11 +1,20 @@
 # -*- coding: utf-8 -*-
 """Сквозная проверка главного сценария SPEC через реальный API."""
 import io
+import os
 import sys
 from datetime import date
 from decimal import Decimal
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+
+# --- Изолированная тестовая база: ДО любого импорта app ---
+# app/db.py читает DATABASE_URL при импорте, поэтому env выставляем заранее.
+os.environ["DATABASE_URL"] = "sqlite:///./_e2e_test.db"
+try:
+    os.remove("_e2e_test.db")
+except OSError:
+    pass
 
 from fastapi.testclient import TestClient
 from app.main import app

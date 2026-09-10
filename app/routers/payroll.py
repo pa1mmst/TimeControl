@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.deps import get_actor, require_manager
 from app.models import Advance, Payout, User, AuditLog
 from app.schemas import (
     AdvanceCreate, AdvanceUpdate, AdvanceOut,
@@ -18,10 +19,22 @@ router = APIRouter(prefix="/api/payroll", tags=["payroll"])
 # ---------- Авансы ----------
 
 @router.post("/advances", response_model=AdvanceOut)
-def create_advance(data: AdvanceCreate, db: Session = Depends(get_db)):
+def create_advance(
+    data: AdvanceCreate,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
+):
+    # Эндпоинт руководителя: при initData — require_manager.
+    # Без initData — старое поведение: никаких проверок, created_by из тела.
+    if actor is not None:
+        require_manager(actor)
     if not db.get(User, data.user_id):
         raise HTTPException(404, "Сотрудник не найден")
-    a = Advance(**data.model_dump())
+    payload = data.model_dump()
+    # Actor из подписанного initData приоритетен над полем в теле.
+    if actor is not None:
+        payload["created_by"] = actor.id
+    a = Advance(**payload)
     db.add(a)
     db.commit()
     db.refresh(a)
@@ -47,7 +60,10 @@ def list_advances(
 
 @router.patch("/advances/{advance_id}", response_model=AdvanceOut)
 def update_advance(
-    advance_id: int, data: AdvanceUpdate, db: Session = Depends(get_db)
+    advance_id: int,
+    data: AdvanceUpdate,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
 ):
     a = db.get(Advance, advance_id)
     if not a:
@@ -69,6 +85,11 @@ def update_advance(
     payload = data.model_dump(exclude_unset=True)
     actor_id = payload.pop("actor_id")
     reason = payload.pop("reason", None)
+    # Эндпоинт руководителя: initData приоритетен; без initData —
+    # старое поведение: actor_id из тела, никаких проверок.
+    if actor is not None:
+        require_manager(actor)
+        actor_id = actor.id
     for field, value in payload.items():
         old = getattr(a, field)
         if str(old) != str(value):
@@ -92,8 +113,17 @@ def preview(start: date, end: date, db: Session = Depends(get_db)):
 
 
 @router.post("/close", response_model=list[PayoutOut])
-def close_period(data: PayrollClose, db: Session = Depends(get_db)):
+def close_period(
+    data: PayrollClose,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
+):
     """Зафиксировать период: создаёт payout каждому сотруднику."""
+    # Эндпоинт руководителя: при initData — require_manager.
+    # Без initData — старое поведение: никаких проверок (created_by в теле
+    # нужен только схеме, сервис его не использует).
+    if actor is not None:
+        require_manager(actor)
     if data.period_end < data.period_start:
         raise HTTPException(400, "Конец периода раньше начала")
     try:
@@ -122,9 +152,17 @@ def list_payouts(
 
 @router.patch("/payouts/{payout_id}", response_model=PayoutOut)
 def update_payout_status(
-    payout_id: int, data: PayoutStatusUpdate, db: Session = Depends(get_db)
+    payout_id: int,
+    data: PayoutStatusUpdate,
+    db: Session = Depends(get_db),
+    actor: User | None = Depends(get_actor),
 ):
     p = db.get(Payout, payout_id)
     if not p:
         raise HTTPException(404, "Выплата не найдена")
-    return payroll_service.set_payout_status(db, p, data.status, data.actor_id)
+    # Actor из initData приоритетен над actor_id из тела; без initData —
+    # старое поведение: actor_id из тела, никаких проверок.
+    effective_actor_id = actor.id if actor is not None else data.actor_id
+    if actor is not None:
+        require_manager(actor)
+    return payroll_service.set_payout_status(db, p, data.status, effective_actor_id)

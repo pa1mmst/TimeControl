@@ -15,6 +15,7 @@ from urllib.parse import parse_qsl
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
+from app.auth import check_init_data  # единая проверка подписи (см. app/auth.py)
 from app.db import get_db
 from app.models import User
 
@@ -24,50 +25,9 @@ router = APIRouter(prefix="/api/users", tags=["miniapp"])
 
 
 def _check_signature(init_data: str) -> dict:
-    """Проверяет подпись initData. Возвращает поля как словарь или бросает 401."""
-    bot_token = os.getenv("BOT_TOKEN", "")
-    if not bot_token:
-        raise HTTPException(401, "Сервер не настроен: нет BOT_TOKEN")
-
-    try:
-        pairs_list = parse_qsl(init_data, keep_blank_values=True)
-    except ValueError:
-        raise HTTPException(401, "Некорректный initData")
-
-    pairs = dict(pairs_list)
-    received_hash = pairs.pop("hash", "")
-    if not received_hash:
-        raise HTTPException(401, "Нет подписи в initData")
-
-    # ВАЖНО: по документации Telegram data_check_string собирается из
-    # ДЕКОДИРОВАННЫХ значений (key=value через \n, отсортировано по ключу),
-    # а поле hash из исходной строки исключается. parse_qsl как раз
-    # возвращает декодированные пары — используем их.
-    # (Ранее здесь использовались сырые URL-закодированные значения —
-    # из-за этого подпись не сходилась ни у одного пользователя.)
-    data_check_string = "\n".join(
-        f"{k}={v}" for k, v in sorted(pairs_list) if k != "hash"
-    )
-    secret_key = hmac.new(b"WebAppData", bot_token.encode(), hashlib.sha256).digest()
-    calculated = hmac.new(
-        secret_key, data_check_string.encode(), hashlib.sha256
-    ).hexdigest()
-
-    if not hmac.compare_digest(calculated, received_hash):
-        logger.warning("initData: подпись не совпала (user_raw=%s)", pairs.get("user", "")[:80])
-        raise HTTPException(401, "Подпись initData не совпадает")
-
-    # Защита от повторов: initData старше суток не принимаем
-    auth_date = pairs.get("auth_date")
-    if auth_date:
-        try:
-            if time.time() - int(auth_date) > 86400:
-                logger.warning("initData: устарел (auth_date=%s)", auth_date)
-                raise HTTPException(401, "initData устарел")
-        except ValueError:
-            raise HTTPException(401, "Некорректный auth_date")
-
-    return pairs
+    """Проверяет подпись initData. Делегирует общей функции в app/auth.py
+    (код проверки вынесен туда без изменений — фикс 4a4219f сохранён)."""
+    return check_init_data(init_data)
 
 
 @router.get("/me")
@@ -89,7 +49,6 @@ def me(
             raise HTTPException(401, "Нет id пользователя в initData")
     except json.JSONDecodeError:
         raise HTTPException(401, "Некорректные данные пользователя")
-
     user = db.query(User).filter(User.tg_id == tg_id).first()
     if not user or not user.is_active:
         logger.warning("me: tg_id=%s не найден в базе или деактивирован", tg_id)
