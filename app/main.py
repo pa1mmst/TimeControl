@@ -36,7 +36,10 @@ _WEBAPP_DIR = Path(__file__).resolve().parent.parent / "webapp"
 @app.get("/app")
 def mini_app():
     """Главная страница Mini App (одна и та же на / и /app)."""
-    return FileResponse(_WEBAPP_DIR / "index.html")
+    return FileResponse(
+        _WEBAPP_DIR / "index.html",
+        headers={"Cache-Control": "no-store, must-revalidate"},
+    )
 
 app.mount("/app/static", StaticFiles(directory=str(_WEBAPP_DIR)), name="webapp")
 
