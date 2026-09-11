@@ -164,7 +164,13 @@
             'onStock': 'на складе',
             'assign': 'Выдать',
             'saved': 'Сохранено',
-            'managerOnly': 'Только для руководителя'
+            'managerOnly': 'Только для руководителя',
+            'tasksNew': 'Новое задание',
+            'hoursAdd': 'Добавить часы',
+            'teamAdd': 'Добавить сотрудника',
+            'clientsAdd': 'Добавить заказчика',
+            'loginSubtitle': 'Проверка данных пользователя...',
+            'badDate': 'Неверный формат даты (нужен ГГГГ-ММ-ДД)'
         },
         uk: {
             'navDashboard': 'Головна', 'navTasks': 'Завдання', 'navHours': 'Години',
@@ -263,7 +269,13 @@
             'onStock': 'на складі',
             'assign': 'Видати',
             'saved': 'Збережено',
-            'managerOnly': 'Лише для керівника'
+            'managerOnly': 'Лише для керівника',
+            'tasksNew': 'Нове завдання',
+            'hoursAdd': 'Додати години',
+            'teamAdd': 'Додати працівника',
+            'clientsAdd': 'Додати замовника',
+            'loginSubtitle': 'Перевірка даних користувача...',
+            'badDate': 'Невірний формат дати (потрібен РРРР-ММ-ДД)'
         },
         es: {
             'navDashboard': 'Inicio', 'navTasks': 'Tareas', 'navHours': 'Horas',
@@ -362,7 +374,13 @@
             'onStock': 'en almacén',
             'assign': 'Entregar',
             'saved': 'Guardado',
-            'managerOnly': 'Solo para el gerente'
+            'managerOnly': 'Solo para el gerente',
+            'tasksNew': 'Nueva tarea',
+            'hoursAdd': 'Añadir horas',
+            'teamAdd': 'Añadir empleado',
+            'clientsAdd': 'Añadir cliente',
+            'loginSubtitle': 'Comprobando datos del usuario...',
+            'badDate': 'Formato de fecha incorrecto (se requiere AAAA-MM-DD)'
         }
     };
 
@@ -389,6 +407,23 @@
             .replace(/&/g, '&amp;').replace(/</g, '&lt;')
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
+    }
+
+    // Всплывающее сообщение сверху (toast). Автоскрытие через 3.5с.
+    let toastTimer = null;
+    function toast(message, kind) {
+        let el = document.getElementById('toast');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'toast';
+            el.className = 'toast';
+            document.body.appendChild(el);
+        }
+        el.textContent = message;
+        el.className = 'toast' + (kind ? ' toast--' + kind : '');
+        el.hidden = false;
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { el.hidden = true; }, 3500);
     }
 
     function roleLabel(user) {
@@ -430,6 +465,8 @@
                     body: options.body !== undefined ? JSON.stringify(options.body) : undefined
                 });
             } catch (err) {
+                console.error('[api] network error', path, err);
+                toast(t('network.error'), 'error');
                 throw new Error(t('network.error'));
             }
             const text = await response.text();
@@ -438,6 +475,8 @@
             if (!response.ok) {
                 let detail = data && data.detail ? data.detail : 'HTTP ' + response.status;
                 if (typeof detail !== 'string') detail = JSON.stringify(detail);
+                console.error('[api]', options.method || 'GET', path, response.status, detail);
+                toast(detail, 'error');
                 throw new Error(detail);
             }
             return data;
@@ -734,14 +773,21 @@
         btn.textContent = t('saving');
 
         try {
-            // 1) Создание задания (created_by берётся сервером из initData-actor)
+            // 1) Создание задания. created_by сервер берёт из initData-actor,
+            //    но по схеме TaskCreate поле обязательное — шлём id текущего
+            //    пользователя (сервер его игнорирует, если есть initData).
+            //    Даты — только YYYY-MM-DD (пустая строка -> null).
+            const dateStart = $('#ntDateStart').value || null;
+            const dateEnd = $('#ntDateEnd').value || null;
+            if (dateStart && !/^\d{4}-\d{2}-\d{2}$/.test(dateStart)) { ntError(t('badDate')); return; }
+            if (dateEnd && !/^\d{4}-\d{2}-\d{2}$/.test(dateEnd)) { ntError(t('badDate')); return; }
             const task = await api.createTask({
                 title: title,
                 description: $('#ntDescr').value.trim() || null,
                 client_id: clientId,
                 location_ids: locationIds,
-                date_start: $('#ntDateStart').value || null,
-                date_end: $('#ntDateEnd').value || null,
+                date_start: dateStart,
+                date_end: dateEnd,
                 created_by: state.user.id
             });
 
@@ -763,7 +809,7 @@
             state.tasks = null; // сброс кэша, список перезагрузится
             btn.disabled = false;
             btn.textContent = t('save');
-            alert(t('taskCreated'));
+            toast(t('taskCreated'), 'success');
             loadTasks();
         } catch (err) {
             btn.disabled = false;
@@ -923,8 +969,8 @@
                 state.entries = null;
                 btn.disabled = false;
                 btn.textContent = t('save');
-                alert(t('groupCreated') +
-                    (skipped.length ? ' (' + t('skippedLine') + ': ' + skipped.length + ')' : ''));
+                toast(t('groupCreated') +
+                    (skipped.length ? ' (' + t('skippedLine') + ': ' + skipped.length + ')' : ''), 'success');
             } else {
                 // Индивидуальная запись: работник за себя (user_id не передаём)
                 await api.createEntry({
@@ -936,7 +982,7 @@
                 state.entries = null;
                 btn.disabled = false;
                 btn.textContent = t('save');
-                alert(t('hoursCreated'));
+                toast(t('hoursCreated'), 'success');
             }
             loadHours();
         } catch (err) {
@@ -1035,7 +1081,7 @@
         const reason = prompt(t('reasonPrompt'), '') || null;
         try {
             await api.updateEntry(entryId, { hours: hours.toFixed(2), reason: reason });
-            alert(t('hoursSaved'));
+            toast(t('hoursSaved'), 'success');
             state.entries = null;
             if (refresh === 'task' && state.detailTask) openTaskDetail(state.detailTask.id);
             else loadHours();
@@ -1094,7 +1140,7 @@
         if (isNaN(rate) || rate < 0) { alert(t('error')); return; }
         try {
             await api.updateUser(userId, { hourly_rate: rate.toFixed(2) });
-            alert(t('rateSaved'));
+            toast(t('rateSaved'), 'success');
             loadTeam();
         } catch (err) {
             alert(t('error') + ': ' + err.message);
@@ -1118,7 +1164,7 @@
             $('#teamAddForm').hidden = true;
             $('#twName').value = ''; $('#twPhone').value = ''; $('#twRate').value = '';
             btn.disabled = false;
-            alert(t('saved'));
+            toast(t('saved'), 'success');
             loadTeam();
         } catch (e) {
             btn.disabled = false;
@@ -1157,7 +1203,7 @@
         if (!name) return;
         try {
             await api.createLocation(clientId, { name: name });
-            alert(t('saved'));
+            toast(t('saved'), 'success');
             loadClients();
         } catch (err) {
             alert(t('error') + ': ' + err.message);
@@ -1180,7 +1226,7 @@
             $('#clientAddForm').hidden = true;
             $('#clName').value = ''; $('#clNotes').value = '';
             btn.disabled = false;
-            alert(t('saved'));
+            toast(t('saved'), 'success');
             loadClients();
         } catch (e) {
             btn.disabled = false;
@@ -1219,7 +1265,7 @@
         const holderId = parseInt(val, 10) || null; // пусто = вернуть на склад
         try {
             await api.updateItem(itemId, { holder_id: holderId });
-            alert(t('saved'));
+            toast(t('saved'), 'success');
             loadInventory();
         } catch (err) {
             alert(t('error') + ': ' + err.message);
@@ -1243,7 +1289,7 @@
             $('#invAddForm').hidden = true;
             $('#invName').value = ''; $('#invNotes').value = '';
             btn.disabled = false;
-            alert(t('saved'));
+            toast(t('saved'), 'success');
             loadInventory();
         } catch (e) {
             btn.disabled = false;
@@ -1327,7 +1373,7 @@
                 period_end: end,
                 created_by: state.user.id
             });
-            alert(t('payrollClosed') + ' (' + (payouts ? payouts.length : 0) + ')');
+            toast(t('payrollClosed') + ' (' + (payouts ? payouts.length : 0) + ')', 'success');
             state.payouts = null;
             loadPayments();
         } catch (err) {
@@ -1341,7 +1387,7 @@
                 status: status,
                 actor_id: state.user.id
             });
-            alert(t('saved'));
+            toast(t('saved'), 'success');
             loadPayments();
         } catch (err) {
             alert(t('error') + ': ' + err.message);
