@@ -606,6 +606,7 @@
         $('#btnNewTask').hidden = !manager;
         $('#btnAddWorker').hidden = !manager;
         $('#btnAddClient').hidden = !manager;
+        $('#btnAddItem').hidden = !manager;
         // «Добавить часы» видят все: работник пишет себя,
         // учётчик — группу (шаг 3)
     }
