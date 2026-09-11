@@ -127,6 +127,7 @@
             // --- Шаг 4: экраны руководителя ---
             'status.draft': 'черновик', 'status.active': 'активно',
             'status.done': 'завершено', 'status.cancelled': 'отменено',
+            'tasksPublish': 'Опубликовать', 'taskPublished': 'Задание опубликовано',
             'taskStatus': 'Статус',
             'editHours': 'Правка',
             'editHoursPrompt': 'Новые часы (0.25–24):',
@@ -233,6 +234,7 @@
             'skippedLine': 'Пропущено',
             'status.draft': 'чернетка', 'status.active': 'активне',
             'status.done': 'завершено', 'status.cancelled': 'скасовано',
+            'tasksPublish': 'Опублікувати', 'taskPublished': 'Завдання опубліковано',
             'taskStatus': 'Статус',
             'editHours': 'Правка',
             'editHoursPrompt': 'Нові години (0.25–24):',
@@ -338,6 +340,7 @@
             'skippedLine': 'Omitidos',
             'status.draft': 'borrador', 'status.active': 'activa',
             'status.done': 'terminada', 'status.cancelled': 'cancelada',
+            'tasksPublish': 'Publicar', 'taskPublished': 'Tarea publicada',
             'taskStatus': 'Estado',
             'editHours': 'Editar',
             'editHoursPrompt': 'Nuevas horas (0.25–24):',
@@ -482,7 +485,8 @@
             return data;
         },
         getMe() { return this.request('/users/me'); },
-        getTasks() { return this.request('/tasks?status=active'); },
+        // Руководитель видит все статусы (в т.ч. черновики), работник — только активные
+        getTasks() { return this.request(isManager() ? '/tasks' : '/tasks?status=active'); },
         getMyEntries() { return this.request('/work-entries'); },
         getUsers() { return this.request('/users'); },
         getClients() { return this.request('/clients'); },
@@ -590,7 +594,8 @@
             '<button class="card card-tap" data-task-id="' + task.id + '">' +
             '<div class="card-title">' + escapeHtml(task.title) + '</div>' +
             '<div class="card-sub">' +
-            '<span class="badge">' + escapeHtml(statusLabel(task.status)) + '</span>' +
+            '<span class="badge badge-status-' + escapeHtml(String(task.status)) + '">' +
+            escapeHtml(statusLabel(task.status)) + '</span>' +
             (task.date_start ? '<span>' + escapeHtml(task.date_start) +
                 (task.date_end ? ' — ' + escapeHtml(task.date_end) : '') + '</span>' : '') +
             '</div></button>'
@@ -788,6 +793,8 @@
                 location_ids: locationIds,
                 date_start: dateStart,
                 date_end: dateEnd,
+                // Форма собирает заказчика, локации, рабочих и учётчика — это публикация
+                status: 'active',
                 created_by: state.user.id
             });
 
@@ -1017,6 +1024,12 @@
                         '<option value="' + s + '"' + (task.status === s ? ' selected' : '') + '>' +
                         escapeHtml(statusLabel(s)) + '</option>').join('') +
                     '</select></div>';
+                // Черновик нельзя опубликовать через select, пока он не виден в списке
+                if (task.status === 'draft') {
+                    html += '<div class="card-sub">' +
+                        '<button class="btn btn-small" data-action="publish-task" data-id="' + task.id + '">' +
+                        escapeHtml(t('tasksPublish')) + '</button></div>';
+                }
             }
             html += '</div>';
 
@@ -1085,6 +1098,19 @@
             state.entries = null;
             if (refresh === 'task' && state.detailTask) openTaskDetail(state.detailTask.id);
             else loadHours();
+        } catch (err) {
+            alert(t('error') + ': ' + err.message);
+        }
+    }
+
+    // Публикация черновика: PATCH status=active, затем перезагрузка детали и списка
+    async function publishTask(taskId) {
+        try {
+            await api.updateTask(taskId, { status: 'active' });
+            toast(t('taskPublished'), 'success');
+            state.tasks = null;
+            if (state.detailTask) openTaskDetail(taskId);
+            loadTasks();
         } catch (err) {
             alert(t('error') + ': ' + err.message);
         }
@@ -1565,6 +1591,8 @@
                 addLocation(id);
             } else if (action === 'assign-item') {
                 assignItem(id);
+            } else if (action === 'publish-task') {
+                publishTask(id);
             }
         });
 

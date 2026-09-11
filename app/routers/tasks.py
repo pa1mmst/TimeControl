@@ -72,6 +72,7 @@ def create_task(
         client_id=data.client_id,
         date_start=data.date_start,
         date_end=data.date_end,
+        status=data.status or TaskStatus.draft,
         created_by=created_by,
     )
     db.add(task)
@@ -79,6 +80,9 @@ def create_task(
     _set_locations(task, data.location_ids, db)
     db.commit()
     db.refresh(task)
+    # Уведомления (SPEC п.21): после commit, как в update_task
+    if task.status == TaskStatus.active:
+        notify_task_assigned(db, task)
     return task
 
 

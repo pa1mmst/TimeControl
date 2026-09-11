@@ -118,6 +118,9 @@ class TaskCreate(BaseModel):
     location_ids: list[int] = []
     date_start: date | None = None
     date_end: date | None = None
+    # Необязательно: если прислать "active" — задание сразу публикуется.
+    # Не прислали — создаётся черновиком (старое поведение).
+    status: TaskStatus | None = None
     created_by: int  # временно вручную; после авторизации возьмётся из Telegram
 
 
