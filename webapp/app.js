@@ -11,8 +11,19 @@
  * Шаг 3: форма «Ввод часов»:
  *   работник за себя  -> POST /work-entries
  *   учётчик за группу -> POST /work-entries/group (exclude_user_ids)
+ * Шаг 4: экраны руководителя:
+ *   - детали задания: статус (PATCH /tasks/{id}), часы задания,
+ *     правка часов (PATCH /work-entries/{id}, причина обязательна),
+ *     история правок (GET /work-entries/{id}/history);
+ *   - payroll: preview (GET /payroll/preview), закрытие периода
+ *     (POST /payroll/close), смена статуса выплаты (PATCH /payroll/payouts/{id});
+ *   - сотрудники: добавление (POST /users), правка ставки (PATCH /users/{id});
+ *   - заказчики: добавление (POST /clients), локации (POST /clients/{id}/locations);
+ *   - инвентарь: добавление (POST /inventory), выдача/склад (PATCH /inventory/{id}).
  *
  * API base относительный ("/api"), работает на любом домене.
+ * ВАЖНО: роутер work_entries в бэкенде смонтирован БЕЗ префикса /api
+ * (prefix="/work-entries"), поэтому пути /work-entries идут мимо /api.
  * ============================================================ */
 
 (function () {
@@ -42,7 +53,9 @@
         entries: null,
         clients: null,       // кэш заказчиков для формы задания
         users: null,         // кэш сотрудников для формы задания
-        myGroups: null       // группы, где текущий пользователь — учётчик
+        myGroups: null,      // группы, где текущий пользователь — учётчик
+        detailTask: null,    // задание на экране деталей
+        payouts: null        // кэш выплат для экрана «Выплаты»
     };
 
     /* ========================================================
@@ -110,7 +123,48 @@
             'hoursNeedsTask': 'Выберите задание',
             'hoursNeedsHours': 'Введите часы (0.25–24)',
             'noReporterGroups': 'Вы не учётчик ни в одной группе',
-            'skippedLine': 'Пропущены'
+            'skippedLine': 'Пропущены',
+            // --- Шаг 4: экраны руководителя ---
+            'status.draft': 'черновик', 'status.active': 'активно',
+            'status.done': 'завершено', 'status.cancelled': 'отменено',
+            'taskStatus': 'Статус',
+            'editHours': 'Правка',
+            'editHoursPrompt': 'Новые часы (0.25–24):',
+            'reasonPrompt': 'Причина правки:',
+            'hoursSaved': 'Часы исправлены',
+            'history': 'История',
+            'noHistory': 'Правок не было',
+            'historyLine': 'правка',
+            'taskSummary': 'Часы по заданию',
+            'totalHours': 'Итого часов',
+            'payrollCalc': 'Расчёт периода',
+            'periodStart': 'Начало периода',
+            'periodEnd': 'Конец периода',
+            'payPreview': 'Рассчитать',
+            'payClose': 'Закрыть период',
+            'payrollClosed': 'Период закрыт, выплаты созданы',
+            'payrollEmpty': 'Нет данных за период',
+            'colEmployee': 'Сотрудник', 'colHours': 'Часы',
+            'colGross': 'Начислено', 'colAdvances': 'Аванс', 'colNet': 'К выплате',
+            'payoutStatus': 'Статус',
+            'st.accrued': 'начислено', 'st.pending': 'ожидает', 'st.paid': 'выплачено',
+            'payoutOf': 'Выплата',
+            'workerName': 'Имя',
+            'workerPhone': 'Телефон',
+            'workerRate': 'Ставка/час',
+            'editRatePrompt': 'Новая ставка/час:',
+            'rateSaved': 'Ставка обновлена',
+            'clientName': 'Название',
+            'clientNotes': 'Заметки',
+            'addLocation': 'Локация',
+            'locationName': 'Название локации',
+            'itemName': 'Предмет',
+            'itemNotes': 'Заметки',
+            'holderPrompt': 'ID сотрудника (пусто = на склад):',
+            'onStock': 'на складе',
+            'assign': 'Выдать',
+            'saved': 'Сохранено',
+            'managerOnly': 'Только для руководителя'
         },
         uk: {
             'navDashboard': 'Головна', 'navTasks': 'Завдання', 'navHours': 'Години',
@@ -170,7 +224,46 @@
             'hoursNeedsTask': 'Оберіть завдання',
             'hoursNeedsHours': 'Введіть години (0.25–24)',
             'noReporterGroups': 'Ви не обліковець ні в одній групі',
-            'skippedLine': 'Пропущено'
+            'skippedLine': 'Пропущено',
+            'status.draft': 'чернетка', 'status.active': 'активне',
+            'status.done': 'завершено', 'status.cancelled': 'скасовано',
+            'taskStatus': 'Статус',
+            'editHours': 'Правка',
+            'editHoursPrompt': 'Нові години (0.25–24):',
+            'reasonPrompt': 'Причина правки:',
+            'hoursSaved': 'Години виправлено',
+            'history': 'Історія',
+            'noHistory': 'Правок не було',
+            'historyLine': 'правка',
+            'taskSummary': 'Години за завданням',
+            'totalHours': 'Разом годин',
+            'payrollCalc': 'Розрахунок періоду',
+            'periodStart': 'Початок періоду',
+            'periodEnd': 'Кінець періоду',
+            'payPreview': 'Розрахувати',
+            'payClose': 'Закрити період',
+            'payrollClosed': 'Період закрито, виплати створено',
+            'payrollEmpty': 'Немає даних за період',
+            'colGross': 'Нараховано', 'colAdvances': 'Аванс', 'colNet': 'До виплати',
+            'payoutStatus': 'Статус',
+            'st.accrued': 'нараховано', 'st.pending': 'очікує', 'st.paid': 'виплачено',
+            'payoutOf': 'Виплата',
+            'workerName': 'Ім\'я',
+            'workerPhone': 'Телефон',
+            'workerRate': 'Ставка/год',
+            'editRatePrompt': 'Нова ставка/год:',
+            'rateSaved': 'Ставку оновлено',
+            'clientName': 'Назва',
+            'clientNotes': 'Нотатки',
+            'addLocation': 'Локація',
+            'locationName': 'Назва локації',
+            'itemName': 'Предмет',
+            'itemNotes': 'Нотатки',
+            'holderPrompt': 'ID працівника (порожньо = на склад):',
+            'onStock': 'на складі',
+            'assign': 'Видати',
+            'saved': 'Збережено',
+            'managerOnly': 'Лише для керівника'
         },
         es: {
             'navDashboard': 'Inicio', 'navTasks': 'Tareas', 'navHours': 'Horas',
@@ -230,7 +323,46 @@
             'hoursNeedsTask': 'Elija una tarea',
             'hoursNeedsHours': 'Introduzca las horas (0.25–24)',
             'noReporterGroups': 'Usted no es encargado de ningún grupo',
-            'skippedLine': 'Omitidos'
+            'skippedLine': 'Omitidos',
+            'status.draft': 'borrador', 'status.active': 'activa',
+            'status.done': 'terminada', 'status.cancelled': 'cancelada',
+            'taskStatus': 'Estado',
+            'editHours': 'Editar',
+            'editHoursPrompt': 'Nuevas horas (0.25–24):',
+            'reasonPrompt': 'Motivo del cambio:',
+            'hoursSaved': 'Horas corregidas',
+            'history': 'Historial',
+            'noHistory': 'Sin cambios',
+            'historyLine': 'cambio',
+            'taskSummary': 'Horas de la tarea',
+            'totalHours': 'Total de horas',
+            'payrollCalc': 'Cálculo del período',
+            'periodStart': 'Inicio del período',
+            'periodEnd': 'Fin del período',
+            'payPreview': 'Calcular',
+            'payClose': 'Cerrar período',
+            'payrollClosed': 'Período cerrado, pagos creados',
+            'payrollEmpty': 'Sin datos para el período',
+            'colGross': 'Acumulado', 'colAdvances': 'Adelantos', 'colNet': 'A pagar',
+            'payoutStatus': 'Estado',
+            'st.accrued': 'acumulado', 'st.pending': 'pendiente', 'st.paid': 'pagado',
+            'payoutOf': 'Pago',
+            'workerName': 'Nombre',
+            'workerPhone': 'Teléfono',
+            'workerRate': 'Tarifa/hora',
+            'editRatePrompt': 'Nueva tarifa/hora:',
+            'rateSaved': 'Tarifa actualizada',
+            'clientName': 'Nombre',
+            'clientNotes': 'Notas',
+            'addLocation': 'Ubicación',
+            'locationName': 'Nombre de la ubicación',
+            'itemName': 'Artículo',
+            'itemNotes': 'Notas',
+            'holderPrompt': 'ID del empleado (vacío = almacén):',
+            'onStock': 'en almacén',
+            'assign': 'Entregar',
+            'saved': 'Guardado',
+            'managerOnly': 'Solo para el gerente'
         }
     };
 
@@ -265,7 +397,13 @@
         return t('role.worker');
     }
 
-    const STATUS_RU = { draft: 'черновик', active: 'активно', done: 'завершено', cancelled: 'отменено' };
+    function statusLabel(status) {
+        return t('status.' + status);
+    }
+
+    function isManager() {
+        return !!(state.user && state.user.is_manager);
+    }
 
     /* ========================================================
      * 6. API client (initData + X-Actor-Id)
@@ -273,7 +411,12 @@
     const api = {
         async request(path, options) {
             options = options || {};
-            const url = CONFIG.apiBase.replace(/\/+$/, '') + path;
+            const base = CONFIG.apiBase.replace(/\/+$/, '');
+            // Роутер work_entries смонтирован БЕЗ /api (prefix="/work-entries"),
+            // остальные — с /api. Чиним путь для work-entries.
+            const url = (path.indexOf('/work-entries') === 0)
+                ? base.replace(/\/api$/, '') + path
+                : base + path;
             const headers = { 'Content-Type': 'application/json' };
             if (tg && tg.initData) headers['X-Telegram-Init-Data'] = tg.initData;
             if (state.user && state.user.id) headers['X-Actor-Id'] = String(state.user.id);
@@ -318,8 +461,48 @@
         },
         // --- Шаг 3: ввод часов ---
         createEntry(body) { return this.request('/work-entries', { method: 'POST', body: body }); },
-        createGroupEntries(body) { return this.request('/work-entries/group', { method: 'POST', body: body }); }
+        createGroupEntries(body) { return this.request('/work-entries/group', { method: 'POST', body: body }); },
+        // --- Шаг 4: руководитель ---
+        updateTask(taskId, body) {
+            return this.request('/tasks/' + taskId, { method: 'PATCH', body: body });
+        },
+        updateEntry(entryId, body) {
+            return this.request('/work-entries/' + entry_id(entryId), { method: 'PATCH', body: body });
+        },
+        entryHistory(entryId) {
+            return this.request('/work-entries/' + entry_id(entryId) + '/history');
+        },
+        taskSummary(taskId) {
+            return this.request('/work-entries/task/' + entry_id(taskId) + '/summary');
+        },
+        createUser(body) { return this.request('/users', { method: 'POST', body: body }); },
+        updateUser(userId, body) {
+            return this.request('/users/' + entry_id(userId), { method: 'PATCH', body: body });
+        },
+        createClient(body) { return this.request('/clients', { method: 'POST', body: body }); },
+        createLocation(clientId, body) {
+            return this.request('/clients/' + entry_id(clientId) + '/locations',
+                { method: 'POST', body: body });
+        },
+        createItem(body) { return this.request('/inventory', { method: 'POST', body: body }); },
+        updateItem(itemId, body) {
+            return this.request('/inventory/' + entry_id(itemId), { method: 'PATCH', body: body });
+        },
+        payPreview(start, end) {
+            return this.request('/payroll/preview?start=' + start + '&end=' + end);
+        },
+        payClose(body) { return this.request('/payroll/close', { method: 'POST', body: body }); },
+        updatePayout(payoutId, body) {
+            return this.request('/payroll/payouts/' + entry_id(payoutId), { method: 'PATCH', body: body });
+        }
     };
+
+    // Защита от склейки путей: id должен быть целым числом
+    function entry_id(value) {
+        const n = parseInt(value, 10);
+        if (!n || n < 1) throw new Error('bad id');
+        return n;
+    }
 
     /* ========================================================
      * 7. Rendering
@@ -368,7 +551,7 @@
             '<button class="card card-tap" data-task-id="' + task.id + '">' +
             '<div class="card-title">' + escapeHtml(task.title) + '</div>' +
             '<div class="card-sub">' +
-            '<span class="badge">' + escapeHtml(STATUS_RU[task.status] || task.status) + '</span>' +
+            '<span class="badge">' + escapeHtml(statusLabel(task.status)) + '</span>' +
             (task.date_start ? '<span>' + escapeHtml(task.date_start) +
                 (task.date_end ? ' — ' + escapeHtml(task.date_end) : '') + '</span>' : '') +
             '</div></button>'
@@ -382,9 +565,16 @@
         }
         setList('hoursList', entries.map((e) =>
             '<div class="card"><div class="card-title">' + escapeHtml(e.work_date) +
-            ' — ' + escapeHtml(String(e.hours)) + ' ч</div>' +
-            '<div class="card-sub"><span>задание #' + e.task_id + '</span>' +
-            '<span>' + escapeHtml(String(e.rate_snapshot)) + '/ч</span></div></div>'
+            ' — ' + escapeHtml(String(e.hours)) + ' ' + t('hoursHours') + '</div>' +
+            '<div class="card-sub"><span>' + t('hoursTask') + ' #' + e.task_id + '</span>' +
+            '<span>' + escapeHtml(String(e.rate_snapshot)) + '/ч</span>' +
+            (isManager()
+                ? '<button class="btn btn-small" data-action="edit-entry" data-id="' + e.id +
+                  '" data-hours="' + escapeHtml(String(e.hours)) + '">' + t('editHours') + '</button>' +
+                  '<button class="btn btn-small" data-action="entry-history" data-id="' + e.id + '">' +
+                  t('history') + '</button>'
+                : '') +
+            '</div></div>'
         ).join(''));
     }
 
@@ -410,12 +600,12 @@
     }
 
     function applyManagerUI() {
-        const isManager = !!(state.user && state.user.is_manager);
+        const manager = isManager();
         const moreBtn = $('#navMoreBtn');
-        if (moreBtn) moreBtn.hidden = !isManager;
-        $('#btnNewTask').hidden = !isManager;
-        $('#btnAddWorker').hidden = !isManager;
-        $('#btnAddClient').hidden = !isManager;
+        if (moreBtn) moreBtn.hidden = !manager;
+        $('#btnNewTask').hidden = !manager;
+        $('#btnAddWorker').hidden = !manager;
+        $('#btnAddClient').hidden = !manager;
         // «Добавить часы» видят все: работник пишет себя,
         // учётчик — группу (шаг 3)
     }
@@ -755,6 +945,408 @@
         }
     }
 
+    /* ========================================================
+     * 7c. Детали задания + правка часов (шаг 4)
+     * ======================================================== */
+    async function openTaskDetail(taskId) {
+        showScreen('task-detail');
+        const box = $('#taskDetailContainer');
+        box.innerHTML = '<p class="screen-message">' + t('loading') + '</p>';
+        try {
+            const task = await api.request('/tasks/' + taskId);
+            state.detailTask = task;
+            $('#taskDetailTitle').textContent = task.title;
+
+            let html = '';
+            // Шапка: заказчик, даты, статус (статус меняет руководитель)
+            html += '<div class="card"><div class="card-sub">' +
+                '<span>' + t('taskClient') + ': #' + task.client_id + '</span>' +
+                '<span>' + escapeHtml(task.date_start || '') +
+                (task.date_end ? ' — ' + escapeHtml(task.date_end) : '') + '</span></div>';
+            if (isManager()) {
+                html += '<div class="card-sub"><span>' + t('taskStatus') + '</span>' +
+                    '<select id="tdStatus">' +
+                    ['draft', 'active', 'done', 'cancelled'].map((s) =>
+                        '<option value="' + s + '"' + (task.status === s ? ' selected' : '') + '>' +
+                        escapeHtml(statusLabel(s)) + '</option>').join('') +
+                    '</select></div>';
+            }
+            html += '</div>';
+
+            // Локации
+            html += '<div class="card"><div class="card-title">' + t('taskLocations') + '</div>' +
+                (task.locations && task.locations.length
+                    ? task.locations.map((l) =>
+                        '<div class="card-sub"><span>' + escapeHtml(l.name) + '</span></div>').join('')
+                    : '<div class="card-sub"><span>' + t('empty') + '</span></div>') +
+                '</div>';
+
+            // Кто назначен (группы — только механизм ввода)
+            html += '<div class="card"><div class="card-title">' + t('taskWorkers') + '</div>' +
+                (task.assignments && task.assignments.length
+                    ? task.assignments.map((a) =>
+                        '<div class="card-sub"><span>' + escapeHtml(a.user.name) + '</span><span>' +
+                        (a.group_id ? t('groupOf') + ' #' + a.group_id : t('modeSelf')) +
+                        '</span></div>').join('')
+                    : '<div class="card-sub"><span>' + t('empty') + '</span></div>') +
+                '</div>';
+
+            box.innerHTML = html;
+
+            // Часы по заданию (сводка SPEC п.11)
+            const sum = await api.taskSummary(task.id);
+            let sumHtml = '<div class="card"><div class="card-title">' + t('taskSummary') + '</div>';
+            sumHtml += (sum.by_user || []).map((u) =>
+                '<div class="card-sub"><span>' + escapeHtml(u.user_name) + '</span>' +
+                '<span>' + escapeHtml(String(u.total_hours)) + ' ч · ' +
+                escapeHtml(String(u.total_amount)) + '</span></div>').join('');
+            sumHtml += '<div class="card-sub"><span>' + t('totalHours') + '</span>' +
+                '<span>' + escapeHtml(String(sum.total_hours)) + '</span></div></div>';
+            box.insertAdjacentHTML('beforeend', sumHtml);
+
+            // Записи часов по заданию (руководитель видит все и может править)
+            const entries = await api.request('/work-entries?task_id=' + task.id);
+            box.insertAdjacentHTML('beforeend', entries.map((e) =>
+                '<div class="card"><div class="card-title">' + escapeHtml(e.work_date) +
+                ' — ' + escapeHtml(String(e.hours)) + ' ч (user #' + e.user_id + ')</div>' +
+                '<div class="card-sub"><span>' + escapeHtml(String(e.rate_snapshot)) + '/ч</span>' +
+                (isManager()
+                    ? '<button class="btn btn-small" data-action="edit-entry" data-id="' + e.id +
+                      '" data-hours="' + escapeHtml(String(e.hours)) + '" data-refresh="task">' +
+                      t('editHours') + '</button>' +
+                      '<button class="btn btn-small" data-action="entry-history" data-id="' + e.id + '">' +
+                      t('history') + '</button>'
+                    : '') +
+                '</div></div>'
+            ).join(''));
+        } catch (err) {
+            box.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
+        }
+    }
+
+    // Правка часов: UPDATE + audit_log с причиной (бэкенд требует reason
+    // опционально, но UI по SPEC её запрашивает).
+    async function editHours(entryId, oldHours, refresh) {
+        const val = prompt(t('editHoursPrompt'), String(oldHours));
+        if (val === null) return;
+        const hours = parseFloat(val);
+        if (!hours || hours <= 0 || hours > 24) { alert(t('hoursNeedsHours')); return; }
+        const reason = prompt(t('reasonPrompt'), '') || null;
+        try {
+            await api.updateEntry(entryId, { hours: hours.toFixed(2), reason: reason });
+            alert(t('hoursSaved'));
+            state.entries = null;
+            if (refresh === 'task' && state.detailTask) openTaskDetail(state.detailTask.id);
+            else loadHours();
+        } catch (err) {
+            alert(t('error') + ': ' + err.message);
+        }
+    }
+
+    async function showEntryHistory(entryId) {
+        try {
+            const history = await api.entryHistory(entryId);
+            if (!history || !history.length) { alert(t('noHistory')); return; }
+            alert(history.map((h) =>
+                h.created_at + ' · ' + t('historyLine') + ': ' + h.old_value +
+                ' → ' + h.new_value + (h.reason ? ' (' + h.reason + ')' : '')
+            ).join('\n'));
+        } catch (err) {
+            alert(t('error') + ': ' + err.message);
+        }
+    }
+
+    /* ========================================================
+     * 7d. Разделы руководителя (шаг 4)
+     * ======================================================== */
+
+    // --- Сотрудники ---
+    async function loadTeam() {
+        showScreen('team');
+        try {
+            state.users = await api.getUsers();
+            const users = state.users || [];
+            if (!users.length) {
+                setList('teamList', '<p class="screen-message">' + t('empty') + '</p>');
+                return;
+            }
+            setList('teamList', users.map((u) =>
+                '<div class="card"><div class="card-title">' + escapeHtml(u.name) + '</div>' +
+                '<div class="card-sub"><span>' + roleLabel(u) +
+                (u.phone ? ' · ' + escapeHtml(u.phone) : '') + '</span>' +
+                '<span>' + t('profile.rate') + ': ' + escapeHtml(String(u.hourly_rate)) + '</span>' +
+                (isManager() && u.is_active
+                    ? '<button class="btn btn-small" data-action="edit-rate" data-id="' + u.id +
+                      '" data-rate="' + escapeHtml(String(u.hourly_rate)) + '">' + t('profile.rate') + '</button>'
+                    : '') +
+                '</div></div>'
+            ).join(''));
+        } catch (err) {
+            setList('teamList', '<p class="screen-message">' + escapeHtml(err.message) + '</p>');
+        }
+    }
+
+    async function editRate(userId, oldRate) {
+        const val = prompt(t('editRatePrompt'), String(oldRate));
+        if (val === null) return;
+        const rate = parseFloat(val);
+        if (isNaN(rate) || rate < 0) { alert(t('error')); return; }
+        try {
+            await api.updateUser(userId, { hourly_rate: rate.toFixed(2) });
+            alert(t('rateSaved'));
+            loadTeam();
+        } catch (err) {
+            alert(t('error') + ': ' + err.message);
+        }
+    }
+
+    async function submitTeamAdd(event) {
+        event.preventDefault();
+        const errEl = $('#twError');
+        errEl.hidden = true;
+        const name = $('#twName').value.trim();
+        if (!name) return;
+        const btn = $('#twSubmit');
+        btn.disabled = true;
+        try {
+            await api.createUser({
+                name: name,
+                phone: $('#twPhone').value.trim() || null,
+                hourly_rate: $('#twRate').value ? $('#twRate').value : '0'
+            });
+            $('#teamAddForm').hidden = true;
+            $('#twName').value = ''; $('#twPhone').value = ''; $('#twRate').value = '';
+            btn.disabled = false;
+            alert(t('saved'));
+            loadTeam();
+        } catch (e) {
+            btn.disabled = false;
+            errEl.textContent = e.message;
+            errEl.hidden = false;
+        }
+    }
+
+    // --- Заказчики ---
+    async function loadClients() {
+        showScreen('clients');
+        try {
+            state.clients = await api.getClients();
+            const clients = state.clients || [];
+            if (!clients.length) {
+                setList('clientsList', '<p class="screen-message">' + t('empty') + '</p>');
+                return;
+            }
+            setList('clientsList', clients.map((c) =>
+                '<div class="card"><div class="card-title">' + escapeHtml(c.name) + '</div>' +
+                (c.locations || []).map((l) =>
+                    '<div class="card-sub"><span>📍 ' + escapeHtml(l.name) + '</span></div>').join('') +
+                (isManager()
+                    ? '<div class="card-sub"><button class="btn btn-small" data-action="add-location" data-id="' +
+                      c.id + '">+ ' + t('addLocation') + '</button></div>'
+                    : '') +
+                '</div>'
+            ).join(''));
+        } catch (err) {
+            setList('clientsList', '<p class="screen-message">' + escapeHtml(err.message) + '</p>');
+        }
+    }
+
+    async function addLocation(clientId) {
+        const name = prompt(t('locationName'), '');
+        if (!name) return;
+        try {
+            await api.createLocation(clientId, { name: name });
+            alert(t('saved'));
+            loadClients();
+        } catch (err) {
+            alert(t('error') + ': ' + err.message);
+        }
+    }
+
+    async function submitClientAdd(event) {
+        event.preventDefault();
+        const errEl = $('#clError');
+        errEl.hidden = true;
+        const name = $('#clName').value.trim();
+        if (!name) return;
+        const btn = $('#clSubmit');
+        btn.disabled = true;
+        try {
+            await api.createClient({
+                name: name,
+                notes: $('#clNotes').value.trim() || null
+            });
+            $('#clientAddForm').hidden = true;
+            $('#clName').value = ''; $('#clNotes').value = '';
+            btn.disabled = false;
+            alert(t('saved'));
+            loadClients();
+        } catch (e) {
+            btn.disabled = false;
+            errEl.textContent = e.message;
+            errEl.hidden = false;
+        }
+    }
+
+    // --- Инвентарь ---
+    async function loadInventory() {
+        showScreen('inventory');
+        try {
+            const items = await api.getInventory();
+            if (!items || !items.length) {
+                setList('inventoryList', '<p class="screen-message">' + t('empty') + '</p>');
+                return;
+            }
+            setList('inventoryList', items.map((i) =>
+                '<div class="card"><div class="card-title">' + escapeHtml(i.name) + '</div>' +
+                '<div class="card-sub"><span>' +
+                (i.holder ? escapeHtml(i.holder.name) : t('onStock')) + '</span>' +
+                (isManager()
+                    ? '<button class="btn btn-small" data-action="assign-item" data-id="' + i.id + '">' +
+                      t('assign') + '</button>'
+                    : '') +
+                '</div></div>'
+            ).join(''));
+        } catch (err) {
+            setList('inventoryList', '<p class="screen-message">' + escapeHtml(err.message) + '</p>');
+        }
+    }
+
+    async function assignItem(itemId) {
+        const val = prompt(t('holderPrompt'), '');
+        if (val === null) return;
+        const holderId = parseInt(val, 10) || null; // пусто = вернуть на склад
+        try {
+            await api.updateItem(itemId, { holder_id: holderId });
+            alert(t('saved'));
+            loadInventory();
+        } catch (err) {
+            alert(t('error') + ': ' + err.message);
+        }
+    }
+
+    async function submitItemAdd(event) {
+        event.preventDefault();
+        const errEl = $('#invError');
+        errEl.hidden = true;
+        const name = $('#invName').value.trim();
+        if (!name) return;
+        const btn = $('#invSubmit');
+        btn.disabled = true;
+        try {
+            await api.createItem({
+                name: name,
+                notes: $('#invNotes').value.trim() || null,
+                holder_id: null
+            });
+            $('#invAddForm').hidden = true;
+            $('#invName').value = ''; $('#invNotes').value = '';
+            btn.disabled = false;
+            alert(t('saved'));
+            loadInventory();
+        } catch (e) {
+            btn.disabled = false;
+            errEl.textContent = e.message;
+            errEl.hidden = false;
+        }
+    }
+
+    // --- Выплаты / payroll ---
+    async function loadPayments() {
+        showScreen('payments');
+        try {
+            state.payouts = await api.getPayouts();
+            renderPayouts(state.payouts);
+        } catch (err) {
+            setList('paymentsList', '<p class="screen-message">' + escapeHtml(err.message) + '</p>');
+        }
+    }
+
+    function renderPayouts(payouts) {
+        if (!payouts || !payouts.length) {
+            setList('paymentsList', '<p class="screen-message">' + t('empty') + '</p>');
+            return;
+        }
+        setList('paymentsList', payouts.map((p) =>
+            '<div class="card"><div class="card-title">' + t('payoutOf') + ' #' + p.id + ' · ' +
+            escapeHtml(p.period_start) + ' — ' + escapeHtml(p.period_end) + '</div>' +
+            '<div class="card-sub"><span>' + t('colGross') + ': ' + escapeHtml(String(p.gross)) + '</span>' +
+            '<span>' + t('colAdvances') + ': ' + escapeHtml(String(p.advances_total)) + '</span>' +
+            '<span>' + t('colNet') + ': ' + escapeHtml(String(p.net)) + '</span></div>' +
+            (isManager()
+                ? '<div class="card-sub"><span>' + t('payoutStatus') + '</span>' +
+                  '<select data-payout-status data-id="' + p.id + '">' +
+                  ['accrued', 'pending', 'paid'].map((s) =>
+                      '<option value="' + s + '"' + (p.status === s ? ' selected' : '') + '>' +
+                      t('st.' + s) + '</option>').join('') +
+                  '</select></div>'
+                : '<div class="card-sub"><span>' + t('payoutStatus') + ': ' + t('st.' + p.status) + '</span></div>') +
+            '</div>'
+        ).join(''));
+    }
+
+    function payError(message) {
+        const el = $('#payError');
+        el.textContent = message || '';
+        el.hidden = !message;
+    }
+
+    async function previewPayroll() {
+        payError('');
+        const start = $('#payStart').value;
+        const end = $('#payEnd').value;
+        if (!start || !end) { payError(t('payrollEmpty')); return; }
+        try {
+            const rows = await api.request('/payroll/preview?start=' + start + '&end=' + end);
+            if (!rows || !rows.length) {
+                setList('payrollTable', '<p class="screen-message">' + t('payrollEmpty') + '</p>');
+                return;
+            }
+            setList('payrollTable', rows.map((r) =>
+                '<div class="card"><div class="card-title">' + escapeHtml(r.name) + '</div>' +
+                '<div class="card-sub"><span>' + t('hoursHours') + ': ' + escapeHtml(String(r.hours)) + '</span>' +
+                '<span>' + t('colGross') + ': ' + escapeHtml(String(r.gross)) + '</span></div>' +
+                '<div class="card-sub"><span>' + t('colAdvances') + ': ' + escapeHtml(String(r.advances_total)) + '</span>' +
+                '<span>' + t('colNet') + ': ' + escapeHtml(String(r.net)) + '</span></div></div>'
+            ).join(''));
+        } catch (err) {
+            payError(err.message);
+        }
+    }
+
+    async function closePayroll() {
+        payError('');
+        const start = $('#payStart').value;
+        const end = $('#payEnd').value;
+        if (!start || !end) { payError(t('payrollEmpty')); return; }
+        if (!confirm(t('payClose') + ': ' + start + ' — ' + end + '?')) return;
+        try {
+            const payouts = await api.payClose({
+                period_start: start,
+                period_end: end,
+                created_by: state.user.id
+            });
+            alert(t('payrollClosed') + ' (' + (payouts ? payouts.length : 0) + ')');
+            state.payouts = null;
+            loadPayments();
+        } catch (err) {
+            payError(err.message);
+        }
+    }
+
+    async function changePayoutStatus(payoutId, status) {
+        try {
+            await api.updatePayout(payoutId, {
+                status: status,
+                actor_id: state.user.id
+            });
+            alert(t('saved'));
+            loadPayments();
+        } catch (err) {
+            alert(t('error') + ': ' + err.message);
+        }
+    }
+
     /* ---------- Загрузчики разделов ---------- */
     async function loadDashboard() {
         showScreen('loading');
@@ -795,22 +1387,6 @@
         renderProfile(state.user);
     }
 
-    async function loadManager(target) {
-        showScreen(target);
-        const map = {
-            team: ['teamList', () => api.getUsers(), (u) => u.name, (u) => roleLabel(u) + (u.phone ? ' · ' + u.phone : '')],
-            clients: ['clientsList', () => api.getClients(), (c) => c.name, (c) => (c.contact || '')],
-            inventory: ['inventoryList', () => api.getInventory(), (i) => i.name, (i) => String(i.qty) + ' шт.'],
-            payments: ['paymentsList', () => api.getPayouts(), (p) => 'Выплата #' + p.id, (p) => String(p.amount)]
-        };
-        const [listId, loader, titleFn, subFn] = map[target];
-        try {
-            renderSimpleList(listId, await loader(), titleFn, subFn);
-        } catch (err) {
-            setList(listId, '<p class="screen-message">' + t('coming.soon') + ' (' + escapeHtml(err.message) + ')</p>');
-        }
-    }
-
     function renderError(message) {
         $('#screenLoading').hidden = true;
         const login = $('#screenLogin');
@@ -838,7 +1414,13 @@
         });
 
         document.querySelectorAll('.more-menu-item[data-nav-target]').forEach((btn) => {
-            btn.addEventListener('click', () => loadManager(btn.getAttribute('data-nav-target')));
+            btn.addEventListener('click', () => {
+                const target = btn.getAttribute('data-nav-target');
+                if (target === 'team') loadTeam();
+                else if (target === 'clients') loadClients();
+                else if (target === 'inventory') loadInventory();
+                else if (target === 'payments') loadPayments();
+            });
         });
 
         const back = $('#btnBackTasks');
@@ -871,6 +1453,80 @@
             radio.addEventListener('change', onHoursModeChange);
         });
 
+        // --- Шаг 4: детали задания ---
+        const tasksList = $('#tasksList');
+        if (tasksList) {
+            tasksList.addEventListener('click', (ev) => {
+                const card = ev.target.closest('[data-task-id]');
+                if (card) openTaskDetail(parseInt(card.getAttribute('data-task-id'), 10));
+            });
+        }
+        const detailBox = $('#taskDetailContainer');
+        if (detailBox) {
+            detailBox.addEventListener('change', (ev) => {
+                if (ev.target.id === 'tdStatus') {
+                    api.updateTask(state.detailTask.id, { status: ev.target.value })
+                        .then(() => openTaskDetail(state.detailTask.id))
+                        .catch((err) => alert(t('error') + ': ' + err.message));
+                }
+            });
+        }
+
+        // --- Шаг 4: разделы руководителя ---
+        const addWorkerBtn = $('#btnAddWorker');
+        if (addWorkerBtn) addWorkerBtn.addEventListener('click', () => {
+            const f = $('#teamAddForm');
+            if (f) f.hidden = !f.hidden;
+        });
+        const teamForm = $('#teamAddForm');
+        if (teamForm) teamForm.addEventListener('submit', submitTeamAdd);
+
+        const addClientBtn = $('#btnAddClient');
+        if (addClientBtn) addClientBtn.addEventListener('click', () => {
+            const f = $('#clientAddForm');
+            if (f) f.hidden = !f.hidden;
+        });
+        const clientForm = $('#clientAddForm');
+        if (clientForm) clientForm.addEventListener('submit', submitClientAdd);
+
+        const addInvBtn = $('#btnAddItem');
+        if (addInvBtn) addInvBtn.addEventListener('click', () => {
+            const f = $('#invAddForm');
+            if (f) f.hidden = !f.hidden;
+        });
+        const invForm = $('#invAddForm');
+        if (invForm) invForm.addEventListener('submit', submitItemAdd);
+
+        const payPreviewBtn = $('#btnPayPreview');
+        if (payPreviewBtn) payPreviewBtn.addEventListener('click', previewPayroll);
+        const payCloseBtn = $('#btnPayClose');
+        if (payCloseBtn) payCloseBtn.addEventListener('click', closePayroll);
+
+        // Делегированные клики: правка часов, история, ставка, локация, инвентарь
+        document.addEventListener('click', (ev) => {
+            const btn = ev.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.getAttribute('data-action');
+            const id = parseInt(btn.getAttribute('data-id'), 10);
+            if (action === 'edit-entry') {
+                editHours(id, btn.getAttribute('data-hours'), btn.getAttribute('data-refresh'));
+            } else if (action === 'entry-history') {
+                showEntryHistory(id);
+            } else if (action === 'edit-rate') {
+                editRate(id, btn.getAttribute('data-rate'));
+            } else if (action === 'add-location') {
+                addLocation(id);
+            } else if (action === 'assign-item') {
+                assignItem(id);
+            }
+        });
+
+        // Смена статуса выплаты (делегированный change)
+        document.addEventListener('change', (ev) => {
+            const sel = ev.target.closest && ev.target.closest('[data-payout-status]');
+            if (sel) changePayoutStatus(parseInt(sel.getAttribute('data-id'), 10), sel.value);
+        });
+
         const lang = $('#langSelect');
         if (lang) lang.addEventListener('change', () => {
             state.lang = normalizeLang(lang.value);
@@ -878,6 +1534,10 @@
             if (state.view === 'profile') loadProfile();
         });
     }
+
+    function detailBox() { return $('#taskDetailContainer'); }
+    function backDetail() { return $('#btnBackTasks'); }
+    function tasksListEl() { return $('#tasksList'); }
 
     /* ========================================================
      * 9. Startup
