@@ -1,0 +1,9 @@
+me=null
+moreBtn=hidden=true display=none
+more container=app hidden=false display=flex vis=visible
+moreItem team rendered=false hidden=false
+real click navMoreBtn=false
+real click team=false
+screen=screenDashboard
+team body="AgroManager РУ УК ES Status: Ok Главная 3 Активных заданий 0.00 Часов за сегодня 0.00 Начислено 🏠 Главная 📋 Задания ⏱ Часы 📊 Отчёты 👤 Профиль"
+API: ["200 GET /api/users/me","200 GET /api/tasks?status=active"]

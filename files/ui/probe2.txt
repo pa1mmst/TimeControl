@@ -1,0 +1,11 @@
+MANAGER btnNewTask rendered=false hidden=false
+MANAGER navMoreBtn=rendered=true
+MANAGER dashText="Главная 3 Активных заданий 0.00 Часов за сегодня 0.00 Начислено"
+MANAGER openedNewTaskForm=true
+MANAGER after 500ms: locBoxes=1 locText="Field 1" htmlLen=75
+MANAGER after 1500ms: locBoxes=1 locText="Field 1" htmlLen=75
+MANAGER after 3000ms: locBoxes=1 locText="Field 1" htmlLen=75
+WORKER btnNewTask rendered=false hidden=true
+WORKER navMoreBtn=rendered=false
+WORKER dashText="Главная 3 Активных заданий 0.00 Часов за сегодня 0.00 Начислено"
+WORKER openedNewTaskForm=false

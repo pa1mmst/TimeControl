@@ -1,0 +1,21 @@
+﻿API 200 GET /api/users/me -> {"id":1,"tg_id":555000111,"name":"Test Manager","lang":"ru","is_manager":true,"total_hours":0.0,"total_earned":0.0}
+API 200 GET /api/tasks -> [{"id":1,"title":"Browser Test Task","status":"active","client_id":1,"date_start":null,"date_end":null}]
+SCREEN after init: screenDashboard
+btnNewTask hidden=false
+SCREEN after nav=tasks: screenTasks
+API 200 GET /api/users -> [{"id":2,"tg_id":555000222,"name":"Petr Worker","phone":null,"lang":"ru","hourly_rate":"0.00","is_manager":false,"is_active":true,"created_at":"2026-09-11T23:44:28"},{"id":1,"tg_id":555000111,"name":"Test Manager","phone":null,"lang":"ru","hourly_rate":"0.00","is_manager":true,"is_active":true,"crea
+API 200 GET /api/clients -> [{"id":1,"name":"Test Farm","notes":null,"is_active":true,"locations":[{"id":1,"client_id":1,"name":"Field 1","address":null,"map_url":null,"lat":null,"lon":null}]}]
+SCREEN after btnNewTask: screenNewTask
+clients in #ntClient=[":ÔÇö","1:Test Farm"]
+locations boxes=0
+workers boxes=2
+API 200 GET /api/clients/1/locations -> [{"id":1,"client_id":1,"name":"Field 1","address":null,"map_url":null,"lat":null,"lon":null}]
+SUBMIT clicked
+API 200 POST /api/tasks -> {"id":2,"title":"Browser Test Task","description":null,"status":"active","client_id":1,"date_start":null,"date_end":null,"created_by":1,"locations":[],"groups":[],"assignments":[]}
+API 200 POST /api/tasks/2/assignments -> {"id":2,"user":{"id":2,"name":"Petr Worker"},"group_id":null}
+API 200 GET /api/tasks -> [{"id":2,"title":"Browser Test Task","status":"active","client_id":1,"date_start":null,"date_end":null},{"id":1,"title":"Browser Test Task","status":"active","client_id":1,"date_start":null,"date_end":null}]
+SCREEN after submit: screenTasks
+ntError=null
+visible toasts=["ðùð░ð┤ð░ð¢ð©ðÁ Ðüð¥ðÀð┤ð░ð¢ð¥"]
+tasksList text="Browser Test Task\nðÉðÜðóðÿðÆðØð×\nBrowser Test Task\nðÉðÜðóðÿðÆðØð×"
+form still visible=false

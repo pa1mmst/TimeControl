@@ -1,0 +1,26 @@
+manager after init screen=screenDashboard
+manager nav=dashboard[vis]|tasks[vis]|hours[vis]|reports[vis]|profile[vis]|more[vis]
+manager moreBtn=hidden=false
+manager nav hours -> screenHours
+manager nav reports -> screenReports
+manager more items=team[vis]|clients[vis]|inventory[vis]|payments[vis]
+manager more team clicked=true -> screenTeam
+manager more clients clicked=true -> screenClients
+manager more inventory clicked=true -> screenInventory
+manager more payments clicked=true -> screenPayments
+manager profile -> screenProfile
+manager langSel=ru/uk/es
+manager lang switch=uk nakedKeys=none
+worker after init screen=screenDashboard
+worker nav=dashboard[vis]|tasks[vis]|hours[vis]|reports[vis]|profile[vis]|more[hidden]
+worker moreBtn=hidden=true
+worker nav hours -> screenHours
+worker nav reports -> screenReports
+worker more items=team[vis]|clients[vis]|inventory[vis]|payments[vis]
+worker more team clicked=true -> screenTeam
+worker more clients clicked=true -> screenClients
+worker more inventory clicked=true -> screenInventory
+worker more payments clicked=true -> screenPayments
+worker profile -> screenProfile
+worker langSel=ru/uk/es
+worker lang switch=uk nakedKeys=none
