@@ -277,6 +277,39 @@ r = client.post("/work-entries", json={
 check("8.12 часы по завершённому заданию запрещены (409)",
       r.status_code == 409, r.text[:80])
 
+# ---------- 9. Дашборд руководителя: поля TaskShortOut ----------
+# Новое активное задание с локацией, сотрудником и часами за СЕГОДНЯШНИЙ
+# день (hours_today считается по date.today(), а не по датам задания).
+TODAY = date.today().isoformat()
+task2 = client.post("/api/tasks", json={
+    "title": "Дашборд-тест", "client_id": cl["id"],
+    "location_ids": [loc1["id"]],
+    "date_start": TODAY, "date_end": TODAY,
+    "created_by": boss["id"]}).json()
+t2 = task2["id"]
+client.post(f"/api/tasks/{t2}/assignments", json={"user_id": w1["id"]})
+client.post(f"/api/tasks/{t2}/groups", json={
+    "reporter_id": w1["id"], "member_ids": [w1["id"]]})
+client.patch(f"/api/tasks/{t2}", json={"status": "active"})
+# вводим часы за сегодня от имени назначенного работника
+H3 = client.post("/work-entries", json={
+    "task_id": t2, "work_date": TODAY, "hours": "5", "location_id": loc1["id"]},
+    headers={"X-Actor-Id": str(w1["id"])})
+assert H3.status_code == 201, H3.text
+
+lst = client.get("/api/tasks", params={"status": "active"}).json()
+dash = next(t for t in lst if t["id"] == t2)
+check("9a. client_name заполнен", dash["client_name"] == "Агро-Ферма Тест",
+      str(dash["client_name"]))
+check("9b. location_names непустой",
+      dash["location_names"] == ["Поле №1"], str(dash["location_names"]))
+wk = {w["user_id"]: w for w in dash["workers"]}
+check("9c. workers непустой и is_reporter у учётчика",
+      w1["id"] in wk and wk[w1["id"]]["is_reporter"] is True,
+      str(dash["workers"]))
+check("9d. hours_today > 0 (5 ч за сегодня)",
+      Decimal(str(dash["hours_today"])) == 5, str(dash["hours_today"]))
+
 print()
 fails = [n for n, ok, _ in results if not ok]
 print(f"ИТОГ: {len(results) - len(fails)}/{len(results)} пройдено")

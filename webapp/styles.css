@@ -78,6 +78,106 @@ h2 { font-size: 20px; }
     line-height: 1.3;
 }
 
+/* Лого-марка 32x32 + двухстрочный блок справа */
+.header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 700;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.app-header__org {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 0;
+}
+
+/* Сетка кнопок-действий 2x2 на дашборде */
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 16px 0;
+}
+
+/* Сворачиваемая строка личных часов внизу дашборда */
+.my-hours-line {
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--muted);
+}
+.my-hours-line summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+/* Заголовок секции списка */
+.list-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 16px 0 8px;
+}
+
+/* Внутренняя панель bottom sheet (backdrop + контент) */
+.sheet__panel {
+    position: relative;
+    z-index: 42;
+}
+
+.sheet__title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.sheet__title {
+    font-size: 17px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.sheet__sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 10px;
+}
+
+.sheet__section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 10px 0 6px;
+}
+
+.sheet__totals {
+    font-size: 13px;
+    color: var(--text);
+    padding: 8px 0;
+}
+
+.sheet__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
 .lang-select {
     background: var(--surface-2);
     color: var(--text);

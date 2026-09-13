@@ -171,7 +171,30 @@
             'teamAdd': 'Добавить сотрудника',
             'clientsAdd': 'Добавить заказчика',
             'loginSubtitle': 'Проверка данных пользователя...',
-            'badDate': 'Неверный формат даты (нужен ГГГГ-ММ-ДД)'
+            'badDate': 'Неверный формат даты (нужен ГГГГ-ММ-ДД)',
+            // --- v3: шапка, навигация, дашборды, карточка задания ---
+            'appOrg': 'Агрофирма',
+            'roleManager': 'Руководитель',
+            'roleWorker': 'Сотрудник',
+            'navTeam': 'Команда',
+            'enterHours': 'Ввести часы',
+            'edit': 'Редактировать',
+            'close': 'Закрыть',
+            'dashActiveTasks': 'Активные задания',
+            'dashHoursWeek': 'Часов за неделю',
+            'dashTasksMonth': 'Заданий за месяц',
+            'reporterTag': 'учётчик',
+            'actNewTask': 'Новое задание',
+            'actClients': 'Заказчики',
+            'actInventory': 'Инвентарь',
+            'actPayments': 'Выплаты',
+            'myHoursLine': 'Мои часы',
+            'earnedShort': 'начислено',
+            'myTasksToday': 'Мои задания сегодня',
+            'myWeekHours': 'Мои часы за неделю',
+            'hoursTodayShort': 'часов сегодня',
+            'whoWorks': 'Кто работает',
+            'hoursAndEarned': 'Часы и начислено'
         },
         uk: {
             'navDashboard': 'Головна', 'navTasks': 'Завдання', 'navHours': 'Години',
@@ -277,7 +300,28 @@
             'teamAdd': 'Додати працівника',
             'clientsAdd': 'Додати замовника',
             'loginSubtitle': 'Перевірка даних користувача...',
-            'badDate': 'Невірний формат дати (потрібен РРРР-ММ-ДД)'
+            'badDate': 'Невірний формат дати (потрібен РРРР-ММ-ДД)',
+            'appOrg': 'Агрофірма',
+            'roleManager': 'Керівник',
+            'roleWorker': 'Працівник',
+            'enterHours': 'Ввести години',
+            'edit': 'Редагувати',
+            'close': 'Закрити',
+            'dashActiveTasks': 'Активні завдання',
+            'dashHoursWeek': 'Годин за тиждень',
+            'dashTasksMonth': 'Завдань за місяць',
+            'reporterTag': 'обліковець',
+            'actNewTask': 'Нове завдання',
+            'actClients': 'Замовники',
+            'actInventory': 'Інвентар',
+            'actPayments': 'Виплати',
+            'myHoursLine': 'Мої години',
+            'earnedShort': 'нараховано',
+            'myTasksToday': 'Мої завдання сьогодні',
+            'myWeekHours': 'Мої години за тиждень',
+            'hoursTodayShort': 'годин сьогодні',
+            'whoWorks': 'Хто працює',
+            'hoursAndEarned': 'Години та нараховано'
         },
         es: {
             'navDashboard': 'Inicio', 'navTasks': 'Tareas', 'navHours': 'Horas',
@@ -383,7 +427,28 @@
             'teamAdd': 'Añadir empleado',
             'clientsAdd': 'Añadir cliente',
             'loginSubtitle': 'Comprobando datos del usuario...',
-            'badDate': 'Formato de fecha incorrecto (se requiere AAAA-MM-DD)'
+            'badDate': 'Formato de fecha incorrecto (se requiere AAAA-MM-DD)',
+            'appOrg': 'Agroempresa',
+            'roleManager': 'Gerente',
+            'roleWorker': 'Empleado',
+            'enterHours': 'Registrar horas',
+            'edit': 'Editar',
+            'close': 'Cerrar',
+            'dashActiveTasks': 'Tareas activas',
+            'dashHoursWeek': 'Horas esta semana',
+            'dashTasksMonth': 'Tareas este mes',
+            'reporterTag': 'contador',
+            'actNewTask': 'Nueva tarea',
+            'actClients': 'Clientes',
+            'actInventory': 'Inventario',
+            'actPayments': 'Pagos',
+            'myHoursLine': 'Mis horas',
+            'earnedShort': 'acumulado',
+            'myTasksToday': 'Mis tareas de hoy',
+            'myWeekHours': 'Mis horas esta semana',
+            'hoursTodayShort': 'horas hoy',
+            'whoWorks': 'Quién trabaja',
+            'hoursAndEarned': 'Horas y acumulado'
         }
     };
 
@@ -434,6 +499,44 @@
         if (user.is_manager) return t('role.manager');
         return t('role.worker');
     }
+
+    // Шапка: организация + роль · сегодняшняя дата в локали
+    function renderHeader() {
+        const org = $('#headerOrg');
+        if (org) org.textContent = t('appOrg');
+        const meta = $('#headerMeta');
+        if (meta) {
+            const role = isManager() ? t('roleManager') : t('roleWorker');
+            const date = new Date().toLocaleDateString(state.lang === 'uk' ? 'uk-UA' : state.lang === 'es' ? 'es-ES' : 'ru-RU', { day: 'numeric', month: 'long' });
+            meta.textContent = role + ' · ' + date;
+        }
+    }
+
+    // Состав нижней навигации по роли (data-manager-only / data-worker-only)
+    function applyNavRole() {
+        const manager = isManager();
+        document.querySelectorAll('#bottomNav [data-manager-only]').forEach((el) => { el.hidden = !manager; });
+        document.querySelectorAll('#bottomNav [data-worker-only]').forEach((el) => { el.hidden = manager; });
+    }
+
+    // Bottom sheet: открытие/закрытие (тап по backdrop, Escape)
+    function openSheet(id) {
+        const sheet = $('#' + id);
+        if (sheet) sheet.hidden = false;
+    }
+    function closeSheet(id) {
+        const sheet = $('#' + id);
+        if (sheet) sheet.hidden = true;
+    }
+    document.addEventListener('click', (ev) => {
+        const closer = ev.target.closest('[data-close-sheet]');
+        if (closer) closeSheet(closer.getAttribute('data-close-sheet'));
+    });
+    document.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape') {
+            document.querySelectorAll('.sheet:not([hidden])').forEach((s) => closeSheet(s.id));
+        }
+    });
 
     function statusLabel(status) {
         return t('status.' + status);
@@ -556,10 +659,10 @@
         document.querySelectorAll('.screen').forEach((s) => {
             s.hidden = s.getAttribute('data-screen-name') !== name;
         });
-        document.querySelectorAll('.nav-item').forEach((b) => {
-            b.classList.toggle('is-active', b.getAttribute('data-nav-target') === name);
+        // Подсветка активного пункта bottom-nav
+        document.querySelectorAll('#bottomNav .bottom-nav__item').forEach((b) => {
+            b.classList.toggle('is-active', b.getAttribute('data-nav') === name);
         });
-        $('#moreMenu').hidden = true;
         state.view = name;
     }
 
@@ -574,15 +677,154 @@
         if (el) el.innerHTML = html;
     }
 
-    function renderDashboard(me, tasks, entries) {
-        $('#statActiveTasks').textContent = tasks ? tasks.length : '—';
-        const today = new Date().toISOString().slice(0, 10);
-        const hoursToday = (entries || [])
-            .filter((e) => e.work_date === today)
+    // --- Дашборд: вспомогательные вычисления ---
+    function weekStartISO() {
+        const d = new Date();
+        d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // понедельник
+        return d.toISOString().slice(0, 10);
+    }
+    function monthStartISO() {
+        const d = new Date();
+        return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
+    }
+    function hoursIn(entries, fromISO, toISO) {
+        return (entries || [])
+            .filter((e) => (!fromISO || e.work_date >= fromISO) && (!toISO || e.work_date <= toISO))
             .reduce((sum, e) => sum + parseFloat(e.hours), 0);
-        $('#statHoursToday').textContent = hoursToday.toFixed(2);
-        $('#statEarned').textContent = me ? Number(me.total_earned).toFixed(2) : '—';
+    }
+    function clientName(id) {
+        const c = (state.clients || []).find((x) => x.id === id);
+        return c ? c.name : '#' + id;
+    }
+    function userName(id) {
+        const u = (state.users || []).find((x) => x.id === id);
+        return u ? u.name : '#' + id;
+    }
+
+    // Дашборд РУКОВОДИТЕЛЯ
+    function renderDashboardManager(me, tasks, entries) {
+        const today = new Date().toISOString().slice(0, 10);
+        const active = (tasks || []).filter((tk) => tk.status === 'active');
+        const weekHours = hoursIn(entries, weekStartISO(), today);
+        const monthTasks = (tasks || []).filter((tk) => tk.date_start && tk.date_start >= monthStartISO()).length;
+
+        let html = '<div class="stat-row">' +
+            '<div class="stat"><span class="stat__value">' + active.length + '</span><span class="stat__label">' + t('dashActiveTasks') + '</span></div>' +
+            '<div class="stat"><span class="stat__value">' + weekHours.toFixed(2) + '</span><span class="stat__label">' + t('dashHoursWeek') + '</span></div>' +
+            '<div class="stat"><span class="stat__value">' + monthTasks + '</span><span class="stat__label">' + t('dashTasksMonth') + '</span></div>' +
+            '</div>';
+
+        html += '<h3 class="list-title">' + t('dashActiveTasks') + '</h3>';
+        const shown = active.slice(0, 5);
+        html += shown.length ? shown.map((task) => {
+            // Поля приходят из /api/tasks (TaskShortOut): location_names,
+            // workers, hours_today. Пустые значения не рисуем.
+            const locs = (task.location_names || []).map(escapeHtml).join(', ');
+            const workers = (task.workers || [])
+                .map((w) => escapeHtml(w.name) + (w.is_reporter ? ' (' + t('reporterTag') + ')' : ''))
+                .join(' · ');
+            const todayHours = parseFloat(task.hours_today) || 0;
+            return '<button class="card card--tap" data-task-id="' + task.id + '">' +
+                '<div class="card-title">' + escapeHtml(task.title) + '</div>' +
+                (locs ? '<div class="card-sub"><span>' + escapeHtml(clientName(task.client_id)) +
+                ' · ' + locs + '</span></div>' : '') +
+                (workers ? '<div class="card-sub"><span>' + workers + '</span>' : '<div class="card-sub"><span>') +
+                '<span class="badge badge--active">' + escapeHtml(statusLabel(task.status)) +
+                (todayHours > 0 ? ' · ' + todayHours.toFixed(2) + ' ' + t('hoursHours') : '') + '</span></div>' +
+                '</button>';
+        }).join('') : '<p class="screen-message">' + t('empty') + '</p>';
+
+        // Кнопки-действия 2x2
+        html += '<div class="actions-grid">' +
+            '<button class="btn btn--primary" data-action="dash-new-task">' + t('actNewTask') + '</button>' +
+            '<button class="btn btn--ghost" data-action="dash-clients">' + t('actClients') + '</button>' +
+            '<button class="btn btn--ghost" data-action="dash-inventory">' + t('actInventory') + '</button>' +
+            '<button class="btn btn--ghost" data-action="dash-payments">' + t('actPayments') + '</button>' +
+            '</div>';
+
+        // В самом низу, мелко, сворачиваемая строка личных часов
+        const myHours = hoursIn(entries, null, today);
+        const myEarned = me ? Number(me.total_earned) : 0;
+        if (myHours > 0) {
+            html += '<details class="my-hours-line"><summary>' + t('myHoursLine') + ': ' +
+                myHours.toFixed(2) + ' ' + t('hoursHours') + ' · ' + t('earnedShort') + ' ' +
+                myEarned.toFixed(2) + '</summary></details>';
+        }
+        setList('dashboardBody', html);
         showScreen('dashboard');
+    }
+
+    // Дашборд СОТРУДНИКА
+    function renderDashboardWorker(me, tasks, entries) {
+        const today = new Date().toISOString().slice(0, 10);
+        const myId = me.id;
+        const myToday = (entries || []).filter((e) => e.work_date === today && e.user_id === myId);
+        const hoursToday = myToday.reduce((s, e) => s + parseFloat(e.hours), 0);
+        const weekEarned = (entries || [])
+            .filter((e) => e.work_date >= weekStartISO() && e.work_date <= today && e.user_id === myId)
+            .reduce((s, e) => s + parseFloat(e.hours) * parseFloat(e.rate_snapshot || 0), 0);
+
+        let html = '<div class="stat-row">' +
+            '<div class="stat"><span class="stat__value">' + hoursToday.toFixed(2) + '</span><span class="stat__label">' + t('statHoursToday') + '</span></div>' +
+            '<div class="stat"><span class="stat__value">' + weekEarned.toFixed(2) + '</span><span class="stat__label">' + t('statEarned') + ' · ' + t('dashHoursWeek') + '</span></div>' +
+            '</div>';
+
+        // Мои задания сегодня (назначенные мне активные)
+        const myTasks = (tasks || []).filter((tk) =>
+            tk.status === 'active' && (tk.assignments || []).some((a) => a.user && a.user.id === myId));
+        html += '<h3 class="list-title">' + t('myTasksToday') + '</h3>';
+        html += myTasks.length ? myTasks.map((task) =>
+            '<button class="card card--tap" data-task-id="' + task.id + '">' +
+            '<div class="card-title">' + escapeHtml(task.title) + '</div>' +
+            '<div class="card-sub"><span>' + escapeHtml(clientName(task.client_id)) + '</span>' +
+            '<span class="badge badge--active">' + escapeHtml(statusLabel(task.status)) + '</span></div>' +
+            '</button>'
+        ).join('') : '<p class="screen-message">' + t('empty') + '</p>';
+
+        // Мои часы за неделю
+        const myWeek = (entries || []).filter((e) => e.work_date >= weekStartISO() && e.work_date <= today && e.user_id === myId);
+        html += '<h3 class="list-title">' + t('myWeekHours') + '</h3>';
+        html += myWeek.length ? myWeek.map((e) =>
+            '<div class="card"><div class="card-sub"><span>' + escapeHtml(e.work_date) + '</span>' +
+            '<span>' + escapeHtml(String(e.hours)) + ' ' + t('hoursHours') + '</span></div></div>'
+        ).join('') : '<p class="screen-message">' + t('empty') + '</p>';
+
+        setList('dashboardBody', html);
+        showScreen('dashboard');
+    }
+
+    function renderDashboard(me, tasks, entries) {
+        if (isManager()) renderDashboardManager(me, tasks, entries);
+        else renderDashboardWorker(me, tasks, entries);
+    }
+
+    // Карточка задания — bottom sheet (данные GET /tasks/{id})
+    async function openTaskSheet(taskId) {
+        openSheet('sheetTask');
+        $('#sheetTaskTitle').textContent = t('loading');
+        $('#sheetTaskSub').textContent = '';
+        $('#sheetTaskWorkers').innerHTML = '';
+        $('#sheetTaskTotals').textContent = '';
+        try {
+            const task = await api.request('/tasks/' + taskId);
+            state.detailTask = task;
+            $('#sheetTaskTitle').textContent = task.title;
+            $('#sheetTaskSub').textContent = clientName(task.client_id) +
+                ((task.locations || []).length ? ' · ' + task.locations.map((l) => l.name).join(', ') : '');
+            const badge = $('#sheetTaskBadge');
+            badge.textContent = statusLabel(task.status);
+            badge.className = 'badge badge--' + task.status;
+            $('#btnSheetEdit').hidden = !isManager();
+            $('#sheetTaskWorkers').innerHTML = (task.assignments || []).map((a) =>
+                '<div class="card-sub"><span>' + escapeHtml(a.user.name) + '</span></div>'
+            ).join('') || '<p class="screen-message">' + t('empty') + '</p>';
+            const sum = await api.taskSummary(task.id);
+            $('#sheetTaskTotals').textContent = t('totalHours') + ': ' + sum.total_hours +
+                ' · ' + t('earnedShort') + ' ' + (sum.total_amount !== undefined ? sum.total_amount : '');
+        } catch (err) {
+            $('#sheetTaskTitle').textContent = t('error');
+            $('#sheetTaskSub').textContent = err.message;
+        }
     }
 
     function renderTasks(tasks) {
@@ -645,14 +887,12 @@
 
     function applyManagerUI() {
         const manager = isManager();
-        const moreBtn = $('#navMoreBtn');
-        if (moreBtn) moreBtn.hidden = !manager;
         $('#btnNewTask').hidden = !manager;
         $('#btnAddWorker').hidden = !manager;
         $('#btnAddClient').hidden = !manager;
         $('#btnAddItem').hidden = !manager;
-        // «Добавить часы» видят все: работник пишет себя,
-        // учётчик — группу (шаг 3)
+        applyNavRole();
+        renderHeader();
     }
 
     /* ========================================================
@@ -1471,29 +1711,44 @@
      * 8. Events
      * ======================================================== */
     function bindEvents() {
-        document.querySelectorAll('.nav-item[data-nav-target]').forEach((btn) => {
+        // Нижняя навигация (data-nav)
+        document.querySelectorAll('#bottomNav .bottom-nav__item').forEach((btn) => {
             btn.addEventListener('click', () => {
-                const target = btn.getAttribute('data-nav-target');
+                const target = btn.getAttribute('data-nav');
                 if (target === 'dashboard') loadDashboard();
                 else if (target === 'tasks') loadTasks();
-                else if (target === 'hours') loadHours();
                 else if (target === 'reports') loadReports();
+                else if (target === 'team') loadTeam();
+                else if (target === 'inventory') loadInventory();
                 else if (target === 'profile') loadProfile();
-                else if (target === 'more') {
-                    const menu = $('#moreMenu');
-                    menu.hidden = !menu.hidden;
-                }
             });
         });
 
-        document.querySelectorAll('.more-menu-item[data-nav-target]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                const target = btn.getAttribute('data-nav-target');
-                if (target === 'team') loadTeam();
-                else if (target === 'clients') loadClients();
-                else if (target === 'inventory') loadInventory();
-                else if (target === 'payments') loadPayments();
-            });
+        // Кнопки-действия на дашборде руководителя
+        document.addEventListener('click', (ev) => {
+            const btn = ev.target.closest('[data-action^="dash-"]');
+            if (!btn) return;
+            const action = btn.getAttribute('data-action');
+            if (action === 'dash-new-task') openNewTask();
+            else if (action === 'dash-clients') loadClients();
+            else if (action === 'dash-inventory') loadInventory();
+            else if (action === 'dash-payments') loadPayments();
+        });
+
+        // Тап по карточке задания: с дашборда и из списка — открываем лист
+        document.addEventListener('click', (ev) => {
+            const card = ev.target.closest('[data-task-id]');
+            if (card) openTaskSheet(parseInt(card.getAttribute('data-task-id'), 10));
+        });
+
+        // Кнопка «Ввести часы» в листе задания (задача B заменит обработчик)
+        const sheetHours = $('#btnSheetHours');
+        if (sheetHours) sheetHours.addEventListener('click', () => {
+            if (state.detailTask) openTaskDetail(state.detailTask.id);
+        });
+        const sheetEdit = $('#btnSheetEdit');
+        if (sheetEdit) sheetEdit.addEventListener('click', () => {
+            if (state.detailTask) openTaskDetail(state.detailTask.id);
         });
 
         const back = $('#btnBackTasks');
@@ -1606,6 +1861,7 @@
         if (lang) lang.addEventListener('change', () => {
             state.lang = normalizeLang(lang.value);
             applyI18n();
+            renderHeader();
             if (state.view === 'profile') loadProfile();
         });
     }

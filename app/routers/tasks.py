@@ -6,8 +6,12 @@ API заданий: создание, назначение людей, груп�
 - одиночки на задании = assignment с group_id = NULL (п.3, п.11);
 - учётчик — назначаемая роль внутри задания, не тип сотрудника (п.13).
 """
+from datetime import date
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy import func
+from sqlalchemy.orm import Session, selectinload
 
 from app.bot.notifications import notify_task_assigned, notify_task_changed
 from app.db import get_db
@@ -89,10 +93,49 @@ def create_task(
 @router.get("", response_model=list[TaskShortOut])
 def list_tasks(status: str | None = None, db: Session = Depends(get_db)):
     """Список заданий, можно фильтровать: ?status=active"""
-    q = db.query(Task)
+    q = db.query(Task).options(
+        # Без N+1: локации, назначения с user и client грузим заранее
+        selectinload(Task.locations),
+        selectinload(Task.assignments).selectinload(TaskAssignment.user),
+        selectinload(Task.client),
+    )
     if status:
         q = q.filter(Task.status == status)
-    return q.order_by(Task.id.desc()).all()
+    tasks = q.order_by(Task.id.desc()).all()
+
+    # hours_today: один агрегатный запрос по всем заданиям сразу
+    today = date.today()
+    hours_map: dict[int, Decimal] = dict(
+        db.query(WorkEntry.task_id, func.coalesce(func.sum(WorkEntry.hours), 0))
+        .filter(WorkEntry.task_id.in_([t.id for t in tasks] or [0]))
+        .filter(WorkEntry.work_date == today)
+        .group_by(WorkEntry.task_id)
+        .all()
+    )
+
+    # Собираем dict'ы явно: from_attributes тянул бы ORM-объекты
+    # (locations/assignments) в pydantic и вызвал ленивые загрузки.
+    out = []
+    for t in tasks:
+        out.append(TaskShortOut.model_validate({
+            **{c.name: getattr(t, c.name) for c in Task.__table__.columns},
+            "client_name": t.client.name if t.client else None,
+            "location_names": [loc.name for loc in t.locations],
+            "workers": [
+                {
+                    "user_id": a.user_id,
+                    "name": a.user.name if a.user else f"#{a.user_id}",
+                    # учётчик = репортер группы, в которую входит назначение
+                    "is_reporter": bool(
+                        a.group_id is not None
+                        and any(g.reporter_id == a.user_id for g in t.groups)
+                    ),
+                }
+                for a in t.assignments
+            ],
+            "hours_today": hours_map.get(t.id, Decimal("0")),
+        }))
+    return out
 
 
 @router.get("/{task_id}", response_model=TaskOut)

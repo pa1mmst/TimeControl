@@ -163,6 +163,13 @@ class GroupOut(BaseModel):
     reporter: UserShort
 
 
+class WorkerOut(BaseModel):
+    """Сотрудник на задании — для дашборда руководителя."""
+    user_id: int
+    name: str
+    is_reporter: bool = False
+
+
 class TaskShortOut(BaseModel):
     """Для списка заданий."""
     model_config = ConfigDict(from_attributes=True)
@@ -173,6 +180,12 @@ class TaskShortOut(BaseModel):
     client_id: int
     date_start: date | None
     date_end: date | None
+    # Дашборд руководителя: заполняются в list_tasks, дефолты —
+    # чтобы не ломать других потребителей /api/tasks.
+    client_name: str | None = None
+    location_names: list[str] = []
+    workers: list[WorkerOut] = []
+    hours_today: Decimal = Decimal("0")
 
 
 class TaskOut(BaseModel):
