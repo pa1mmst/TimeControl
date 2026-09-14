@@ -109,7 +109,22 @@ def create_entry(
     """
     target_id = user_id if user_id is not None else actor.id
     if target_id != actor.id and not actor.is_manager:
-        raise WorkEntryError(403, "Создавать записи за другого может только руководитель")
+        # Учётчик может вносить часы участникам СВОЕЙ группы на активном
+        # задании (SPEC п.6: учётчик вводит часы за группу одним действием).
+        allowed = db.execute(
+            select(TaskGroup.id)
+            .join(TaskAssignment, TaskAssignment.group_id == TaskGroup.id)
+            .where(
+                TaskGroup.task_id == task_id,
+                TaskGroup.reporter_id == actor.id,
+                TaskAssignment.user_id == target_id,
+            )
+        ).first()
+        if not allowed:
+            raise WorkEntryError(
+                403, "Создавать записи за другого может только руководитель "
+                     "или учётчик группы этого сотрудника"
+            )
 
     target = db.get(User, target_id)
     if target is None or not target.is_active:
