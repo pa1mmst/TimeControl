@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>AgroManager</title>
-    <meta name="theme-color" content="#2b7a4b">
+    <meta name="theme-color" content="#0E1412">
 
     <!-- Telegram Mini App SDK (обязательный скрипт для работы внутри Telegram) -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <!-- Стили приложения (v=2: [hidden]!important + кнопка инвентаря) -->
-    <link rel="stylesheet" href="/app/static/styles.css?v=5">
+    <!-- Стили приложения (v=3: дизайн-система, тёмная тема) -->
+    <link rel="stylesheet" href="/app/static/styles.css?v=6">
 </head>
 <body>
 
@@ -21,7 +21,8 @@
         <!-- ============================================= -->
         <header class="app-header">
             <div class="header-left">
-                <h1 class="app-title">AgroManager</h1>
+                <h1 class="app-header__org">AgroManager</h1>
+                <div class="app-header__meta" id="headerMeta"></div>
             </div>
             <div class="header-right">
                 <select id="langSelect" class="lang-select" title="Язык / Language">
@@ -63,18 +64,18 @@
             <!-- Экран: главная (сводка) -->
             <section class="screen" id="screenDashboard" data-screen-name="dashboard" hidden>
                 <h2 data-i18n="dashboardTitle">Главная</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <span class="stat-value" id="statActiveTasks">0</span>
-                        <span class="stat-label" data-i18n="statActiveTasks">Активных заданий</span>
+                <div class="stat-row">
+                    <div class="stat">
+                        <span class="stat__value" id="statActiveTasks">0</span>
+                        <span class="stat__label" data-i18n="statActiveTasks">Активных заданий</span>
                     </div>
-                    <div class="stat-card">
-                        <span class="stat-value" id="statHoursToday">0</span>
-                        <span class="stat-label" data-i18n="statHoursToday">Часов за сегодня</span>
+                    <div class="stat">
+                        <span class="stat__value" id="statHoursToday">0</span>
+                        <span class="stat__label" data-i18n="statHoursToday">Часов за сегодня</span>
                     </div>
-                    <div class="stat-card">
-                        <span class="stat-value" id="statEarned">0</span>
-                        <span class="stat-label" data-i18n="statEarned">Начислено</span>
+                    <div class="stat">
+                        <span class="stat__value" id="statEarned">0</span>
+                        <span class="stat__label" data-i18n="statEarned">Начислено</span>
                     </div>
                 </div>
             </section>
@@ -83,7 +84,7 @@
             <section class="screen" id="screenTasks" data-screen-name="tasks" hidden>
                 <div class="screen-header">
                     <h2 data-i18n="tasksTitle">Задания</h2>
-                    <button class="btn btn-primary" id="btnNewTask" hidden data-i18n="tasksNew">Новое задание</button>
+                    <button class="btn btn--primary" id="btnNewTask" hidden data-i18n="tasksNew">Новое задание</button>
                 </div>
                 <div class="list" id="tasksList">
                     <!-- Карточки заданий будет добавлять script.js -->
@@ -138,7 +139,7 @@
                         <div class="check-list" id="ntGroupMembers"></div>
                     </div>
                     <p class="form-error" id="ntError" hidden></p>
-                    <button type="submit" class="btn btn-primary btn-block" id="ntSubmit" data-i18n="save">Создать</button>
+                    <button type="submit" class="btn btn--primary btn--block" id="ntSubmit" data-i18n="save">Создать</button>
                 </form>
             </section>
 
@@ -155,7 +156,7 @@
             <section class="screen" id="screenHours" data-screen-name="hours" hidden>
                 <div class="screen-header">
                     <h2 data-i18n="hoursTitle">Рабочие часы</h2>
-                    <button class="btn btn-primary" id="btnAddHours" data-i18n="hoursAdd">Добавить часы</button>
+                    <button class="btn btn--primary" id="btnAddHours" data-i18n="hoursAdd">Добавить часы</button>
                 </div>
                 <div class="list" id="hoursList">
                     <!-- Записи о часах будет добавлять script.js -->
@@ -207,7 +208,7 @@
                         <div class="check-list" id="nhExclude"></div>
                     </div>
                     <p class="form-error" id="nhError" hidden></p>
-                    <button type="submit" class="btn btn-primary btn-block" id="nhSubmit" data-i18n="save">Создать</button>
+                    <button type="submit" class="btn btn--primary btn--block" id="nhSubmit" data-i18n="save">Создать</button>
                 </form>
             </section>
 
@@ -223,7 +224,7 @@
             <section class="screen" id="screenTeam" data-screen-name="team" hidden>
                 <div class="screen-header">
                     <h2 data-i18n="teamTitle">Сотрудники</h2>
-                    <button class="btn btn-primary" id="btnAddWorker" hidden data-i18n="teamAdd">Добавить</button>
+                    <button class="btn btn--primary" id="btnAddWorker" hidden data-i18n="teamAdd">Добавить</button>
                 </div>
                 <form id="teamAddForm" class="form" hidden>
                     <label class="form-field">
@@ -239,7 +240,7 @@
                         <input type="number" id="twRate" min="0" step="0.01">
                     </label>
                     <p class="form-error" id="twError" hidden></p>
-                    <button type="submit" class="btn btn-primary btn-block" id="twSubmit" data-i18n="save">Создать</button>
+                    <button type="submit" class="btn btn--primary btn--block" id="twSubmit" data-i18n="save">Создать</button>
                 </form>
                 <div class="list" id="teamList">
                     <!-- Карточки сотрудников -->
@@ -250,7 +251,7 @@
             <section class="screen" id="screenClients" data-screen-name="clients" hidden>
                 <div class="screen-header">
                     <h2 data-i18n="clientsTitle">Заказчики</h2>
-                    <button class="btn btn-primary" id="btnAddClient" hidden data-i18n="clientsAdd">Добавить</button>
+                    <button class="btn btn--primary" id="btnAddClient" hidden data-i18n="clientsAdd">Добавить</button>
                 </div>
                 <form id="clientAddForm" class="form" hidden>
                     <label class="form-field">
@@ -262,7 +263,7 @@
                         <textarea id="clNotes" rows="2"></textarea>
                     </label>
                     <p class="form-error" id="clError" hidden></p>
-                    <button type="submit" class="btn btn-primary btn-block" id="clSubmit" data-i18n="save">Создать</button>
+                    <button type="submit" class="btn btn--primary btn--block" id="clSubmit" data-i18n="save">Создать</button>
                 </form>
                 <div class="list" id="clientsList">
                     <!-- Карточки заказчиков -->
@@ -273,7 +274,7 @@
             <section class="screen" id="screenInventory" data-screen-name="inventory" hidden>
                 <div class="screen-header">
                     <h2 data-i18n="inventoryTitle">Инвентарь</h2>
-                    <button class="btn btn-primary" id="btnAddItem" hidden data-i18n="teamAdd">Добавить</button>
+                    <button class="btn btn--primary" id="btnAddItem" hidden data-i18n="teamAdd">Добавить</button>
                 </div>
                 <form id="invAddForm" class="form" hidden>
                     <label class="form-field">
@@ -285,7 +286,7 @@
                         <textarea id="invNotes" rows="2"></textarea>
                     </label>
                     <p class="form-error" id="invError" hidden></p>
-                    <button type="submit" class="btn btn-primary btn-block" id="invSubmit" data-i18n="save">Создать</button>
+                    <button type="submit" class="btn btn--primary btn--block" id="invSubmit" data-i18n="save">Создать</button>
                 </form>
                 <div class="list" id="inventoryList">
                     <!-- Записи инвентаря -->
@@ -308,8 +309,8 @@
                         </label>
                     </div>
                     <div class="form-row">
-                        <button class="btn btn-primary" id="btnPayPreview" data-i18n="payPreview">Рассчитать</button>
-                        <button class="btn btn-danger" id="btnPayClose" data-i18n="payClose">Закрыть период</button>
+                        <button class="btn btn--primary" id="btnPayPreview" data-i18n="payPreview">Рассчитать</button>
+                        <button class="btn btn--danger" id="btnPayClose" data-i18n="payClose">Закрыть период</button>
                     </div>
                     <p class="form-error" id="payError" hidden></p>
                 </div>
@@ -393,7 +394,7 @@
     </script>
 
     <!-- Логика приложения (v=2: applyManagerUI + btnAddItem, сброс кэша webview) -->
-    <script src="/app/static/app.js?v=5"></script>
+    <script src="/app/static/app.js?v=6"></script>
 
 </body>
 </html>
