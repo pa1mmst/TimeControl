@@ -1,9 +1,10 @@
 """API заказчиков и их локаций. Локации всегда принадлежат заказчику."""
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.models import Client, Location
+from app.models import Client, Location, TaskLocation, WorkEntry
 from app.schemas import (
     ClientCreate, ClientUpdate, ClientOut,
     LocationCreate, LocationUpdate, LocationOut,
@@ -89,3 +90,27 @@ def update_location(
     db.commit()
     db.refresh(loc)
     return loc
+
+@router.delete("/{client_id}/locations/{location_id}")
+def delete_location(
+    client_id: int, location_id: int, db: Session = Depends(get_db),
+):
+    """Удалить локацию заказчика. Связки с заданиями (task_locations)
+    снимаются; локацию, по которой уже есть часы, удалять нельзя —
+    иначе история часов потеряет место работы."""
+    loc = db.get(Location, location_id)
+    if not loc or loc.client_id != client_id:
+        raise HTTPException(404, "Локация не найдена")
+    used = db.execute(
+        select(WorkEntry.id).where(WorkEntry.location_id == location_id)
+    ).first()
+    if used:
+        raise HTTPException(
+            400, "По этой локации уже есть внесённые часы — удалить нельзя"
+        )
+    db.query(TaskLocation).filter(
+        TaskLocation.location_id == location_id
+    ).delete(synchronize_session=False)
+    db.delete(loc)
+    db.commit()
+    return {"ok": True}

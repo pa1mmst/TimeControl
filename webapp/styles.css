@@ -1,9 +1,9 @@
 /* ============================================================
  * Time Control — Telegram Mini App
- * File: webapp/styles.css  (v3 — дизайн-система)
- * Тёмная тема, компоненты: card / stat / badge / btn / row /
- * sheet / field / chip / bottom-nav / empty / toast / skeleton.
- * Legacy-классы, которые генерирует app.js, сохранены внизу файла.
+ * File: webapp/styles.css  (v=6)
+ * Единая тёмная палитра, карточки без рамок, кнопки 48px,
+ * радиусы 12/16/20, bottom sheet с backdrop-blur,
+ * toast / skeleton / empty.
  * ============================================================ */
 
 :root {
@@ -43,7 +43,8 @@ body {
 }
 
 h1, h2, h3 { font-weight: 700; line-height: 1.25; margin: 0; }
-h2 { font-size: 20px; }
+h2 { font-size: 20px; margin: 6px 0 12px; }
+h3 { font-size: 16px; }
 
 #app {
     max-width: 640px;
@@ -54,7 +55,7 @@ h2 { font-size: 20px; }
 }
 
 /* ============================================================
-   ШАПКА — двухстрочная
+   ШАПКА: лого-марка + название фирмы + роль/дата
    ============================================================ */
 .app-header {
     display: flex;
@@ -65,17 +66,42 @@ h2 { font-size: 20px; }
     background: var(--bg);
 }
 
-.app-header__org {
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.logo-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 700;
     font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.header-titles { min-width: 0; }
+
+.app-header__org {
+    font-size: 15px;
     font-weight: 700;
     line-height: 1.2;
-    margin: 0;
 }
 
 .app-header__meta {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--muted);
     line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .lang-select {
@@ -89,7 +115,7 @@ h2 { font-size: 20px; }
 }
 
 /* ============================================================
-   КАРТОЧКИ
+   КАРТОЧКИ (без рамок)
    ============================================================ */
 .card {
     background: var(--surface);
@@ -106,6 +132,23 @@ h2 { font-size: 20px; }
 }
 .card--tap:active { transform: scale(.98); }
 
+.card-title { font-weight: 600; margin-bottom: 4px; }
+.card-sub {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: 13px;
+    color: var(--muted);
+}
+.card-hours {
+    margin-left: auto;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+.card__enter { margin-top: 10px; }
+
 /* ============================================================
    СТАТИСТИКА
    ============================================================ */
@@ -113,7 +156,9 @@ h2 { font-size: 20px; }
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
+    margin-bottom: 12px;
 }
+.stat-row--2 { grid-template-columns: repeat(2, 1fr); }
 
 .stat {
     background: var(--surface);
@@ -163,13 +208,21 @@ h2 { font-size: 20px; }
     color: var(--accent);
 }
 
+.badge--draft { background: rgba(138, 150, 145, .16); color: var(--muted); }
+.badge--cancelled { background: rgba(248, 113, 113, .14); color: var(--danger); }
 .badge--wait {
     background: rgba(251, 191, 36, .14);
     color: var(--warn);
 }
+.badge--reporter {
+    background: rgba(96, 165, 250, .16);
+    color: #60A5FA;
+    text-transform: none;
+    letter-spacing: 0;
+}
 
 /* ============================================================
-   КНОПКИ
+   КНОПКИ (48px)
    ============================================================ */
 .btn {
     display: inline-flex;
@@ -198,8 +251,8 @@ h2 { font-size: 20px; }
 }
 
 .btn--ghost {
-    background: transparent;
-    color: var(--accent);
+    background: var(--surface-2);
+    color: var(--text);
 }
 
 .btn--danger {
@@ -208,6 +261,27 @@ h2 { font-size: 20px; }
 }
 
 .btn--block { width: 100%; }
+
+.btn-small {
+    height: 36px;
+    padding: 0 14px;
+    font-size: 13px;
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--text);
+    border: none;
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-back {
+    background: transparent;
+    color: var(--accent);
+    height: auto;
+    padding: 6px 0;
+    justify-content: flex-start;
+}
 
 /* ============================================================
    СПИСКИ И СТРОКИ
@@ -218,46 +292,67 @@ h2 { font-size: 20px; }
     gap: 8px;
 }
 
-.row {
+.row-line {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
+    padding: 10px 0;
+    font-family: inherit;
+    color: inherit;
     text-align: left;
+}
+
+.row-line--btn {
     background: var(--surface);
     border: none;
     border-radius: var(--r-md);
-    padding: 14px var(--pad);
-    font-family: inherit;
-    color: inherit;
+    padding: 12px var(--pad);
     cursor: pointer;
     box-shadow: 0 1px 2px rgba(0, 0, 0, .4);
     transition: transform .15s var(--ease-out);
 }
-.row:active { transform: scale(.98); }
+.row-line--btn:active { transform: scale(.98); }
 
-.row__title {
+.row-line__name {
     font-size: 16px;
     font-weight: 600;
-    line-height: 1.3;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.row__sub {
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 2px;
-}
-
-.row__meta {
+.row-line__meta {
     font-size: 13px;
     color: var(--muted);
     white-space: nowrap;
     flex-shrink: 0;
 }
 
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    color: #052E16;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.muted { color: var(--muted); }
+.my-hours {
+    font-size: 12px;
+    text-align: center;
+    margin: 16px 0 0;
+}
+
 /* ============================================================
-   BOTTOM SHEET
+   BOTTOM SHEET (backdrop-blur)
    ============================================================ */
 .sheet__backdrop {
     position: fixed;
@@ -276,6 +371,8 @@ h2 { font-size: 20px; }
     transform: translateX(-50%);
     width: 100%;
     max-width: 640px;
+    max-height: 85vh;
+    overflow-y: auto;
     background: var(--surface-2);
     border-radius: 24px 24px 0 0;
     padding: var(--pad);
@@ -292,6 +389,22 @@ h2 { font-size: 20px; }
     margin: 0 auto 12px;
 }
 
+.sheet__title { font-size: 18px; margin-bottom: 6px; }
+.sheet__h3 { margin: 14px 0 6px; font-size: 14px; color: var(--muted); }
+
+.sheet__totals {
+    border-top: 1px solid var(--border);
+    margin-top: 10px;
+    padding-top: 6px;
+}
+
+.sheet__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 14px;
+}
+
 @keyframes sheet-up {
     from { transform: translate(-50%, 100%); }
     to   { transform: translate(-50%, 0); }
@@ -305,20 +418,24 @@ h2 { font-size: 20px; }
 /* ============================================================
    ПОЛЯ ФОРМЫ
    ============================================================ */
-.field {
-    display: block;
-}
+.form { display: flex; flex-direction: column; gap: 12px; }
 
-.field__label {
+.form-field { display: block; }
+
+.form-label {
     display: block;
     font-size: 13px;
     color: var(--muted);
     margin-bottom: 6px;
 }
 
-.field input,
-.field select,
-.field textarea {
+.form input[type="text"],
+.form input[type="date"],
+.form input[type="number"],
+.form input[type="tel"],
+.form textarea,
+.form select,
+.form-field select {
     width: 100%;
     height: 48px;
     padding: 0 14px;
@@ -334,16 +451,41 @@ h2 { font-size: 20px; }
     appearance: none;
 }
 
-.field textarea { height: auto; padding: 12px 14px; resize: vertical; }
+.form textarea { height: auto; padding: 12px 14px; resize: vertical; }
 
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
-    border-color: var(--accent);
+.form input:focus,
+.form select:focus,
+.form textarea:focus { border-color: var(--accent); }
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.form-error {
+    color: var(--danger);
+    font-size: 14px;
+    margin: 0;
+}
+
+.check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 2px;
+    font-size: 15px;
+    cursor: pointer;
+}
+.check-item input[type="checkbox"],
+.check-item input[type="radio"] {
+    accent-color: var(--accent);
+    width: 18px;
+    height: 18px;
 }
 
 /* ============================================================
-   ЧИПЫ (выбор сотрудника / локации)
+   ЧИПЫ (выбор сотрудника / локации / быстрые часы)
    ============================================================ */
 .chip-row {
     display: flex;
@@ -376,7 +518,134 @@ h2 { font-size: 20px; }
     font-weight: 600;
 }
 
-.chip--on::after { content: "✓"; font-size: 13px; }
+/* ============================================================
+   СЕГМЕНТЫ (вкладки отчётов) — pill 44px
+   ============================================================ */
+.segment {
+    display: flex;
+    gap: 6px;
+    background: var(--surface);
+    border-radius: 999px;
+    padding: 4px;
+    margin-bottom: 12px;
+}
+
+.segment__btn {
+    flex: 1;
+    height: 44px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+}
+
+.segment__btn.is-active {
+    background: var(--accent);
+    color: var(--accent-ink);
+}
+
+/* ============================================================
+   СЕТКА 2x2 НА ГЛАВНОЙ
+   ============================================================ */
+.grid2x2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.grid2x2__wide { grid-column: 1 / -1; height: 52px; }
+.grid2x2__cell { height: 52px; }
+
+/* ============================================================
+   ЭКРАН ВВОДА ЧАСОВ
+   ============================================================ */
+.he-date {
+    width: 100%;
+    height: 56px;
+    border: none;
+    border-radius: var(--r-md);
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: left;
+    padding: 0 var(--pad);
+    cursor: pointer;
+}
+
+.he-same {
+    background: var(--surface);
+    border-radius: var(--r-md);
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.he-quick {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.he-row { padding: 10px 0; }
+
+.he-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.he-input {
+    width: 96px;
+    height: 52px;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 600;
+    font-family: inherit;
+    background: var(--surface);
+    border: 2px solid transparent;
+    border-radius: var(--r-sm);
+    color: var(--text);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+.he-input:focus { border-color: var(--accent); }
+
+.he-unit {
+    font-size: 12px;
+    color: var(--muted);
+    align-self: flex-end;
+    padding-bottom: 8px;
+}
+
+.he-val {
+    font-size: 28px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    min-width: 96px;
+    text-align: center;
+}
+.he-val--grey { color: var(--muted); }
+
+.he-sticky {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg);
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+    margin-top: 12px;
+}
+
+.he-save { height: 56px; font-size: 17px; }
 
 /* ============================================================
    НИЖНЯЯ НАВИГАЦИЯ
@@ -401,7 +670,7 @@ h2 { font-size: 20px; }
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    padding: 8px 2px 8px;
+    padding: 8px 2px;
     border: none;
     background: transparent;
     color: var(--muted);
@@ -412,7 +681,10 @@ h2 { font-size: 20px; }
     user-select: none;
 }
 
-.bottom-nav__icon { font-size: 20px; line-height: 1; }
+.bottom-nav__icon {
+    width: 24px;
+    height: 24px;
+}
 
 .bottom-nav__item.is-active { color: var(--accent); }
 
@@ -430,7 +702,6 @@ h2 { font-size: 20px; }
     color: var(--muted);
 }
 
-.empty__icon { font-size: 40px; line-height: 1; opacity: .7; }
 .empty__text { font-size: 14px; }
 
 /* ============================================================
@@ -480,8 +751,6 @@ h2 { font-size: 20px; }
     to   { background-position: -80% 0; }
 }
 
-.skeleton--text { height: 14px; margin: 6px 0; }
-.skeleton--title { height: 20px; width: 60%; margin-bottom: 10px; }
 .skeleton--card { height: 76px; border-radius: var(--r-md); }
 
 /* ============================================================
@@ -494,7 +763,6 @@ h2 { font-size: 20px; }
 }
 
 .screen[hidden] { display: none; }
-.screen h2 { margin: 6px 0 12px; }
 
 .screen-header {
     display: flex;
@@ -507,7 +775,7 @@ h2 { font-size: 20px; }
 .screen-message {
     text-align: center;
     color: var(--muted);
-    padding: 24px 8px;
+    padding: 12px 8px;
 }
 
 .loader {
@@ -521,233 +789,12 @@ h2 { font-size: 20px; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.status-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px var(--pad) 8px;
-    font-size: 12px;
-    color: var(--muted);
-}
-.status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
-}
-
-/* ============================================================
-   LEGACY-КЛАССЫ app.js (не удалять — генерируются скриптом)
-   ============================================================ */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-}
-.stat-card {
-    background: var(--surface);
-    border-radius: var(--r-md);
-    padding: 14px 12px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .4);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    text-align: center;
-}
-.stat-value { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.stat-label { font-size: 12px; color: var(--muted); }
-
-.card-tap {
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-    font: inherit;
-    color: inherit;
-    transition: transform .15s var(--ease-out);
-}
-.card-tap:active { transform: scale(.98); }
-
-.card-title { font-weight: 600; margin-bottom: 4px; }
-.card-sub {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: center;
-    font-size: 13px;
-    color: var(--muted);
-}
-
-.btn-primary { background: var(--accent); color: var(--accent-ink); }
-.btn-danger  { background: rgba(248, 113, 113, .14); color: var(--danger); }
-.btn-small {
-    height: 36px;
-    padding: 0 14px;
-    font-size: 13px;
-    border-radius: 10px;
-    background: var(--surface-2);
-    color: var(--text);
-}
-.btn-back {
-    background: transparent;
-    color: var(--accent);
-    height: auto;
-    padding: 6px 0;
-    justify-content: flex-start;
-}
-.btn-block { width: 100%; margin-top: 8px; }
-
-/* Формы (legacy разметка .form-field / .form-label) */
-.form { display: flex; flex-direction: column; gap: 12px; }
-.form-field { display: block; }
-.form-label {
-    display: block;
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 6px;
-}
-.form input[type="text"],
-.form input[type="date"],
-.form input[type="number"],
-.form input[type="tel"],
-.form textarea,
-.form select {
-    width: 100%;
-    height: 48px;
-    padding: 0 14px;
-    background: var(--surface-2);
-    border: 2px solid transparent;
-    border-radius: var(--r-sm);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 16px;
-    outline: none;
-    transition: border-color .15s;
-    -webkit-appearance: none;
-    appearance: none;
-}
-.form textarea { height: auto; padding: 12px 14px; resize: vertical; }
-.form input:focus,
-.form select:focus,
-.form textarea:focus { border-color: var(--accent); }
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-.check-list {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    background: var(--surface-2);
-    border-radius: var(--r-sm);
-    padding: 10px 12px;
-}
-.check-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 2px;
-    font-size: 15px;
-    cursor: pointer;
-}
-.check-item input[type="checkbox"],
-.check-item input[type="radio"] {
-    accent-color: var(--accent);
-    width: 18px;
-    height: 18px;
-}
-
-.mode-toggle { display: flex; gap: 16px; }
-
-.form-error {
-    color: var(--danger);
-    font-size: 14px;
-    margin: 0;
-}
-
-/* Нижняя навигация (legacy .app-nav) */
-.app-nav {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    max-width: 640px;
-    display: flex;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    padding-bottom: env(safe-area-inset-bottom);
-    z-index: 10;
-}
-.nav-item {
-    flex: 1;
-    border: none;
-    background: transparent;
-    padding: 8px 2px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    color: var(--muted);
-    font-family: inherit;
-    font-size: 10px;
-    cursor: pointer;
-    -webkit-user-select: none;
-    user-select: none;
-}
-.nav-item.is-active { color: var(--accent); }
-.nav-icon { font-size: 20px; line-height: 1; }
-
-/* Меню «Ещё» (legacy .more-menu) */
-.more-menu {
-    position: fixed;
-    bottom: calc(64px + env(safe-area-inset-bottom));
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - 28px);
-    max-width: 400px;
-    background: var(--surface-2);
-    border-radius: var(--r-lg);
-    padding: 6px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
-    z-index: 20;
-    animation: sheet-up .25s var(--ease-out);
-}
-.more-menu-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    border: none;
-    background: transparent;
-    padding: 14px;
-    border-radius: var(--r-sm);
-    font-family: inherit;
-    font-size: 15px;
-    color: var(--text);
-    cursor: pointer;
-}
-.more-menu-item:active { background: var(--surface); }
-
-/* Мелкие селекты внутри карточек (статусы выплат) */
-.card-sub select {
-    padding: 6px 10px;
-    border: none;
-    border-radius: 10px;
-    background: var(--surface-2);
-    color: var(--text);
-    font-family: inherit;
-    font-size: 13px;
-}
-
 /* ============================================================
    АДАПТИВ
    ============================================================ */
 @media (max-width: 380px) {
-    .stats-grid,
-    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .stat-row,
+    .stat-row--2 { grid-template-columns: repeat(2, 1fr); }
     .form-row { grid-template-columns: 1fr; }
     .card-sub { gap: 6px; }
 }

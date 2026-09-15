@@ -9,7 +9,7 @@
     <!-- Telegram Mini App SDK (обязательный скрипт для работы внутри Telegram) -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <!-- Стили приложения (v=3: дизайн-система, тёмная тема) -->
+    <!-- Стили приложения (v=6: новая дизайн-система, тёмная тема) -->
     <link rel="stylesheet" href="/app/static/styles.css?v=6">
 </head>
 <body>
@@ -17,12 +17,15 @@
     <div id="app">
 
         <!-- ============================================= -->
-        <!-- ШАПКА ПРИЛОЖЕНИЯ                             -->
+        <!-- ШАПКА: лого-марка + название фирмы + роль/дата -->
         <!-- ============================================= -->
         <header class="app-header">
             <div class="header-left">
-                <h1 class="app-header__org">AgroManager</h1>
-                <div class="app-header__meta" id="headerMeta"></div>
+                <div class="logo-mark" aria-hidden="true">A</div>
+                <div class="header-titles">
+                    <div id="headerOrg" class="app-header__org"></div>
+                    <div id="headerMeta" class="app-header__meta"></div>
+                </div>
             </div>
             <div class="header-right">
                 <select id="langSelect" class="lang-select" title="Язык / Language">
@@ -32,14 +35,6 @@
                 </select>
             </div>
         </header>
-
-        <!-- ============================================= -->
-        <!-- СТРОКА СОСТОЯНИЯ СИСТЕМЫ                     -->
-        <!-- ============================================= -->
-        <div class="status-bar" id="statusBar" role="status">
-            <span class="status-dot" aria-hidden="true"></span>
-            <span class="status-text">Status: <strong id="statusValue">Ok</strong></span>
-        </div>
 
         <!-- ============================================= -->
         <!-- ОСНОВНОЕ СОДЕРЖИМОЕ                          -->
@@ -63,20 +58,8 @@
 
             <!-- Экран: главная (сводка) -->
             <section class="screen" id="screenDashboard" data-screen-name="dashboard" hidden>
-                <h2 data-i18n="dashboardTitle">Главная</h2>
-                <div class="stat-row">
-                    <div class="stat">
-                        <span class="stat__value" id="statActiveTasks">0</span>
-                        <span class="stat__label" data-i18n="statActiveTasks">Активных заданий</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat__value" id="statHoursToday">0</span>
-                        <span class="stat__label" data-i18n="statHoursToday">Часов за сегодня</span>
-                    </div>
-                    <div class="stat">
-                        <span class="stat__value" id="statEarned">0</span>
-                        <span class="stat__label" data-i18n="statEarned">Начислено</span>
-                    </div>
+                <div id="dashboardBody">
+                    <!-- Содержимое собирает app.js по роли -->
                 </div>
             </section>
 
@@ -87,7 +70,7 @@
                     <button class="btn btn--primary" id="btnNewTask" hidden data-i18n="tasksNew">Новое задание</button>
                 </div>
                 <div class="list" id="tasksList">
-                    <!-- Карточки заданий будет добавлять script.js -->
+                    <!-- Карточки заданий будет добавлять app.js -->
                 </div>
             </section>
 
@@ -110,114 +93,43 @@
                             <option value="">—</option>
                         </select>
                     </label>
-                    <div class="form-field">
+                    <div class="form-field" id="ntLocationsField" hidden>
                         <span class="form-label" data-i18n="taskLocations">Локации</span>
-                        <div class="check-list" id="ntLocations"></div>
-                    </div>
-                    <div class="form-row">
-                        <label class="form-field">
-                            <span class="form-label" data-i18n="taskDateStart">Начало</span>
-                            <input type="date" id="ntDateStart">
-                        </label>
-                        <label class="form-field">
-                            <span class="form-label" data-i18n="taskDateEnd">Конец</span>
-                            <input type="date" id="ntDateEnd">
-                        </label>
+                        <div class="chip-row" id="ntLocations"></div>
                     </div>
                     <div class="form-field">
                         <span class="form-label" data-i18n="taskWorkers">Сотрудники</span>
-                        <div class="check-list" id="ntWorkers"></div>
+                        <div class="chip-row" id="ntWorkers"></div>
+                    </div>
+                    <div class="form-field" id="ntReporterField" hidden>
+                        <span class="form-label" data-i18n="taskReporter">Учётчик</span>
+                        <div class="chip-row" id="ntReporter"></div>
                     </div>
                     <label class="form-field">
-                        <span class="form-label" data-i18n="taskReporter">Учётчик (необязательно)</span>
-                        <select id="ntReporter">
-                            <option value="">—</option>
-                        </select>
+                        <span class="form-label" data-i18n="taskDateStart">Дата</span>
+                        <input type="date" id="ntDateStart">
                     </label>
-                    <div class="form-field">
-                        <span class="form-label" data-i18n="taskGroupMembers">Участники группы учётчика</span>
-                        <div class="check-list" id="ntGroupMembers"></div>
-                    </div>
+                    <label class="check-item">
+                        <input type="checkbox" id="ntMultiDay">
+                        <span data-i18n="taskMultiDay">Несколько дней</span>
+                    </label>
+                    <label class="form-field" id="ntDateEndField" hidden>
+                        <span class="form-label" data-i18n="taskDateEnd">По дату</span>
+                        <input type="date" id="ntDateEnd">
+                    </label>
                     <p class="form-error" id="ntError" hidden></p>
                     <button type="submit" class="btn btn--primary btn--block" id="ntSubmit" data-i18n="save">Создать</button>
                 </form>
             </section>
 
-            <!-- Экран: детали задания -->
-            <section class="screen" id="screenTaskDetail" data-screen-name="task-detail" hidden>
-                <button class="btn btn-back" id="btnBackTasks" data-i18n="back">← Назад</button>
-                <h2 id="taskDetailTitle">Задание</h2>
-                <div class="detail-content" id="taskDetailContainer">
-                    <!-- Информация о задании: заказчик, локация, участники, часы -->
-                </div>
-            </section>
-
-            <!-- Экран: рабочие часы -->
-            <section class="screen" id="screenHours" data-screen-name="hours" hidden>
-                <div class="screen-header">
-                    <h2 data-i18n="hoursTitle">Рабочие часы</h2>
-                    <button class="btn btn--primary" id="btnAddHours" data-i18n="hoursAdd">Добавить часы</button>
-                </div>
-                <div class="list" id="hoursList">
-                    <!-- Записи о часах будет добавлять script.js -->
-                </div>
-            </section>
-
-            <!-- Экран: форма «Ввод часов» (работник за себя / учётчик за группу) -->
-            <section class="screen" id="screenNewHours" data-screen-name="new-hours" hidden>
-                <button class="btn btn-back" id="btnBackNewHours" data-i18n="back">← Назад</button>
-                <h2 data-i18n="hoursNewTitle">Ввод часов</h2>
-                <form id="newHoursForm" class="form">
-                    <label class="form-field">
-                        <span class="form-label" data-i18n="hoursTask">Задание</span>
-                        <select id="nhTask" required>
-                            <option value="">—</option>
-                        </select>
-                    </label>
-                    <div class="form-row">
-                        <label class="form-field">
-                            <span class="form-label" data-i18n="hoursDate">Дата</span>
-                            <input type="date" id="nhDate" required>
-                        </label>
-                        <label class="form-field">
-                            <span class="form-label" data-i18n="hoursHours">Часы</span>
-                            <input type="number" id="nhHours" min="0.25" max="24" step="0.25" required>
-                        </label>
-                    </div>
-                    <label class="form-field">
-                        <span class="form-label" data-i18n="hoursLocation">Локация (необязательно)</span>
-                        <select id="nhLocation">
-                            <option value="">—</option>
-                        </select>
-                    </label>
-                    <div class="form-field" id="nhModeField" hidden>
-                        <span class="form-label" data-i18n="hoursMode">Кого записываем</span>
-                        <div class="mode-toggle">
-                            <label class="check-item">
-                                <input type="radio" name="nhMode" value="self" checked>
-                                <span data-i18n="modeSelf">Себя</span>
-                            </label>
-                            <label class="check-item">
-                                <input type="radio" name="nhMode" value="group">
-                                <span data-i18n="modeGroup">Группа (учётчик)</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="form-field" id="nhExcludeField" hidden>
-                        <span class="form-label" data-i18n="groupExclude">Не работал(и) в этот день — отметить</span>
-                        <div class="check-list" id="nhExclude"></div>
-                    </div>
-                    <p class="form-error" id="nhError" hidden></p>
-                    <button type="submit" class="btn btn--primary btn--block" id="nhSubmit" data-i18n="save">Создать</button>
-                </form>
-            </section>
-
-            <!-- Экран: отчёты -->
+            <!-- Экран: отчёты (две вкладки: Сводка | Выплаты) -->
             <section class="screen" id="screenReports" data-screen-name="reports" hidden>
                 <h2 data-i18n="reportsTitle">Отчёты</h2>
-                <div class="list" id="reportsList">
-                    <!-- Список доступных отчётов -->
+                <div class="segment" id="reportsSegment">
+                    <button class="segment__btn is-active" data-reports-tab="summary" data-i18n="tabSummary">Сводка</button>
+                    <button class="segment__btn" data-reports-tab="payouts" data-i18n="tabPayouts" hidden>Выплаты</button>
                 </div>
+                <div id="reportsBody"></div>
             </section>
 
             <!-- Экран: сотрудники (для руководителя) -->
@@ -270,7 +182,7 @@
                 </div>
             </section>
 
-            <!-- Экран: инвентарь (для руководителя) -->
+            <!-- Экран: инвентарь -->
             <section class="screen" id="screenInventory" data-screen-name="inventory" hidden>
                 <div class="screen-header">
                     <h2 data-i18n="inventoryTitle">Инвентарь</h2>
@@ -293,88 +205,73 @@
                 </div>
             </section>
 
-            <!-- Экран: выплаты (для руководителя) -->
-            <section class="screen" id="screenPayments" data-screen-name="payments" hidden>
-                <h2 data-i18n="paymentsTitle">Выплаты</h2>
-                <div class="card" id="payrollPanel">
-                    <div class="card-title" data-i18n="payrollCalc">Расчёт периода</div>
-                    <div class="form-row">
-                        <label class="form-field">
-                            <span class="form-label" data-i18n="periodStart">Начало периода</span>
-                            <input type="date" id="payStart">
-                        </label>
-                        <label class="form-field">
-                            <span class="form-label" data-i18n="periodEnd">Конец периода</span>
-                            <input type="date" id="payEnd">
-                        </label>
+            <!-- Экран: ввод часов (полноэкранный, открывается из задания) -->
+            <section class="screen" id="screenHoursEntry" data-screen-name="hours-entry" hidden>
+                <button class="btn btn-back" id="btnBackHoursEntry" data-i18n="back">← Назад</button>
+                <h2 data-i18n="hoursEntryTitle">Часы за работу</h2>
+                <p class="screen-message" id="heTaskTitle"></p>
+                <div class="form">
+                    <button type="button" class="he-date" id="heDateBtn"></button>
+                    <input type="date" id="heDate" hidden>
+                    <label class="check-item he-same">
+                        <input type="checkbox" id="heSame">
+                        <span data-i18n="hoursSameAll">Всем одинаково</span>
+                    </label>
+                    <p class="screen-message" id="heSameHint" hidden data-i18n="hoursSameHint"></p>
+                    <div class="he-quick" id="heQuick">
+                        <button type="button" class="chip" data-quick="4">4</button>
+                        <button type="button" class="chip" data-quick="8">8</button>
+                        <button type="button" class="chip" data-quick="10">10</button>
+                        <button type="button" class="chip" data-quick="12">12</button>
                     </div>
-                    <div class="form-row">
-                        <button class="btn btn--primary" id="btnPayPreview" data-i18n="payPreview">Рассчитать</button>
-                        <button class="btn btn--danger" id="btnPayClose" data-i18n="payClose">Закрыть период</button>
+                    <div class="list" id="hePeople"></div>
+                    <div class="form-field" id="heReasonField" hidden>
+                        <span class="form-label" data-i18n="hoursReason">Почему меняете часы?</span>
+                        <input type="text" id="heReason" data-i18n-placeholder="hoursReasonHint">
                     </div>
-                    <p class="form-error" id="payError" hidden></p>
+                    <p class="form-error" id="heError" hidden></p>
                 </div>
-                <div class="list" id="payrollTable"></div>
-                <div class="list" id="paymentsList">
-                    <!-- Периоды и статусы выплат -->
-                </div>
-            </section>
-
-            <!-- Экран: профиль -->
-            <section class="screen" id="screenProfile" data-screen-name="profile" hidden>
-                <h2 data-i18n="profileTitle">Профиль</h2>
-                <div id="profileInfo">
-                    <!-- Данные пользователя: имя, роль, ставка, инвентарь -->
+                <div class="he-sticky">
+                    <button class="btn btn--primary btn--block he-save" id="heSave" data-i18n="save">Сохранить</button>
+                    <p class="screen-message" id="heHint" data-i18n="hoursHintEmpty"></p>
                 </div>
             </section>
 
         </main>
 
         <!-- ============================================= -->
-        <!-- НИЖНЯЯ НАВИГАЦИЯ                             -->
+        <!-- НИЖНЯЯ НАВИГАЦИЯ: 5 пунктов, инлайн SVG       -->
         <!-- ============================================= -->
-        <nav class="app-nav" id="appNav">
-            <button class="nav-item" data-nav-target="dashboard">
-                <span class="nav-icon">🏠</span>
+        <nav class="bottom-nav" id="bottomNav">
+            <button class="bottom-nav__item" data-nav-target="dashboard">
+                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
                 <span class="nav-label" data-i18n="navDashboard">Главная</span>
             </button>
-            <button class="nav-item" data-nav-target="tasks">
-                <span class="nav-icon">📋</span>
+            <button class="bottom-nav__item" data-nav-target="tasks">
+                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
                 <span class="nav-label" data-i18n="navTasks">Задания</span>
             </button>
-            <button class="nav-item" data-nav-target="hours">
-                <span class="nav-icon">⏱</span>
-                <span class="nav-label" data-i18n="navHours">Часы</span>
-            </button>
-            <button class="nav-item" data-nav-target="reports">
-                <span class="nav-icon">📊</span>
+            <button class="bottom-nav__item" data-nav-target="reports">
+                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
                 <span class="nav-label" data-i18n="navReports">Отчёты</span>
             </button>
-            <button class="nav-item" id="navProfileBtn" data-nav-target="profile">
-                <span class="nav-icon">👤</span>
-                <span class="nav-label" data-i18n="navProfile">Профиль</span>
+            <button class="bottom-nav__item" data-nav-target="team" hidden>
+                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.2 3.4-5 6.5-5s5.7 1.8 6.5 5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 15.2c2.8.2 4.8 1.8 5.5 4.5"/></svg>
+                <span class="nav-label" data-i18n="navTeam">Команда</span>
             </button>
-            <button class="nav-item" id="navMoreBtn" data-nav-target="more" hidden>
-                <span class="nav-icon">☰</span>
+            <button class="bottom-nav__item" data-nav-target="inventory" hidden>
+                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 12h18"/></svg>
+                <span class="nav-label" data-i18n="navInventory">Инвентарь</span>
+            </button>
+            <button class="bottom-nav__item" data-nav-target="more">
+                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
                 <span class="nav-label" data-i18n="navMore">Ещё</span>
             </button>
         </nav>
 
-        <!-- Дополнительное меню руководителя -->
-        <div class="more-menu" id="moreMenu" hidden>
-            <button class="more-menu-item" data-nav-target="team">
-                <span>👥</span> <span data-i18n="navTeam">Сотрудники</span>
-            </button>
-            <button class="more-menu-item" data-nav-target="clients">
-                <span>🏢</span> <span data-i18n="navClients">Заказчики</span>
-            </button>
-            <button class="more-menu-item" data-nav-target="inventory">
-                <span>🧰</span> <span data-i18n="navInventory">Инвентарь</span>
-            </button>
-            <button class="more-menu-item" data-nav-target="payments">
-                <span>💰</span> <span data-i18n="navPayments">Выплаты</span>
-            </button>
-        </div>
+        <!-- Корень bottom sheet'ов и тостов -->
+        <div id="sheetRoot"></div>
+        <div id="toastRoot"></div>
 
     </div>
 
@@ -393,7 +290,7 @@
         })();
     </script>
 
-    <!-- Логика приложения (v=2: applyManagerUI + btnAddItem, сброс кэша webview) -->
+    <!-- Логика приложения (v=6: экраны по ролям, листы, ввод часов из задания) -->
     <script src="/app/static/app.js?v=6"></script>
 
 </body>
