@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.bot.router import router as bot_router
 from app.bot.telegram import setup_webhook
-from app.routers import users, clients, tasks, work_entries, payroll, reports, inventory, miniapp
+from app.routers import users, clients, tasks, work_entries, payroll, reports, inventory, miniapp, aggregates
 
 app = FastAPI(title="AgroWork")
 
@@ -24,6 +24,7 @@ app.include_router(payroll.router)
 app.include_router(reports.router)
 app.include_router(inventory.router)
 app.include_router(bot_router)
+app.include_router(aggregates.router)  # агрегатные read-only эндпоинты Mini App v4
 
 @app.on_event("startup")
 def _bot_webhook():

@@ -310,8 +310,87 @@ check("9c. workers непустой и is_reporter у учётчика",
 check("9d. hours_today > 0 (5 ч за сегодня)",
       Decimal(str(dash["hours_today"])) == 5, str(dash["hours_today"]))
 
+# ---------- 10. Агрегатные эндпоинты Mini App v4 ----------
+from decimal import Decimal as _D
+
+# 10a. /api/me/today — Иван назначен на активное задание t2 (сегодня)
+r = client.get("/api/me/today", headers={"X-Actor-Id": str(w1["id"])})
+mt = r.json()
+mt_task = next((t for t in mt["tasks"] if t["id"] == t2), None)
+check("10a. me/today: активное задание, мои часы, флаг учётчика",
+      r.status_code == 200 and mt_task is not None
+      and _D(str(mt_task["my_hours_today"])) == 5
+      and mt_task["is_reporter"] is True
+      and any(w["user_id"] == w1["id"] and w["hours_today"] for w in mt_task["workers"]),
+      str(mt)[:150])
+
+# 10b. /api/me/history — у Петро есть правка 8 -> 6 с причиной
+r = client.get("/api/me/history", headers={"X-Actor-Id": str(w2["id"])})
+h = r.json()
+corrected = [e for e in h if e["corrected"]]
+check("10b. me/history: правка видна с причиной",
+      r.status_code == 200 and len(corrected) == 1
+      and corrected[0]["corrected_reason"] == "ушёл на 2 ч раньше"
+      and _D(str(corrected[0]["hours"])) == 6,
+      str(corrected[:1])[:150])
+
+# 10c. /api/me/money — период закрыт (7b), значит открытый период после D2
+r = client.get("/api/me/money", headers={"X-Actor-Id": str(w2["id"])})
+m = r.json()
+check("10c. me/money: открытый период после последнего закрытия, нули",
+      r.status_code == 200
+      and m["period_start"] == date(2026, 8, 26).isoformat()
+      and _D(str(m["earned"])) == 0 and _D(str(m["to_pay"])) == 0
+      and m["last_payout"] is not None
+      and _D(str(m["last_payout"]["amount"])) == 125,
+      str(m)[:200])
+
+# 10d. /api/dashboard/today — руководитель
+r = client.get("/api/dashboard/today", headers={"X-Actor-Id": str(boss["id"])})
+d = r.json()
+check("10d. dashboard/today: 1 работник с часами, 5 ч, t2 не в tasks_no_hours",
+      r.status_code == 200 and d["workers_count"] == 1
+      and _D(str(d["hours_today"])) == 5
+      and t2 not in d["tasks_no_hours"]
+      and any(t["id"] == t2 for t in d["tasks"]),
+      str({k: d[k] for k in ("workers_count", "hours_today", "tasks_no_hours")}))
+
+# 10e. /api/tasks/{id}/matrix — руководитель
+r = client.get(f"/api/tasks/{tid}/matrix", headers={"X-Actor-Id": str(boss["id"])})
+mx = r.json()
+row_w2 = next((row for row in mx["rows"] if row["user_id"] == w2["id"]), None)
+check("10e. matrix: даты D1-D2, у Петро 8 и 6 ч",
+      r.status_code == 200 and mx["dates"] == [D1.isoformat(), D2.isoformat()]
+      and row_w2 is not None
+      and _D(str(row_w2["cells"][D1.isoformat()])) == _D("6")
+      and _D(str(row_w2["cells"][D2.isoformat()])) == _D("8"),
+      str(mx)[:200])
+
+# 10f. /api/users/{id}/summary — руководитель; у Петро закрытый период,
+# поэтому hours_period = 0, но last_entries видны
+r = client.get(f"/api/users/{w2['id']}/summary", headers={"X-Actor-Id": str(boss["id"])})
+s = r.json()
+check("10f. user summary: ставка, открытый период, последние записи",
+      r.status_code == 200 and _D(str(s["rate"])) == _D("12.50")
+      and s["period_start"] == date(2026, 8, 26).isoformat()
+      and _D(str(s["hours_period"])) == 0
+      and len(s["last_entries"]) >= 1
+      and any(e["task_title"] == "Сбор урожая" for e in s["last_entries"]),
+      str(s)[:200])
+
+# 10g. права: не-руководителю запрещены manager-эндпоинты (403)
+r1 = client.get("/api/dashboard/today", headers={"X-Actor-Id": str(w2["id"])})
+r2 = client.get(f"/api/tasks/{tid}/matrix", headers={"X-Actor-Id": str(w2["id"])})
+r3 = client.get(f"/api/users/{w1['id']}/summary", headers={"X-Actor-Id": str(w2["id"])})
+check("10g. не-руководитель получает 403 на dashboard/matrix/summary",
+      r1.status_code == 403 and r2.status_code == 403 and r3.status_code == 403,
+      f"{r1.status_code}/{r2.status_code}/{r3.status_code}")
+
 print()
 fails = [n for n, ok, _ in results if not ok]
+print(f"ИТОГ: {len(results) - len(fails)}/{len(results)} пройдено")
+if fails:
+    print("Провалены:", *fails, sep="\n  - ")
 print(f"ИТОГ: {len(results) - len(fails)}/{len(results)} пройдено")
 if fails:
     print("Провалены:", *fails, sep="\n  - ")
