@@ -205,6 +205,56 @@
                 </div>
             </section>
 
+            <!-- Экран: сегодня (v4, работник/менеджер) -->
+            <section class="screen" id="screenToday" data-screen-name="today" hidden>
+                <h2 data-i18n="todayTitle">Сегодня</h2>
+                <div id="todayBody"></div>
+            </section>
+
+            <!-- Экран: история (v4) -->
+            <section class="screen" id="screenHistory" data-screen-name="history" hidden>
+                <h2 data-i18n="histTitle">История</h2>
+                <div class="segment" id="histSegment">
+                    <button class="segment__btn is-active" data-hist="week" data-i18n="histWeek">Неделя</button>
+                    <button class="segment__btn" data-hist="month" data-i18n="histMonth">Месяц</button>
+                    <button class="segment__btn" data-hist="custom" data-i18n="histCustom">Свой</button>
+                </div>
+                <div class="form-row" id="histCustomRange" hidden>
+                    <label class="form-field"><span class="form-label" data-i18n="payStart">Начало</span>
+                        <input type="date" id="histFrom"></label>
+                    <label class="form-field"><span class="form-label" data-i18n="payEnd">Конец</span>
+                        <input type="date" id="histTo"></label>
+                    <button class="btn btn--primary" id="histApply" data-i18n="histApply">Применить</button>
+                </div>
+                <div class="list" id="historyList"></div>
+            </section>
+
+            <!-- Экран: деньги (v4) -->
+            <section class="screen" id="screenMoney" data-screen-name="money" hidden>
+                <h2 data-i18n="moneyTitle">Деньги</h2>
+                <div id="moneyBody"></div>
+            </section>
+
+            <!-- Экран: дашборд руководителя (v4) -->
+            <section class="screen" id="screenManagerDash" data-screen-name="manager-dash" hidden>
+                <h2 data-i18n="dashTitle">Сегодня</h2>
+                <div id="managerDashBody"></div>
+            </section>
+
+            <!-- Экран: матрица задания (v4, руководитель) -->
+            <section class="screen" id="screenMatrix" data-screen-name="matrix" hidden>
+                <button class="btn btn-back" id="btnBackMatrix" data-i18n="back">← Назад</button>
+                <h2 data-i18n="matrixTitle">Таблица часов</h2>
+                <div id="matrixBody"></div>
+            </section>
+
+            <!-- Экран: карточка сотрудника (v4, руководитель) -->
+            <section class="screen" id="screenUserSummary" data-screen-name="user-summary" hidden>
+                <button class="btn btn-back" id="btnBackSummary" data-i18n="back">← Назад</button>
+                <h2 data-i18n="sumTitle">Карточка сотрудника</h2>
+                <div id="userSummaryBody"></div>
+            </section>
+
             <!-- Экран: ввод часов (полноэкранный, открывается из задания) -->
             <section class="screen" id="screenHoursEntry" data-screen-name="hours-entry" hidden>
                 <button class="btn btn-back" id="btnBackHoursEntry" data-i18n="back">← Назад</button>
@@ -243,6 +293,22 @@
         <!-- НИЖНЯЯ НАВИГАЦИЯ: 5 пунктов, инлайн SVG       -->
         <!-- ============================================= -->
         <nav class="bottom-nav" id="bottomNav">
+            <button class="bottom-nav__item" data-nav-target="today" hidden>
+                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                <span class="nav-label" data-i18n="navToday">Сегодня</span>
+            </button>
+            <button class="bottom-nav__item" data-nav-target="history" hidden>
+                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l2.5 2.5"/><path d="M3.05 11a9 9 0 1 1 .5 4"/><path d="M3 22v-5h5"/></svg>
+                <span class="nav-label" data-i18n="navHistory">История</span>
+            </button>
+            <button class="bottom-nav__item" data-nav-target="money" hidden>
+                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M15 9.5c0-1.4-1.3-2-3-2s-3 .6-3 2 1.3 1.8 3 2.2 3 .9 3 2.3-1.3 2-3 2-3-.6-3-2"/></svg>
+                <span class="nav-label" data-i18n="navMoney">Деньги</span>
+            </button>
+            <button class="bottom-nav__item" data-nav-target="manager-dash" hidden>
+                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+                <span class="nav-label" data-i18n="dashTitle">Сегодня</span>
+            </button>
             <button class="bottom-nav__item" data-nav-target="dashboard">
                 <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
                 <span class="nav-label" data-i18n="navDashboard">Главная</span>

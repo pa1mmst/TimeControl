@@ -39,7 +39,10 @@
         reportsTab: 'summary',
         detailTask: null,   // задание в открытом листе
         sheetTaskId: null,
-        heCtx: null         // контекст экрана ввода часов
+        heCtx: null,        // контекст экрана ввода часов
+        histRange: null,    // [from, to] для экрана История
+        matrixTaskId: null, // задание открытой матрицы
+        summaryUserId: null // сотрудник открытой карточки
     };
 
     /* ========================================================
@@ -172,7 +175,42 @@
             'pickHolder': 'Кому выдать?',
             'returnStock': 'Вернуть на склад',
             'itemSaved': 'Сохранено',
-            'inventoryEmpty': 'Пока нет предметов. Нажмите «Добавить», чтобы создать'
+            'inventoryEmpty': 'Пока нет предметов. Нажмите «Добавить», чтобы создать',
+            // --- v4: сегодня / история / деньги / дашборд / матрица / карточка ---
+            'navToday': 'Сегодня', 'navHistory': 'История', 'navMoney': 'Деньги',
+            'todayTitle': 'Сегодня',
+            'todayNoTasks': 'На сегодня заданий нет',
+            'todayMyHours': 'Мои часы сегодня: {n} ч',
+            'todayEnterHours': 'Записать часы',
+            'todayEntered': 'Записано: {n} ч',
+            'todayNotEntered': 'Часы ещё не записаны',
+            'histTitle': 'История',
+            'histWeek': 'Неделя', 'histMonth': 'Месяц', 'histCustom': 'Свой',
+            'histApply': 'Применить',
+            'histEmpty': 'Записей за период нет',
+            'histCorrected': 'Исправлено',
+            'moneyTitle': 'Деньги',
+            'moneyPeriod': 'Период с {d}',
+            'moneyHours': 'Часы', 'moneyEarned': 'Начислено',
+            'moneyAdvances': 'Аванс', 'moneyToPay': 'К выплате',
+            'moneyRate': 'Ставка/час',
+            'moneyLastPayout': 'Последняя выплата',
+            'moneyNoPayout': 'Выплат ещё не было',
+            'moneyInventory': 'Инвентарь на руках',
+            'moneyNoInventory': 'Инвентаря на руках нет',
+            'payout.accrued': 'начислено', 'payout.pending': 'ожидает', 'payout.paid': 'выплачено',
+            'dashTitle': 'Сегодня',
+            'dashWorkers': 'Людей на работе', 'dashNoHoursTasks': 'Заданий без часов',
+            'dashNoHoursWarn': 'Задания без часов сегодня: {n}',
+            'dashNoHours': 'нет часов',
+            'dashOpenMatrix': 'Таблица часов',
+            'dashOpenWorker': 'Карточка сотрудника',
+            'matrixTitle': 'Таблица часов',
+            'matrixEmpty': 'Нет данных',
+            'sumTitle': 'Карточка сотрудника',
+            'sumPeriod': 'За период с {d}',
+            'sumLastEntries': 'Последние записи',
+            'sumNoEntries': 'Записей нет'
         },
         uk: {
             'app.name': 'AgroManager',
@@ -291,7 +329,41 @@
             'pickHolder': 'Кому видати?',
             'returnStock': 'Повернути на склад',
             'itemSaved': 'Збережено',
-            'inventoryEmpty': 'Поки немає предметів. Натисніть «Додати», щоб створити'
+            'inventoryEmpty': 'Поки немає предметів. Натисніть «Додати», щоб створити',
+            'navToday': 'Сьогодні', 'navHistory': 'Історія', 'navMoney': 'Гроші',
+            'todayTitle': 'Сьогодні',
+            'todayNoTasks': 'На сьогодні завдань немає',
+            'todayMyHours': 'Мої години сьогодні: {n} год',
+            'todayEnterHours': 'Записати години',
+            'todayEntered': 'Записано: {n} год',
+            'todayNotEntered': 'Години ще не записані',
+            'histTitle': 'Історія',
+            'histWeek': 'Тиждень', 'histMonth': 'Місяць', 'histCustom': 'Свій',
+            'histApply': 'Застосувати',
+            'histEmpty': 'Записів за період немає',
+            'histCorrected': 'Виправлено',
+            'moneyTitle': 'Гроші',
+            'moneyPeriod': 'Період з {d}',
+            'moneyHours': 'Години', 'moneyEarned': 'Нараховано',
+            'moneyAdvances': 'Аванс', 'moneyToPay': 'До виплати',
+            'moneyRate': 'Ставка/год',
+            'moneyLastPayout': 'Остання виплата',
+            'moneyNoPayout': 'Виплат ще не було',
+            'moneyInventory': 'Інвентар на руках',
+            'moneyNoInventory': 'Інвентарю на руках немає',
+            'payout.accrued': 'нараховано', 'payout.pending': 'очікує', 'payout.paid': 'виплачено',
+            'dashTitle': 'Сьогодні',
+            'dashWorkers': 'Людей на роботі', 'dashNoHoursTasks': 'Завдань без годин',
+            'dashNoHoursWarn': 'Завдання без годин сьогодні: {n}',
+            'dashNoHours': 'немає годин',
+            'dashOpenMatrix': 'Таблиця годин',
+            'dashOpenWorker': 'Картка працівника',
+            'matrixTitle': 'Таблиця годин',
+            'matrixEmpty': 'Немає даних',
+            'sumTitle': 'Картка працівника',
+            'sumPeriod': 'За період з {d}',
+            'sumLastEntries': 'Останні записи',
+            'sumNoEntries': 'Записів немає'
         },
         es: {
             'app.name': 'AgroManager',
@@ -410,7 +482,41 @@
             'pickHolder': '¿A quién entregar?',
             'returnStock': 'Devolver al almacén',
             'itemSaved': 'Guardado',
-            'inventoryEmpty': 'Aún no hay artículos. Pulse «Añadir» para crear uno'
+            'inventoryEmpty': 'Aún no hay artículos. Pulse «Añadir» para crear uno',
+            'navToday': 'Hoy', 'navHistory': 'Historial', 'navMoney': 'Dinero',
+            'todayTitle': 'Hoy',
+            'todayNoTasks': 'No hay tareas para hoy',
+            'todayMyHours': 'Mis horas hoy: {n} h',
+            'todayEnterHours': 'Registrar horas',
+            'todayEntered': 'Registrado: {n} h',
+            'todayNotEntered': 'Horas aún no registradas',
+            'histTitle': 'Historial',
+            'histWeek': 'Semana', 'histMonth': 'Mes', 'histCustom': 'Propio',
+            'histApply': 'Aplicar',
+            'histEmpty': 'Sin registros en el período',
+            'histCorrected': 'Corregido',
+            'moneyTitle': 'Dinero',
+            'moneyPeriod': 'Período desde {d}',
+            'moneyHours': 'Horas', 'moneyEarned': 'Acumulado',
+            'moneyAdvances': 'Adelanto', 'moneyToPay': 'A pagar',
+            'moneyRate': 'Tarifa/hora',
+            'moneyLastPayout': 'Último pago',
+            'moneyNoPayout': 'Aún no hay pagos',
+            'moneyInventory': 'Inventario en mano',
+            'moneyNoInventory': 'Sin inventario en mano',
+            'payout.accrued': 'acumulado', 'payout.pending': 'pendiente', 'payout.paid': 'pagado',
+            'dashTitle': 'Hoy',
+            'dashWorkers': 'Personas en trabajo', 'dashNoHoursTasks': 'Tareas sin horas',
+            'dashNoHoursWarn': 'Tareas sin horas hoy: {n}',
+            'dashNoHours': 'sin horas',
+            'dashOpenMatrix': 'Tabla de horas',
+            'dashOpenWorker': 'Ficha del empleado',
+            'matrixTitle': 'Tabla de horas',
+            'matrixEmpty': 'Sin datos',
+            'sumTitle': 'Ficha del empleado',
+            'sumPeriod': 'Por el período desde {d}',
+            'sumLastEntries': 'Últimos registros',
+            'sumNoEntries': 'Sin registros'
         }
     };
 
@@ -661,6 +767,22 @@
         reportUser(userId, start, end) {
             return this.request('/reports/user/' + entry_id(userId) +
                 '?start=' + start + '&end=' + end);
+        },
+        // --- v4: агрегатные эндпоинты ---
+        meToday() { return this.request('/me/today'); },
+        meHistory(from, to) {
+            const p = [];
+            if (from) p.push('date_from=' + from);
+            if (to) p.push('date_to=' + to);
+            return this.request('/me/history' + (p.length ? '?' + p.join('&') : ''));
+        },
+        meMoney() { return this.request('/me/money'); },
+        dashboardToday() { return this.request('/dashboard/today'); },
+        taskMatrix(taskId) {
+            return this.request('/tasks/' + entry_id(taskId) + '/matrix');
+        },
+        userSummary(userId) {
+            return this.request('/users/' + entry_id(userId) + '/summary');
         }
     };
 
@@ -673,6 +795,11 @@
             const target = btn.getAttribute('data-nav-target');
             if (target === 'team') btn.hidden = !manager;
             if (target === 'inventory') btn.hidden = manager;
+            // v4: работнику — Сегодня/История/Деньги; менеджеру — Дашборд
+            if (target === 'today' || target === 'history' || target === 'money') {
+                btn.hidden = manager;
+            }
+            if (target === 'manager-dash') btn.hidden = !manager;
         });
     }
 
@@ -1576,6 +1703,8 @@
             '<input type="number" id="ueRate" min="0" step="0.01" value="' + escapeHtml(String(u.hourly_rate)) + '"></label>' +
             '<div class="card-sub"><span>' + escapeHtml(t('profile.role')) + ': ' + escapeHtml(roleLabel(u)) + '</span>' +
             '<span>' + escapeHtml(u.is_active ? t('profile.active') : t('profile.inactive')) + '</span></div>' +
+            '<button type="button" class="btn btn--ghost btn--block" data-action="open-user-summary" data-user="' + u.id + '">' +
+            escapeHtml(t('dashOpenWorker')) + '</button>' +
             '<p class="form-error" id="ueError" hidden></p>' +
             '<button type="submit" class="btn btn--primary btn--block">' + escapeHtml(t('save')) + '</button>' +
             '</form>');
@@ -1883,6 +2012,296 @@
     }
 
     /* ========================================================
+     * 19a. v4: СЕГОДНЯ (работник)
+     * ======================================================== */
+    async function loadToday() {
+        showScreen('loading');
+        try {
+            state.meToday = await api.meToday();
+            renderToday();
+        } catch (err) { renderError(err.message); }
+    }
+
+    function renderToday() {
+        const data = state.meToday;
+        const body = $('#todayBody');
+        if (!data || !data.tasks || !data.tasks.length) {
+            body.innerHTML = '<div class="empty"><div class="empty__text">' +
+                escapeHtml(t('todayNoTasks')) + '</div></div>';
+            showScreen('today');
+            return;
+        }
+        const myTotal = data.tasks.reduce((s, tk) => s + num(tk.my_hours_today), 0);
+        const cards = data.tasks.map((tk) => {
+            const workers = (tk.workers || []).map((w) =>
+                escapeHtml(w.name) +
+                (w.hours_today !== null && w.hours_today !== undefined
+                    ? ' ' + escapeHtml(fmtHours(w.hours_today)) + escapeHtml(t('hoursUnit'))
+                    : '') +
+                (w.is_reporter
+                    ? ' <span class="badge badge--reporter">' + escapeHtml(t('role.reporter')) + '</span>'
+                    : '')
+            ).join(', ');
+            const entered = num(tk.my_hours_today) > 0;
+            return '<div class="card card--tap" data-task-id="' + tk.id + '" role="button" tabindex="0">' +
+                '<div class="card-title">' + escapeHtml(tk.title) + '</div>' +
+                '<div class="card-sub"><span>' +
+                [tk.client_name, (tk.location_names || []).join(', ')]
+                    .filter(Boolean).map(escapeHtml).join(' · ') + '</span></div>' +
+                (workers ? '<div class="card-sub"><span>' + workers + '</span></div>' : '') +
+                '<div class="card-sub"><span class="' + (entered ? '' : 'muted') + '">' +
+                escapeHtml(entered
+                    ? t('todayEntered', { n: fmtHours(tk.my_hours_today) })
+                    : t('todayNotEntered')) + '</span></div>' +
+                '<button class="btn btn--primary btn--block card__enter" data-action="enter-hours" data-id="' + tk.id + '">' +
+                escapeHtml(t('todayEnterHours')) + '</button>' +
+                '</div>';
+        }).join('');
+        body.innerHTML =
+            (myTotal > 0
+                ? '<p class="muted my-hours">' + escapeHtml(t('todayMyHours', { n: fmtHours(myTotal) })) + '</p>'
+                : '') +
+            '<div class="list">' + cards + '</div>';
+        showScreen('today');
+    }
+
+    /* ========================================================
+     * 19b. v4: ИСТОРИЯ (работник)
+     * ======================================================== */
+    async function loadHistory(preset) {
+        showScreen('history');
+        state.histPreset = preset || 'week';
+        document.querySelectorAll('#histSegment .segment__btn').forEach((b) => {
+            b.classList.toggle('is-active',
+                b.getAttribute('data-hist') === state.histPreset);
+        });
+        $('#histCustomRange').hidden = state.histPreset !== 'custom';
+        let from = null, to = null;
+        if (state.histPreset === 'week') {
+            const r = weekRange(); from = r[0]; to = r[1];
+        } else if (state.histPreset === 'month') {
+            const r = monthRange(); from = r[0]; to = r[1];
+        } else {
+            if (state.histRange) { from = state.histRange[0]; to = state.histRange[1]; }
+            else return; // ждём «Применить»
+        }
+        await refreshHistory(from, to);
+    }
+
+    async function refreshHistory(from, to) {
+        const box = $('#historyList');
+        box.innerHTML = '<div class="skeleton skeleton--card"></div>';
+        try {
+            const rows = await api.meHistory(from, to);
+            if (!rows.length) {
+                box.innerHTML = '<div class="empty"><div class="empty__text">' +
+                    escapeHtml(t('histEmpty')) + '</div></div>';
+                return;
+            }
+            // группировка по датам
+            const byDate = {};
+            rows.forEach((r) => {
+                (byDate[r.date] = byDate[r.date] || []).push(r);
+            });
+            box.innerHTML = Object.keys(byDate).sort().reverse().map((d) =>
+                '<div class="card">' +
+                '<div class="card-title">' + escapeHtml(fmtDateHuman(d)) + '</div>' +
+                byDate[d].map((r) =>
+                    '<div class="row-line"><span>' + escapeHtml(r.task_title || '—') +
+                    (r.location ? ' · ' + escapeHtml(r.location) : '') +
+                    (r.corrected
+                        ? ' <span class="badge badge--warn" title="' + escapeHtml(r.corrected_reason || '') + '">' +
+                          escapeHtml(t('histCorrected')) + '</span>'
+                        : '') + '</span>' +
+                    '<span class="row-line__meta">' + escapeHtml(fmtHours(r.hours)) + ' ' +
+                    escapeHtml(t('hoursUnit')) + '</span></div>'
+                ).join('') + '</div>'
+            ).join('');
+        } catch (err) {
+            box.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
+        }
+    }
+
+    /* ========================================================
+     * 19c. v4: ДЕНЬГИ (работник)
+     * ======================================================== */
+    async function loadMoney() {
+        showScreen('loading');
+        try {
+            state.money = await api.meMoney();
+            renderMoney();
+        } catch (err) { renderError(err.message); }
+    }
+
+    function renderMoney() {
+        const m = state.money;
+        const body = $('#moneyBody');
+        if (!m) { showScreen('money'); return; }
+        const lp = m.last_payout;
+        body.innerHTML =
+            '<p class="muted my-hours">' + escapeHtml(t('moneyPeriod', { d: fmtDateHuman(m.period_start) })) + '</p>' +
+            '<div class="stat-row stat-row--2">' +
+            '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHours(m.hours)) + '</span>' +
+            '<span class="stat__label">' + escapeHtml(t('moneyHours')) + '</span></div>' +
+            '<div class="stat"><span class="stat__value">' + escapeHtml(num(m.earned).toFixed(2)) + '</span>' +
+            '<span class="stat__label">' + escapeHtml(t('moneyEarned')) + '</span></div>' +
+            '</div>' +
+            '<div class="stat-row stat-row--2">' +
+            '<div class="stat"><span class="stat__value">' + escapeHtml(num(m.advances).toFixed(2)) + '</span>' +
+            '<span class="stat__label">' + escapeHtml(t('moneyAdvances')) + '</span></div>' +
+            '<div class="stat"><span class="stat__value">' + escapeHtml(num(m.to_pay).toFixed(2)) + '</span>' +
+            '<span class="stat__label">' + escapeHtml(t('moneyToPay')) + '</span></div>' +
+            '</div>' +
+            '<div class="card">' +
+            '<div class="row-line"><span>' + escapeHtml(t('moneyRate')) + '</span>' +
+            '<span class="row-line__meta">' + escapeHtml(num(m.rate).toFixed(2)) + '</span></div>' +
+            '<div class="row-line"><span>' + escapeHtml(t('moneyLastPayout')) + '</span>' +
+            (lp
+                ? '<span class="row-line__meta">' + escapeHtml(fmtDateHuman(lp.date)) + ' · ' +
+                  escapeHtml(num(lp.amount).toFixed(2)) + ' · ' +
+                  escapeHtml(t('payout.' + lp.status)) + '</span>'
+                : '<span class="row-line__meta muted">' + escapeHtml(t('moneyNoPayout')) + '</span>') +
+            '</div></div>' +
+            '<h3 class="sheet__h3">' + escapeHtml(t('moneyInventory')) + '</h3>' +
+            ((m.inventory || []).length
+                ? m.inventory.map((i) =>
+                    '<div class="row-line"><span>' + escapeHtml(i.name) + '</span></div>').join('')
+                : '<p class="screen-message">' + escapeHtml(t('moneyNoInventory')) + '</p>');
+        showScreen('money');
+    }
+
+    /* ========================================================
+     * 19d. v4: ДАШБОРД РУКОВОДИТЕЛЯ
+     * ======================================================== */
+    async function loadManagerDash() {
+        showScreen('loading');
+        try {
+            state.dash = await api.dashboardToday();
+            renderManagerDash();
+        } catch (err) { renderError(err.message); }
+    }
+
+    function renderManagerDash() {
+        const d = state.dash;
+        const body = $('#managerDashBody');
+        if (!d) { showScreen('manager-dash'); return; }
+        const noHours = d.tasks_no_hours || [];
+        const cards = (d.tasks || []).map((tk) => {
+            const workers = (tk.workers || []).map((w) => {
+                const has = w.hours_today !== null && w.hours_today !== undefined && num(w.hours_today) > 0;
+                return '<span data-dash-user="' + w.user_id + '" class="' + (has ? '' : 'dash-no-hours') + '">' +
+                    escapeHtml(w.name) + ' ' +
+                    escapeHtml(has ? fmtHours(w.hours_today) + escapeHtml(t('hoursUnit')) : t('dashNoHours')) + '</span>';
+            }).join(', ');
+            return '<div class="card card--tap" data-task-id="' + tk.id + '" role="button" tabindex="0">' +
+                '<div class="card-title">' + escapeHtml(tk.title) + '</div>' +
+                '<div class="card-sub"><span>' +
+                [tk.client_name, (tk.location_names || []).join(', ')]
+                    .filter(Boolean).map(escapeHtml).join(' · ') + '</span></div>' +
+                (workers ? '<div class="card-sub"><span>' + workers + '</span></div>' : '') +
+                '<button class="btn btn--ghost btn--block" data-action="open-matrix" data-id="' + tk.id + '">' +
+                escapeHtml(t('dashOpenMatrix')) + '</button>' +
+                '</div>';
+        }).join('');
+        body.innerHTML =
+            '<div class="stat-row stat-row--3">' +
+            '<div class="stat"><span class="stat__value">' + d.workers_count + '</span>' +
+            '<span class="stat__label">' + escapeHtml(t('dashWorkers')) + '</span></div>' +
+            '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHours(d.hours_today)) + '</span>' +
+            '<span class="stat__label">' + escapeHtml(t('dashHoursToday')) + '</span></div>' +
+            '<div class="stat"><span class="stat__value' + (noHours.length ? ' dash-warn' : '') + '">' +
+            noHours.length + '</span>' +
+            '<span class="stat__label">' + escapeHtml(t('dashNoHoursTasks')) + '</span></div>' +
+            '</div>' +
+            (noHours.length
+                ? '<p class="dash-warn-text">' + escapeHtml(t('dashNoHoursWarn', { n: noHours.length })) + '</p>'
+                : '') +
+            '<div class="list">' + (cards || '<div class="empty"><div class="empty__text">' +
+                escapeHtml(t('dashNoTasksToday')) + '</div></div>') + '</div>';
+        showScreen('manager-dash');
+    }
+
+    /* ========================================================
+     * 19e. v4: МАТРИЦА ЗАДАНИЯ (руководитель)
+     * ======================================================== */
+    async function openMatrix(taskId) {
+        state.matrixTaskId = taskId;
+        const body = $('#matrixBody');
+        body.innerHTML = '<div class="skeleton skeleton--card"></div>';
+        showScreen('matrix');
+        try {
+            const m = await api.taskMatrix(taskId);
+            if (!m.rows.length || !m.dates.length) {
+                body.innerHTML = '<div class="empty"><div class="empty__text">' +
+                    escapeHtml(t('matrixEmpty')) + '</div></div>';
+                return;
+            }
+            const head = '<tr><th></th>' + m.dates.map((d) =>
+                '<th>' + escapeHtml(fmtDateHuman(d)) + '</th>').join('') + '</tr>';
+            const rows = m.rows.map((r) =>
+                '<tr><th>' + escapeHtml(r.name) + '</th>' +
+                m.dates.map((d) => {
+                    const v = r.cells[d];
+                    return v === null || v === undefined
+                        ? '<td class="matrix-cell matrix-cell--empty">·</td>'
+                        : '<td class="matrix-cell">' + escapeHtml(fmtHours(v)) + '</td>';
+                }).join('') + '</tr>').join('');
+            body.innerHTML =
+                '<p class="muted my-hours">' + escapeHtml(m.title) + '</p>' +
+                '<div class="matrix-wrap"><table class="matrix">' +
+                '<thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div>';
+        } catch (err) {
+            body.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
+        }
+    }
+
+    /* ========================================================
+     * 19f. v4: КАРТОЧКА СОТРУДНИКА (руководитель)
+     * ======================================================== */
+    async function openUserSummary(userId) {
+        state.summaryUserId = userId;
+        const body = $('#userSummaryBody');
+        body.innerHTML = '<div class="skeleton skeleton--card"></div>';
+        showScreen('user-summary');
+        try {
+            const s = await api.userSummary(userId);
+            body.innerHTML =
+                '<div class="row-line">' + avatarHtml(s.id, s.name) +
+                '<span class="row-line__name">' + escapeHtml(s.name) + '</span>' +
+                '<span class="row-line__meta">' + escapeHtml(roleLabel(s)) + '</span></div>' +
+                '<p class="muted my-hours">' + escapeHtml(t('sumPeriod', { d: fmtDateHuman(s.period_start) })) + '</p>' +
+                '<div class="stat-row stat-row--2">' +
+                '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHours(s.hours_period)) + '</span>' +
+                '<span class="stat__label">' + escapeHtml(t('moneyHours')) + '</span></div>' +
+                '<div class="stat"><span class="stat__value">' + escapeHtml(num(s.earned_period).toFixed(2)) + '</span>' +
+                '<span class="stat__label">' + escapeHtml(t('moneyEarned')) + '</span></div>' +
+                '</div>' +
+                '<div class="card">' +
+                '<div class="row-line"><span>' + escapeHtml(t('moneyRate')) + '</span>' +
+                '<span class="row-line__meta">' + escapeHtml(num(s.rate).toFixed(2)) + '</span></div>' +
+                '<div class="row-line"><span>' + escapeHtml(t('profile.role')) + '</span>' +
+                '<span class="row-line__meta">' +
+                escapeHtml(s.is_active ? t('profile.active') : t('profile.inactive')) + '</span></div>' +
+                '</div>' +
+                '<h3 class="sheet__h3">' + escapeHtml(t('moneyInventory')) + '</h3>' +
+                ((s.inventory || []).length
+                    ? s.inventory.map((i) =>
+                        '<div class="row-line"><span>' + escapeHtml(i.name) + '</span></div>').join('')
+                    : '<p class="screen-message">' + escapeHtml(t('moneyNoInventory')) + '</p>') +
+                '<h3 class="sheet__h3">' + escapeHtml(t('sumLastEntries')) + '</h3>' +
+                ((s.last_entries || []).length
+                    ? s.last_entries.map((e) =>
+                        '<div class="row-line"><span>' + escapeHtml(e.task_title || '—') +
+                        (e.location ? ' · ' + escapeHtml(e.location) : '') + '</span>' +
+                        '<span class="row-line__meta">' + escapeHtml(fmtDateHuman(e.date)) + ' · ' +
+                        escapeHtml(fmtHours(e.hours)) + ' ' + escapeHtml(t('hoursUnit')) + '</span></div>').join('')
+                    : '<p class="screen-message">' + escapeHtml(t('sumNoEntries')) + '</p>');
+        } catch (err) {
+            body.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
+        }
+    }
+
+    /* ========================================================
      * 20. Events
      * ======================================================== */
     function bindEvents() {
@@ -1895,6 +2314,11 @@
                 else if (target === 'team') loadTeam();
                 else if (target === 'inventory') loadInventory();
                 else if (target === 'more') openMoreSheet();
+                // v4
+                else if (target === 'today') loadToday();
+                else if (target === 'history') loadHistory('week');
+                else if (target === 'money') loadMoney();
+                else if (target === 'manager-dash') loadManagerDash();
             });
         });
 
@@ -1924,6 +2348,11 @@
                         parseInt(btn.getAttribute('data-user'), 10));
                 }
                 else if (action === 'return-item') returnItem(parseInt(id, 10));
+                // v4
+                else if (action === 'open-matrix') openMatrix(parseInt(id, 10));
+                else if (action === 'open-user-summary') {
+                    openUserSummary(parseInt(btn.getAttribute('data-user'), 10));
+                }
                 return;
             }
 
@@ -1941,7 +2370,33 @@
             const clientCard = ev.target.closest('[data-client-id]');
             if (clientCard && !ev.target.closest('[data-action]')) {
                 openClientSheet(parseInt(clientCard.getAttribute('data-client-id'), 10));
+                return;
             }
+            // v4: тап по работнику в дашборде руководителя -> карточка
+            const dashWorker = ev.target.closest('[data-dash-user]');
+            if (dashWorker && !ev.target.closest('[data-action]')) {
+                openUserSummary(parseInt(dashWorker.getAttribute('data-dash-user'), 10));
+            }
+        });
+
+        // v4: сегменты истории
+        document.querySelectorAll('#histSegment .segment__btn').forEach((b) => {
+            b.addEventListener('click', () => loadHistory(b.getAttribute('data-hist')));
+        });
+        const histApply = $('#histApply');
+        if (histApply) histApply.addEventListener('click', () => {
+            const from = $('#histFrom').value, to = $('#histTo').value;
+            if (!from || !to) return;
+            state.histRange = [from, to];
+            refreshHistory(from, to);
+        });
+        // v4: назад из матрицы и карточки
+        const backMatrix = $('#btnBackMatrix');
+        if (backMatrix) backMatrix.addEventListener('click', loadManagerDash);
+        const backSummary = $('#btnBackSummary');
+        if (backSummary) backSummary.addEventListener('click', () => {
+            if (state.matrixTaskId) openMatrix(state.matrixTaskId);
+            else loadManagerDash();
         });
 
         // Чипы формы нового задания
@@ -2076,6 +2531,9 @@
             else if (state.view === 'team') renderTeam();
             else if (state.view === 'clients') renderClients();
             else if (state.view === 'inventory') renderInventory();
+            else if (state.view === 'today') renderToday();
+            else if (state.view === 'money') renderMoney();
+            else if (state.view === 'manager-dash') renderManagerDash();
         });
     }
 

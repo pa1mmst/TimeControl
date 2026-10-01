@@ -220,6 +220,39 @@ h3 { font-size: 16px; }
     text-transform: none;
     letter-spacing: 0;
 }
+.badge--warn {
+    background: rgba(251, 191, 36, .14);
+    color: var(--warn);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* ============================================================
+   v4: сегодня / история / деньги / дашборд / матрица / карточка
+   ============================================================ */
+.dash-warn { color: var(--danger); }
+.dash-warn-text {
+    color: var(--danger);
+    font-size: 13px;
+    margin: 0 0 12px;
+}
+.dash-no-hours { color: var(--danger); }
+.matrix-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.matrix {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+.matrix th, .matrix td {
+    border: 1px solid var(--border, rgba(255, 255, 255, .08));
+    padding: 6px 8px;
+    text-align: center;
+    white-space: nowrap;
+}
+.matrix thead th { font-weight: 600; color: var(--muted); }
+.matrix tbody th { font-weight: 500; text-align: left; }
+.matrix-cell--empty { color: var(--muted); opacity: .5; }
 
 /* ============================================================
    КНОПКИ (48px)
