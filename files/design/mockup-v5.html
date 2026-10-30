@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TimeControl — макет v5 (не код проекта)</title>
+<style>
+:root{--bg:var(--tg-theme-secondary-bg-color,#f1f2f6);--card:var(--tg-theme-bg-color,#fff);--text:var(--tg-theme-text-color,#111);--hint:var(--tg-theme-hint-color,#8a8f98);--accent:var(--tg-theme-button-color,#2a8bf2);--accent-ink:var(--tg-theme-button-text-color,#fff);--ok:#1fa855;--bad:#e5484d;--warn:#f5a524}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#1b1e24;--text:#eef0f3;--hint:#8a8f98}}
+*{box-sizing:border-box;margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,sans-serif}
+body{background:#d9dce3;display:flex;flex-direction:column;align-items:center;padding:12px;gap:10px;color:var(--text)}
+.roles{display:flex;gap:6px}.roles button{border:0;padding:8px 12px;border-radius:20px;background:#fff;font-size:14px;cursor:pointer}.roles button.on{background:#111;color:#fff}
+.phone{width:375px;max-width:100%;height:740px;background:var(--bg);border-radius:28px;overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 10px 40px #0003}
+.top{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 6px}.top b{font-size:17px}.top small{color:var(--hint);display:block;font-size:12px}
+.icon{border:0;background:none;font-size:22px;cursor:pointer;color:var(--text)}
+.scroll{flex:1;overflow:auto;padding:6px 12px 90px}
+.card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:10px}
+.h{font-size:13px;color:var(--hint);text-transform:uppercase;letter-spacing:.04em;margin:14px 4px 6px}
+.banner{background:#fff4e0;color:#8a5a00;border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:14px;display:flex;justify-content:space-between;align-items:center}
+.banner button{border:0;background:#8a5a00;color:#fff;border-radius:8px;padding:6px 10px}
+.task-t{font-size:18px;font-weight:600}.sub{color:var(--hint);font-size:14px;margin-top:2px}
+.ppl{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.chip{background:var(--bg);border-radius:14px;padding:5px 10px;font-size:14px}.chip.bad{color:var(--bad)}.chip.ok{color:var(--ok)}
+.big{width:100%;border:0;border-radius:14px;padding:16px;font-size:17px;font-weight:600;background:var(--accent);color:var(--accent-ink);margin-top:12px;cursor:pointer}
+.done{margin-top:12px;padding:14px;border-radius:14px;background:#e7f7ee;color:var(--ok);font-weight:600;text-align:center}
+.money{display:flex;justify-content:space-between;align-items:flex-end}.money .n{font-size:28px;font-weight:700}
+.row{display:flex;justify-content:space-between;padding:10px 2px;border-bottom:1px solid #0000000f;font-size:15px}.row:last-child{border:0}.row .r{font-weight:600}
+.fix{color:var(--warn);font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}.stat{background:var(--card);border-radius:14px;padding:10px;text-align:center}.stat b{font-size:22px;display:block}.stat span{font-size:12px;color:var(--hint)}.stat.bad b{color:var(--bad)}
+.alert{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #0000000f}.alert:last-child{border:0}.alert button{border:0;background:var(--bg);border-radius:8px;padding:6px 10px;color:var(--accent);cursor:pointer}
+.allok{text-align:center;color:var(--ok);font-weight:600;padding:8px}
+.tabs{position:absolute;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid #0000001a;padding:6px 0 14px}
+.tabs button{flex:1;border:0;background:none;color:var(--hint);font-size:12px;cursor:pointer}.tabs button i{display:block;font-style:normal;font-size:22px}.tabs button.on{color:var(--accent)}
+.fab{position:absolute;right:16px;bottom:84px;border:0;border-radius:28px;padding:14px 18px;background:var(--accent);color:var(--accent-ink);font-weight:600;box-shadow:0 4px 14px #0003;cursor:pointer}
+.seg{display:flex;background:var(--card);border-radius:10px;padding:3px;margin-bottom:10px}.seg button{flex:1;border:0;background:none;padding:7px;border-radius:8px;color:var(--text)}.seg button.on{background:var(--bg);font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:8px 4px;text-align:center;border-bottom:1px solid #0000000f}td:first-child,th:first-child{text-align:left}th{color:var(--hint);font-weight:500}td.e{color:var(--bad)}
+.sheet-bg{position:absolute;inset:0;background:#0006;display:none;align-items:flex-end}.sheet-bg.on{display:flex}
+.sheet{background:var(--card);width:100%;border-radius:20px 20px 0 0;padding:16px 16px 24px}.sheet h3{font-size:18px;margin-bottom:12px}
+.hrs{display:flex;gap:8px}.hrs button{flex:1;border:2px solid transparent;background:var(--bg);border-radius:12px;padding:14px 0;font-size:20px;font-weight:600;color:var(--text);cursor:pointer}.hrs button.on{border-color:var(--accent)}
+.check{display:flex;justify-content:space-between;padding:11px 2px;border-bottom:1px solid #0000000f;font-size:16px}
+.menu a{display:block;padding:14px 4px;border-bottom:1px solid #0000000f;color:var(--text);text-decoration:none;font-size:16px}
+.note{max-width:375px;font-size:13px;color:#444;text-align:center}
+</style></head><body>
+<div class="roles"><button data-r="worker" class="on">Работник</button><button data-r="lead">Бригадир</button><button data-r="boss">Руководитель</button></div>
+<div class="phone" id="phone"></div>
+<div class="note">Макет v5: только внешний вид и переходы, данные выдуманы. Не код проекта.</div>
+<script>
+const $=s=>document.querySelector(s);let role='worker',tab='today',logged=false,taskOpen=false,seg='act';
+const crew=['Иван','Пётр','Олег','Марко'];
+function top(name,sub,menu){return `<div class="top"><div><b>${name}</b><small>${sub}</small></div>${menu?'<button class="icon" onclick="openMenu()">☰</button>':'<button class="icon">🌐</button>'}</div>`}
+function taskCard(lead){return `<div class="card"><div class="task-t">Ферма 2 · Поле 3</div><div class="sub">AgroSur · 📍 открыть карту</div>
+<div class="ppl"><span class="chip">★ Иван</span><span class="chip">Пётр</span><span class="chip">Олег</span><span class="chip">Марко</span></div>
+${logged?`<div class="done">✓ ${lead?'Бригада: 4 × 8 ч':'Записано 8 ч'} · изменить</div>`:`<button class="big" onclick="openHours(${lead})">${lead?'Записать за бригаду':'Записать часы'}</button>`}</div>`}
+function worker(lead){return top(lead?'Иван · бригадир':'Пётр','Пятница, 30 октября')+`<div class="scroll">
+<div class="banner">За вчера часы не записаны<button onclick="openHours(${lead})">Записать</button></div>
+<div class="h">Сегодня</div>${taskCard(lead)}
+<div class="card money"><div><div class="sub">К выплате за октябрь</div><div class="n">1 240</div><div class="sub">начислено 1 540 · аванс 300</div></div><div class="sub">›</div></div>
+<div class="h">История</div><div class="card">
+<div class="row"><span>Чт 29 · Ферма 2</span><span class="r">8 ч</span></div>
+<div class="row"><span>Ср 28 · Ферма 2<br><span class="fix">исправлено: было 9 → 8, руководитель</span></span><span class="r">8 ч</span></div>
+<div class="row"><span>Вт 27 · Склад Norte</span><span class="r">10 ч</span></div>
+<div class="row"><span style="color:var(--accent)">Вся история ›</span><span></span></div></div></div>`}
+function bossToday(){return top('Сегодня','Пятница, 30 октября',1)+`<div class="scroll">
+<div class="stats"><div class="stat"><b>11</b><span>на работе</span></div><div class="stat"><b>64</b><span>часов</span></div><div class="stat bad"><b>2</b><span>без часов</span></div></div>
+<div class="h">Требует внимания</div><div class="card">
+<div class="alert"><span>Пётр — нет часов<br><span class="sub">Ферма 2 · вчера</span></span><button>Напомнить</button></div>
+<div class="alert"><span>Склад Norte — 0 из 3 записали</span><button onclick="openTask()">Открыть</button></div></div>
+<div class="h">Активные задания</div>
+<div class="card" onclick="openTask()" style="cursor:pointer"><div class="task-t">Ферма 2 · Поле 3</div><div class="sub">AgroSur · 4 чел.</div><div class="ppl"><span class="chip ok">Иван 8</span><span class="chip ok">Олег 8</span><span class="chip ok">Марко 8</span><span class="chip bad">Пётр —</span></div></div>
+<div class="card" onclick="openTask()" style="cursor:pointer"><div class="task-t">Склад Norte</div><div class="sub">Frutas Norte · 3 чел.</div><div class="ppl"><span class="chip bad">Ана —</span><span class="chip bad">Луис —</span><span class="chip bad">Сергей —</span></div></div>
+</div><button class="fab">+ Задание</button>`}
+function bossTasks(){return top('Задания','',1)+`<div class="scroll"><div class="seg">${[['act','Активные'],['done','Завершённые']].map(([k,t])=>`<button class="${seg==k?'on':''}" onclick="seg='${k}';render()">${t}</button>`).join('')}</div>
+${seg=='act'?`<div class="card" onclick="openTask()" style="cursor:pointer"><div class="task-t">Ферма 2 · Поле 3</div><div class="sub">с 27.10 · 4 чел. · 120 ч</div></div><div class="card" onclick="openTask()" style="cursor:pointer"><div class="task-t">Склад Norte</div><div class="sub">с 30.10 · 3 чел. · 0 ч</div></div>`:`<div class="card"><div class="task-t">Обрезка, Ферма 1</div><div class="sub">01–24.10 · 6 чел. · 980 ч</div></div>`}
+</div><button class="fab">+ Задание</button>`}
+function taskScreen(){return `<div class="top"><button class="icon" onclick="taskOpen=false;render()">‹</button><div style="flex:1;margin-left:8px"><b>Ферма 2 · Поле 3</b><small>AgroSur · бригадир Иван</small></div><button class="icon">⋯</button></div><div class="scroll">
+<div class="card"><table><tr><th></th><th>Пн</th><th>Вт</th><th>Ср</th><th>Чт</th><th>Пт</th></tr>
+<tr><td>Иван</td><td>8</td><td>10</td><td>8</td><td>8</td><td>8</td></tr><tr><td>Пётр</td><td>8</td><td>10</td><td>8*</td><td>—</td><td class="e">—</td></tr>
+<tr><td>Олег</td><td>8</td><td>10</td><td>8</td><td>8</td><td>8</td></tr><tr><td>Марко</td><td>8</td><td>10</td><td>8</td><td>8</td><td>8</td></tr></table>
+<div class="sub" style="margin-top:8px">Тап по ячейке — внести/исправить (причина обязательна). * — исправлено</div></div>
+<button class="big">Завершить задание</button></div>`}
+function bossMoney(){return top('Деньги','Период 01–31 октября',1)+`<div class="scroll">
+<div class="card money"><div><div class="sub">К выплате всего</div><div class="n">14 380</div><div class="sub">начислено 16 900 · авансы 2 520</div></div></div>
+<div class="h">Сотрудники</div><div class="card">
+<div class="row"><span>Иван · 168 ч</span><span class="r">1 610</span></div><div class="row"><span>Пётр · 154 ч</span><span class="r">1 240</span></div>
+<div class="row"><span>Олег · 160 ч</span><span class="r">1 600</span></div><div class="row"><span style="color:var(--accent)">Ещё 8 ›</span><span></span></div></div>
+<div class="card"><div class="row"><span>+ Аванс</span><span>›</span></div><div class="row"><span>Отчёты</span><span>›</span></div></div>
+<button class="big">Закрыть период</button></div>`}
+function render(){let h;if(role!='boss'){h=worker(role=='lead')}else if(taskOpen){h=taskScreen()}else{h={today:bossToday,tasks:bossTasks,money:bossMoney}[tab]()+`<div class="tabs">${[['today','🏠','Сегодня'],['tasks','📋','Задания'],['money','💶','Деньги']].map(([k,i,t])=>`<button class="${tab==k?'on':''}" onclick="tab='${k}';render()"><i>${i}</i>${t}</button>`).join('')}</div>`}
+$('#phone').innerHTML=h+'<div class="sheet-bg" id="sb" onclick="if(event.target.id==\'sb\')closeS()"><div class="sheet" id="sh"></div></div>'}
+function sheet(html){$('#sh').innerHTML=html;$('#sb').classList.add('on')}function closeS(){$('#sb').classList.remove('on')}
+function pick(b){b.parentNode.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')}
+function openHours(lead){sheet(`<h3>${lead?'Часы за бригаду':'Сколько часов сегодня?'}</h3><div class="sub" style="margin-bottom:12px">Ферма 2 · Поле 3</div>
+<div class="hrs"><button onclick="pick(this)">6</button><button class="on" onclick="pick(this)">8</button><button onclick="pick(this)">10</button><button onclick="pick(this)">…</button></div>
+${lead?`<div style="margin-top:12px">${crew.map(n=>`<label class="check"><span>${n}</span><input type="checkbox" checked></label>`).join('')}</div>`:''}
+<button class="big" onclick="logged=true;closeS();render()">Сохранить</button>`)}
+function openTask(){taskOpen=true;render()}
+function openMenu(){sheet(`<h3>Меню</h3><div class="menu"><a>👥 Люди</a><a>🏢 Заказчики и локации</a><a>🧰 Инвентарь</a><a>🌐 Язык</a></div>`)}
+document.querySelectorAll('.roles button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.roles button').forEach(x=>x.classList.remove('on'));b.classList.add('on');role=b.dataset.r;logged=false;taskOpen=false;tab='today';render()});
+render();
+</script></body></html>
