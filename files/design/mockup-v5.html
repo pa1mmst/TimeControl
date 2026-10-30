@@ -43,11 +43,11 @@ table{width:100%;border-collapse:collapse;font-size:14px}td,th{padding:8px 4px;t
 <script>
 const $=s=>document.querySelector(s);let role='worker',tab='today',logged=false,taskOpen=false,seg='act';
 const crew=['Иван','Пётр','Олег','Марко'];
-function top(name,sub,menu){return `<div class="top"><div><b>${name}</b><small>${sub}</small></div>${menu?'<button class="icon" onclick="openMenu()">☰</button>':'<button class="icon">🌐</button>'}</div>`}
+function hdr(name,sub,menu){return `<div class="top"><div><b>${name}</b><small>${sub}</small></div>${menu?'<button class="icon" onclick="openMenu()">☰</button>':'<button class="icon">🌐</button>'}</div>`}
 function taskCard(lead){return `<div class="card"><div class="task-t">Ферма 2 · Поле 3</div><div class="sub">AgroSur · 📍 открыть карту</div>
 <div class="ppl"><span class="chip">★ Иван</span><span class="chip">Пётр</span><span class="chip">Олег</span><span class="chip">Марко</span></div>
 ${logged?`<div class="done">✓ ${lead?'Бригада: 4 × 8 ч':'Записано 8 ч'} · изменить</div>`:`<button class="big" onclick="openHours(${lead})">${lead?'Записать за бригаду':'Записать часы'}</button>`}</div>`}
-function worker(lead){return top(lead?'Иван · бригадир':'Пётр','Пятница, 30 октября')+`<div class="scroll">
+function worker(lead){return hdr(lead?'Иван · бригадир':'Пётр','Пятница, 30 октября')+`<div class="scroll">
 <div class="banner">За вчера часы не записаны<button onclick="openHours(${lead})">Записать</button></div>
 <div class="h">Сегодня</div>${taskCard(lead)}
 <div class="card money"><div><div class="sub">К выплате за октябрь</div><div class="n">1 240</div><div class="sub">начислено 1 540 · аванс 300</div></div><div class="sub">›</div></div>
@@ -56,7 +56,7 @@ function worker(lead){return top(lead?'Иван · бригадир':'Пётр',
 <div class="row"><span>Ср 28 · Ферма 2<br><span class="fix">исправлено: было 9 → 8, руководитель</span></span><span class="r">8 ч</span></div>
 <div class="row"><span>Вт 27 · Склад Norte</span><span class="r">10 ч</span></div>
 <div class="row"><span style="color:var(--accent)">Вся история ›</span><span></span></div></div></div>`}
-function bossToday(){return top('Сегодня','Пятница, 30 октября',1)+`<div class="scroll">
+function bossToday(){return hdr('Сегодня','Пятница, 30 октября',1)+`<div class="scroll">
 <div class="stats"><div class="stat"><b>11</b><span>на работе</span></div><div class="stat"><b>64</b><span>часов</span></div><div class="stat bad"><b>2</b><span>без часов</span></div></div>
 <div class="h">Требует внимания</div><div class="card">
 <div class="alert"><span>Пётр — нет часов<br><span class="sub">Ферма 2 · вчера</span></span><button>Напомнить</button></div>
@@ -65,7 +65,7 @@ function bossToday(){return top('Сегодня','Пятница, 30 октяб�
 <div class="card" onclick="openTask()" style="cursor:pointer"><div class="task-t">Ферма 2 · Поле 3</div><div class="sub">AgroSur · 4 чел.</div><div class="ppl"><span class="chip ok">Иван 8</span><span class="chip ok">Олег 8</span><span class="chip ok">Марко 8</span><span class="chip bad">Пётр —</span></div></div>
 <div class="card" onclick="openTask()" style="cursor:pointer"><div class="task-t">Склад Norte</div><div class="sub">Frutas Norte · 3 чел.</div><div class="ppl"><span class="chip bad">Ана —</span><span class="chip bad">Луис —</span><span class="chip bad">Сергей —</span></div></div>
 </div><button class="fab">+ Задание</button>`}
-function bossTasks(){return top('Задания','',1)+`<div class="scroll"><div class="seg">${[['act','Активные'],['done','Завершённые']].map(([k,t])=>`<button class="${seg==k?'on':''}" onclick="seg='${k}';render()">${t}</button>`).join('')}</div>
+function bossTasks(){return hdr('Задания','',1)+`<div class="scroll"><div class="seg">${[['act','Активные'],['done','Завершённые']].map(([k,t])=>`<button class="${seg==k?'on':''}" onclick="seg='${k}';render()">${t}</button>`).join('')}</div>
 ${seg=='act'?`<div class="card" onclick="openTask()" style="cursor:pointer"><div class="task-t">Ферма 2 · Поле 3</div><div class="sub">с 27.10 · 4 чел. · 120 ч</div></div><div class="card" onclick="openTask()" style="cursor:pointer"><div class="task-t">Склад Norte</div><div class="sub">с 30.10 · 3 чел. · 0 ч</div></div>`:`<div class="card"><div class="task-t">Обрезка, Ферма 1</div><div class="sub">01–24.10 · 6 чел. · 980 ч</div></div>`}
 </div><button class="fab">+ Задание</button>`}
 function taskScreen(){return `<div class="top"><button class="icon" onclick="taskOpen=false;render()">‹</button><div style="flex:1;margin-left:8px"><b>Ферма 2 · Поле 3</b><small>AgroSur · бригадир Иван</small></div><button class="icon">⋯</button></div><div class="scroll">
@@ -74,7 +74,7 @@ function taskScreen(){return `<div class="top"><button class="icon" onclick="tas
 <tr><td>Олег</td><td>8</td><td>10</td><td>8</td><td>8</td><td>8</td></tr><tr><td>Марко</td><td>8</td><td>10</td><td>8</td><td>8</td><td>8</td></tr></table>
 <div class="sub" style="margin-top:8px">Тап по ячейке — внести/исправить (причина обязательна). * — исправлено</div></div>
 <button class="big">Завершить задание</button></div>`}
-function bossMoney(){return top('Деньги','Период 01–31 октября',1)+`<div class="scroll">
+function bossMoney(){return hdr('Деньги','Период 01–31 октября',1)+`<div class="scroll">
 <div class="card money"><div><div class="sub">К выплате всего</div><div class="n">14 380</div><div class="sub">начислено 16 900 · авансы 2 520</div></div></div>
 <div class="h">Сотрудники</div><div class="card">
 <div class="row"><span>Иван · 168 ч</span><span class="r">1 610</span></div><div class="row"><span>Пётр · 154 ч</span><span class="r">1 240</span></div>
