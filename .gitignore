@@ -76,3 +76,16 @@ media/
 # ===== Backup folders (auto-created by tooling) =====
 .skales-backup/
 _backups/
+
+# ===== Local check output & one-off probes =====
+_last_check.txt
+_e2e_out.txt
+_probe*.js
+_probe*.py
+_scratch*.py
+_worker_probe.js
+files/ui/*.txt
+files/ui/*.json
+
+# ===== Old Skales service file =====
+project.json
