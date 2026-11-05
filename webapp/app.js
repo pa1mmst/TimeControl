@@ -201,7 +201,8 @@
             'hoursMore': '…',
             'hoursCustom': 'Своя цифра',
             'recorded': 'Записано',
-            'fixNoReason': 'Укажите причину изменения',
+            'offlineSaved': 'Сохранено офлайн — отправим при появлении сети',
+            'offlineQueued': '{n} записей ждут отправки',
             'fixNotAllowed': 'Изменять часы может только руководитель',
             'histTitle': 'История',
             'histWeek': 'Неделя', 'histMonth': 'Месяц', 'histCustom': 'Свой',
@@ -391,7 +392,8 @@
             'hoursMore': '…',
             'hoursCustom': 'Своя цифра',
             'recorded': 'Записано',
-            'fixNoReason': 'Вкажіть причину зміни',
+            'offlineSaved': 'Збережено офлайн — надішлемо, коли з’явиться мережа',
+            'offlineQueued': '{n} записів чекають відправки',
             'fixNotAllowed': 'Змінювати години може тільки керівник',
             'histTitle': 'Історія',
             'histWeek': 'Тиждень', 'histMonth': 'Місяць', 'histCustom': 'Свій',
@@ -581,7 +583,8 @@
             'hoursMore': '…',
             'hoursCustom': 'Cifra propia',
             'recorded': 'Registrado',
-            'fixNoReason': 'Indique el motivo del cambio',
+            'offlineSaved': 'Guardado sin conexión — se enviará cuando haya red',
+            'offlineQueued': '{n} registros esperando envío',
             'fixNotAllowed': 'Solo el jefe puede cambiar las horas',
             'histTitle': 'Historial',
             'histWeek': 'Semana', 'histMonth': 'Mes', 'histCustom': 'Propio',
@@ -747,6 +750,71 @@
         el.hidden = false;
         if (toastTimer) clearTimeout(toastTimer);
         toastTimer = setTimeout(() => { el.hidden = true; }, 3500);
+    }
+
+    /* ========================================================
+     * 5b. v5: офлайн-очередь самоввода часов (SPEC §22)
+     * localStorage может быть недоступен (приватный режим) —
+     * тогда очередь просто не работает, обычный путь.
+     * ======================================================== */
+    const QUEUE_KEY = 'tc_offline_queue';
+
+    function queueLoad() {
+        try {
+            const arr = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+            return Array.isArray(arr) ? arr : [];
+        } catch (e) { return []; }
+    }
+    function queueSave(arr) {
+        try { localStorage.setItem(QUEUE_KEY, JSON.stringify(arr)); } catch (e) { /* нет storage */ }
+    }
+    function queueAdd(payload) {
+        const arr = queueLoad();
+        arr.push({
+            id: Date.now() + Math.floor(Math.random() * 1000),
+            payload: payload,
+            created_at: new Date().toISOString()
+        });
+        queueSave(arr);
+    }
+    function queueGet() { return queueLoad(); }
+    function queueRemove(id) {
+        queueSave(queueLoad().filter((it) => it.id !== id));
+    }
+    function queueCount() { return queueLoad().length; }
+
+    /* сетевая ошибка? (fetch бросил / браузер офлайн) */
+    function isNetError(err) {
+        return !navigator.onLine || (err && err.message === t('network.error'));
+    }
+
+    /* прогон очереди: успех или отказ сервера (409 «уже есть») → убрать,
+       сеть недоступна → оставить и прекратить прогон */
+    async function syncQueue() {
+        if (!queueCount()) { renderOfflineBanner(); return; }
+        for (const it of queueGet()) {
+            try {
+                await api.createEntry(it.payload);
+                queueRemove(it.id);
+            } catch (err) {
+                if (isNetError(err)) break;
+                queueRemove(it.id);
+            }
+        }
+        renderOfflineBanner();
+        if (state.view === 'today' && !isManager()) {
+            state.meToday = null;
+            state.money = null;
+            await loadToday();
+        }
+    }
+
+    function renderOfflineBanner() {
+        const box = $('#offlineBanner');
+        if (!box) return;
+        const n = queueCount();
+        box.hidden = n === 0;
+        if (n) box.textContent = '⏳ ' + t('offlineQueued', { n: n });
     }
 
     /* ========================================================
@@ -1463,10 +1531,31 @@
                         hours: hours.toFixed(2), reason: r
                     });
                 } else {
-                    await api.createEntry({
+                    const payload = {
                         task_id: taskId, work_date: todayIso(),
                         hours: hours.toFixed(2)
-                    });
+                    };
+                    try {
+                        await api.createEntry(payload);
+                    } catch (netErr) {
+                        if (isNetError(netErr)) {
+                            // SPEC §22: офлайн-запись — в очередь, уйдёт при появлении сети
+                            queueAdd(payload);
+                            closeSheet();
+                            toast(t('offlineSaved'), 'success');
+                            // Сети нет — с сервера перечитать нельзя (упадёт на
+                            // логин). Отмечаем часы локально, экран остаётся.
+                            const data = state.meToday;
+                            if (data && data.tasks) {
+                                const tk = data.tasks.find((x) => x.id === taskId);
+                                if (tk) tk.my_hours_today = num(tk.my_hours_today) + hours;
+                            }
+                            renderToday();
+                            renderOfflineBanner();
+                            return;
+                        }
+                        throw netErr;
+                    }
                 }
                 closeSheet();
                 toast(t('recorded'), 'success');
@@ -2272,12 +2361,14 @@
 
         body.innerHTML = '<div class="list">' + cards + '</div>' +
             '<div id="todayPayCard"></div>' +
+            '<p class="card-sub" id="offlineBanner" hidden style="margin:8px 0"></p>' +
             '<h3 class="sheet__h3">' + escapeHtml(t('todayHistoryTitle')) + '</h3>' +
             '<div id="todayHistList"><div class="skeleton skeleton--card"></div></div>' +
             '<button class="btn btn--ghost btn--block" data-action="open-history">' +
             escapeHtml(t('allHistory')) + ' ›</button>';
 
         renderTodayPayCard();
+        renderOfflineBanner();
         loadTodayHistory();
         showScreen('today');
     }
@@ -3030,6 +3121,12 @@
             }
             renderNav();
             await (isManager() ? loadManagerDash() : loadToday());
+            // SPEC §22: офлайн-очередь — прогон при старте и при появлении сети
+            if (!isManager()) {
+                renderOfflineBanner();
+                syncQueue();
+                window.addEventListener('online', () => { syncQueue(); });
+            }
         } catch (err) {
             renderError(err.message || t('network.error'));
         }
