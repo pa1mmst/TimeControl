@@ -93,3 +93,6 @@ files/images/
 
 # ===== Old Skales service file =====
 project.json
+
+# случайный артефакт npm (буквальная папка %TEMP%)
+%TEMP%/
