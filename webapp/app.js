@@ -42,7 +42,8 @@
         heCtx: null,        // контекст экрана ввода часов
         histRange: null,    // [from, to] для экрана История
         matrixTaskId: null, // задание открытой матрицы
-        summaryUserId: null // сотрудник открытой карточки
+        summaryUserId: null, // сотрудник открытой карточки
+        teamTab: 'people'   // активный сегмент экрана «Сотрудники»
     };
 
     /* ========================================================
@@ -52,8 +53,9 @@
         ru: {
             'app.name': 'AgroManager',
             'navDashboard': 'Главная', 'navTasks': 'Задания',
-            'navReports': 'Отчёты', 'navTeam': 'Команда',
+            'navReports': 'Отчёты', 'navTeam': 'Сотрудники',
             'navInventory': 'Инвентарь', 'navMore': 'Ещё',
+            'navMe': 'Я', 'navClients': 'Заказчики',
             'loading': 'Загрузка...',
             'loginTitle': 'Вход',
             'loginSubtitle': 'Проверка данных пользователя...',
@@ -127,7 +129,8 @@
             'hoursBad': 'Часы должны быть от 0.25 до 24',
             // --- отчёты ---
             'reportsTitle': 'Отчёты',
-            'tabSummary': 'Сводка', 'tabPayouts': 'Выплаты',
+            'tabSummary': 'Сводка', 'tabPayouts': 'Выплаты', 'tabReports': 'Отчёты',
+            'teamTabPeople': 'Люди', 'teamTabInventory': 'Инвентарь',
             'repPeriod': 'Период',
             'repTasksTotal': 'Заданий всего', 'repTasksActive': 'Активных',
             'repTasksDone': 'Завершённых', 'repHoursTotal': 'Часов всего',
@@ -215,8 +218,9 @@
         uk: {
             'app.name': 'AgroManager',
             'navDashboard': 'Головна', 'navTasks': 'Завдання',
-            'navReports': 'Звіти', 'navTeam': 'Команда',
+            'navReports': 'Звіти', 'navTeam': 'Працівники',
             'navInventory': 'Інвентар', 'navMore': 'Більше',
+            'navMe': 'Я', 'navClients': 'Замовники',
             'loading': 'Завантаження...',
             'loginTitle': 'Вхід',
             'loginSubtitle': 'Перевірка даних користувача...',
@@ -285,7 +289,8 @@
             'hoursUnit': 'год',
             'hoursBad': 'Години мають бути від 0.25 до 24',
             'reportsTitle': 'Звіти',
-            'tabSummary': 'Зведення', 'tabPayouts': 'Виплати',
+            'tabSummary': 'Зведення', 'tabPayouts': 'Виплати', 'tabReports': 'Звіти',
+            'teamTabPeople': 'Люди', 'teamTabInventory': 'Інвентар',
             'repPeriod': 'Період',
             'repTasksTotal': 'Завдань всього', 'repTasksActive': 'Активних',
             'repTasksDone': 'Завершених', 'repHoursTotal': 'Годин всього',
@@ -368,8 +373,9 @@
         es: {
             'app.name': 'AgroManager',
             'navDashboard': 'Inicio', 'navTasks': 'Tareas',
-            'navReports': 'Informes', 'navTeam': 'Equipo',
+            'navReports': 'Informes', 'navTeam': 'Empleados',
             'navInventory': 'Inventario', 'navMore': 'Más',
+            'navMe': 'Yo', 'navClients': 'Clientes',
             'loading': 'Cargando...',
             'loginTitle': 'Entrar',
             'loginSubtitle': 'Comprobando datos del usuario...',
@@ -438,7 +444,8 @@
             'hoursUnit': 'h',
             'hoursBad': 'Las horas deben ser de 0.25 a 24',
             'reportsTitle': 'Informes',
-            'tabSummary': 'Resumen', 'tabPayouts': 'Pagos',
+            'tabSummary': 'Resumen', 'tabPayouts': 'Pagos', 'tabReports': 'Informes',
+            'teamTabPeople': 'Personas', 'teamTabInventory': 'Inventario',
             'repPeriod': 'Período',
             'repTasksTotal': 'Tareas totales', 'repTasksActive': 'Activas',
             'repTasksDone': 'Terminadas', 'repHoursTotal': 'Horas totales',
@@ -791,15 +798,16 @@
      * ======================================================== */
     function renderNav() {
         const manager = isManager();
+        // Работник: Сегодня / История / Я.
+        // Руководитель: Сегодня / Задания / Сотрудники / Заказчики / Деньги.
         document.querySelectorAll('.bottom-nav__item').forEach((btn) => {
             const target = btn.getAttribute('data-nav-target');
-            if (target === 'team') btn.hidden = !manager;
-            if (target === 'inventory') btn.hidden = manager;
-            // v4: работнику — Сегодня/История/Деньги; менеджеру — Дашборд
             if (target === 'today' || target === 'history' || target === 'money') {
                 btn.hidden = manager;
+            } else {
+                // manager-dash, tasks, team, clients, reports
+                btn.hidden = !manager;
             }
-            if (target === 'manager-dash') btn.hidden = !manager;
         });
     }
 
@@ -904,65 +912,12 @@
             '</div>';
     }
 
-    async function loadDashboard() {
-        showScreen('loading');
-        try {
-            const [tasks, entries] = await Promise.all([api.getTasks(), api.getMyEntries()]);
-            state.tasks = tasks;
-            state.entries = entries;
-            renderDashboard();
-        } catch (err) { renderError(err.message); }
-    }
-
-    function renderDashboard() {
-        const body = $('#dashboardBody');
-        const today = todayIso();
-        const myToday = (state.entries || [])
-            .filter((e) => e.work_date === today)
-            .reduce((s, e) => s + num(e.hours), 0);
-
-        if (isManager()) {
-            const tasks = state.tasks || [];
-            const cards = tasks.map((tk) => taskCardHtml(tk, { canEnter: true })).join('');
-            const empty = tasks.length
-                ? ''
-                : '<div class="empty"><div class="empty__text">' + escapeHtml(t('dashEmpty')) + '</div></div>';
-            body.innerHTML =
-                '<h2>' + escapeHtml(t('dashActiveTasks')) + '</h2>' +
-                '<div class="list">' + cards + empty + '</div>' +
-                '<div class="stat-row stat-row--2">' +
-                statCell(t('dashWeek'), tasks.length, 0) +
-                statCell(t('dashWeek'), 0, 0, true) +
-                statCell(t('dashMonth'), tasks.length, 0) +
-                statCell(t('dashMonth'), 0, 0, true) +
-                '</div>' +
-                '<div class="grid2x2">' +
-                '<button class="btn btn--primary grid2x2__wide" data-action="new-task">' + escapeHtml(t('dashNewTask')) + '</button>' +
-                '<button class="btn btn--ghost grid2x2__cell" data-action="go-clients">' + escapeHtml(t('dashClients')) + '</button>' +
-                '<button class="btn btn--ghost grid2x2__cell" data-action="go-inventory">' + escapeHtml(t('dashInventory')) + '</button>' +
-                '<button class="btn btn--ghost grid2x2__cell" data-action="go-team">' + escapeHtml(t('dashTeam')) + '</button>' +
-                '</div>' +
-                (myToday > 0
-                    ? '<p class="muted my-hours">' + escapeHtml(t('dashMyHours', { n: fmtHours(myToday) })) + '</p>'
-                    : '');
-        } else {
-            const myTasks = (state.tasks || []).filter((tk) =>
-                (tk.workers || []).some((w) => w.user_id === state.user.id));
-            const cards = myTasks.map((tk) => taskCardHtml(tk)).join('');
-            body.innerHTML =
-                '<div class="stat-row stat-row--2">' +
-                '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHours(myToday)) + '</span>' +
-                '<span class="stat__label">' + escapeHtml(t('dashHoursToday')) + '</span></div>' +
-                '<div class="stat"><span class="stat__value">' + escapeHtml(Number(state.user.total_earned || 0).toFixed(2)) + '</span>' +
-                '<span class="stat__label">' + escapeHtml(t('dashEarned')) + '</span></div>' +
-                '</div>' +
-                '<h2>' + escapeHtml(t('dashMyTasksToday')) + '</h2>' +
-                '<div class="list">' +
-                (myTasks.length ? cards
-                    : '<div class="empty"><div class="empty__text">' + escapeHtml(t('dashNoTasksToday')) + '</div></div>') +
-                '</div>';
-        }
-        showScreen('dashboard');
+    /* ========================================================
+     * 9b. Возврат на «домашний» экран по роли
+     * ======================================================== */
+    function goBackHome() {
+        if (isManager()) loadManagerDash();
+        else loadToday();
     }
 
     function statCell(label, tasks, hours, isHours) {
@@ -1272,7 +1227,8 @@
             // Возврат в лист задания, итоги обновятся сразу
             const tid = ctx.task.id;
             state.heCtx = null;
-            showScreen(state.view === 'hours-entry' ? 'dashboard' : state.view);
+            if (state.view === 'hours-entry') goBackHome();
+            else showScreen(state.view);
             await openTaskSheet(tid);
         } catch (err) {
             errEl.textContent = err.message;
@@ -1409,7 +1365,7 @@
             btn.disabled = false;
             btn.textContent = t('create');
             toast(t('taskCreated'), 'success');
-            loadTasks();
+            goBackHome();
         } catch (err) {
             btn.disabled = false;
             btn.textContent = t('create');
@@ -1418,14 +1374,13 @@
     }
 
     /* ========================================================
-     * 14. ОТЧЁТЫ: две вкладки (Сводка | Выплаты)
+     * 14. ДЕНЬГИ РУКОВОДИТЕЛЯ: вкладки (Выплаты | Отчёты)
      * ======================================================== */
     async function loadReports() {
         showScreen('reports');
-        $('#reportsSegment [data-reports-tab="payouts"]').hidden = !isManager();
-        state.reportsTab = 'summary';
+        state.reportsTab = 'payouts';
         document.querySelectorAll('#reportsSegment .segment__btn').forEach((b) => {
-            b.classList.toggle('is-active', b.getAttribute('data-reports-tab') === 'summary');
+            b.classList.toggle('is-active', b.getAttribute('data-reports-tab') === 'payouts');
         });
         renderReportsBody();
     }
@@ -1434,8 +1389,7 @@
         const body = $('#reportsBody');
         body.innerHTML = '<div class="skeleton skeleton--card"></div>';
         if (state.reportsTab === 'payouts') renderPayoutsTab(body);
-        else if (isManager()) renderManagerSummary(body);
-        else renderWorkerSummary(body);
+        else renderManagerSummary(body);
     }
 
     function periodPickerHtml(start, end) {
@@ -1517,41 +1471,6 @@
                 (myHours > 0
                     ? '<p class="muted my-hours">' + escapeHtml(t('repMyHours', { n: fmtHours(myHours) })) + '</p>'
                     : '');
-        } catch (err) {
-            box.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
-        }
-    }
-
-    async function renderWorkerSummary(body) {
-        const [ws, we] = weekRange();
-        body.innerHTML = periodPickerHtml(ws, we) + '<div id="repData"></div>';
-        await refreshWorkerSummary();
-    }
-
-    async function refreshWorkerSummary() {
-        const start = $('#repStart').value;
-        const end = $('#repEnd').value;
-        const box = $('#repData');
-        box.innerHTML = '<div class="skeleton skeleton--card"></div>';
-        try {
-            const rep = await api.reportUser(state.user.id, start, end);
-            const hours = num(rep.total_hours);
-            const earned = num(rep.total_earned);
-            box.innerHTML =
-                '<div class="stat-row stat-row--2">' +
-                '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHours(hours)) + '</span>' +
-                '<span class="stat__label">' + escapeHtml(t('repMyHoursLabel')) + '</span></div>' +
-                '<div class="stat"><span class="stat__value">' + earned.toFixed(2) + '</span>' +
-                '<span class="stat__label">' + escapeHtml(t('repMyEarned')) + '</span></div>' +
-                '</div>' +
-                '<h3 class="sheet__h3">' + escapeHtml(t('repMyTasks')) + '</h3>' +
-                ((rep.days || []).length
-                    ? rep.days.map((d) =>
-                        '<div class="row-line"><span>' + escapeHtml(d.task) +
-                        (d.location ? ' · ' + escapeHtml(d.location) : '') + '</span>' +
-                        '<span class="row-line__meta">' + escapeHtml(fmtDateHuman(d.date)) + ' · ' +
-                        escapeHtml(fmtHours(d.hours)) + ' ' + escapeHtml(t('hoursUnit')) + '</span></div>').join('')
-                    : '<p class="screen-message">' + escapeHtml(t('repEmpty')) + '</p>');
         } catch (err) {
             box.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
         }
@@ -1658,17 +1577,36 @@
     }
 
     /* ========================================================
-     * 15. КОМАНДА: строки тапаются -> лист редактирования
+     * 15. СОТРУДНИКИ: сегменты Люди · Инвентарь (руководитель)
      * ======================================================== */
     async function loadTeam() {
         showScreen('team');
         $('#btnAddWorker').hidden = !isManager();
+        // По умолчанию — сегмент «Люди»
+        setTeamTab('people');
         try {
             state.users = await api.getUsers();
             renderTeam();
         } catch (err) {
             setList('teamList', '<p class="screen-message">' + escapeHtml(err.message) + '</p>');
         }
+    }
+
+    function setTeamTab(tab) {
+        const prev = state.teamTab;
+        state.teamTab = tab;
+        document.querySelectorAll('#teamSegment .segment__btn').forEach((b) => {
+            b.classList.toggle('is-active', b.getAttribute('data-team-tab') === tab);
+        });
+        const peopleBlock = $('#teamPeopleBlock');
+        const invBlock = $('#teamInvBlock');
+        if (peopleBlock) peopleBlock.hidden = tab !== 'people';
+        if (invBlock) invBlock.hidden = tab !== 'inventory';
+        $('#btnAddWorker').hidden = tab !== 'people' || !isManager();
+        $('#btnAddItem').hidden = tab !== 'inventory' || !isManager();
+        // Подгружаем инвентарь при первом переходе на вкладку
+        // (prev-гард не даёт loadInventory -> setTeamTab зациклиться)
+        if (tab === 'inventory' && prev !== 'inventory' && !state.inventory) loadInventory();
     }
 
     function renderTeam() {
@@ -1862,11 +1800,12 @@
     }
 
     /* ========================================================
-     * 17. ИНВЕНТАРЬ: выдача через выбор сотрудника из списка
+     * 17. ИНВЕНТАРЬ: сегмент внутри экрана «Сотрудники»
      * ======================================================== */
     async function loadInventory() {
-        showScreen('inventory');
-        $('#btnAddItem').hidden = !isManager();
+        // Рендерим внутри screenTeam: активный сегмент «Инвентарь»
+        showScreen('team');
+        setTeamTab('inventory');
         try {
             state.inventory = await api.getInventory();
             renderInventory();
@@ -1964,51 +1903,6 @@
             errEl.textContent = e.message;
             errEl.hidden = false;
         }
-    }
-
-    /* ========================================================
-     * 18. ПРОФИЛЬ (bottom sheet из «Ещё»)
-     * ======================================================== */
-    async function openProfileSheet() {
-        const sheet = openSheet('<p class="screen-message">' + escapeHtml(t('loading')) + '</p>');
-        try {
-            const inv = await api.getInventory();
-            const mine = (inv || []).filter((i) => i.holder && i.holder.id === state.user.id);
-            sheet.innerHTML =
-                '<div class="row-line">' + avatarHtml(state.user.id, state.user.name) +
-                '<span class="row-line__name">' + escapeHtml(state.user.name) + '</span></div>' +
-                '<div class="card-sub"><span>' + escapeHtml(t('profile.role')) + ': ' +
-                escapeHtml(roleLabel(state.user)) + '</span>' +
-                '<span>' + escapeHtml(t('workerRate')) + ': ' +
-                escapeHtml(Number(state.user.hourly_rate || 0).toFixed(2)) + '</span></div>' +
-                '<h3 class="sheet__h3">' + escapeHtml(t('profileInventory')) + '</h3>' +
-                (mine.length
-                    ? mine.map((i) =>
-                        '<div class="row-line"><span>' + escapeHtml(i.name) + '</span></div>').join('')
-                    : '<p class="screen-message">' + escapeHtml(t('profileNoInventory')) + '</p>') +
-                '<button class="btn btn--ghost btn--block" data-action="close-sheet">' + escapeHtml(t('close')) + '</button>';
-        } catch (err) {
-            sheet.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
-        }
-    }
-
-    /* ========================================================
-     * 19. «Ещё» — bottom sheet
-     * ======================================================== */
-    function openMoreSheet() {
-        const manager = isManager();
-        const items = [];
-        if (manager) {
-            items.push(['go-clients', t('navClients')]);
-            items.push(['go-inventory', t('navInventory')]);
-        }
-        items.push(['go-profile', t('profileTitle')]);
-        openSheet(
-            '<div class="list">' +
-            items.map(([act, label]) =>
-                '<button class="row-line row-line--btn" data-action="' + act + '">' +
-                '<span class="row-line__name">' + escapeHtml(label) + '</span></button>').join('') +
-            '</div>');
     }
 
     /* ========================================================
@@ -2199,11 +2093,17 @@
                 [tk.client_name, (tk.location_names || []).join(', ')]
                     .filter(Boolean).map(escapeHtml).join(' · ') + '</span></div>' +
                 (workers ? '<div class="card-sub"><span>' + workers + '</span></div>' : '') +
-                '<button class="btn btn--ghost btn--block" data-action="open-matrix" data-id="' + tk.id + '">' +
+                '<div class="card-sub">' +
+                '<button class="btn btn-small" data-action="enter-hours" data-id="' + tk.id + '">' +
+                escapeHtml(t('enterHours')) + '</button>' +
+                '<button class="btn btn-small" data-action="open-matrix" data-id="' + tk.id + '">' +
                 escapeHtml(t('dashOpenMatrix')) + '</button>' +
+                '</div>' +
                 '</div>';
         }).join('');
         body.innerHTML =
+            '<button class="btn btn--primary btn--block" data-action="new-task">' +
+            escapeHtml(t('dashNewTask')) + '</button>' +
             '<div class="stat-row stat-row--3">' +
             '<div class="stat"><span class="stat__value">' + d.workers_count + '</span>' +
             '<span class="stat__label">' + escapeHtml(t('dashWorkers')) + '</span></div>' +
@@ -2308,12 +2208,10 @@
         document.querySelectorAll('.bottom-nav__item[data-nav-target]').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const target = btn.getAttribute('data-nav-target');
-                if (target === 'dashboard') loadDashboard();
-                else if (target === 'tasks') loadTasks();
+                if (target === 'tasks') loadTasks();
                 else if (target === 'reports') loadReports();
                 else if (target === 'team') loadTeam();
-                else if (target === 'inventory') loadInventory();
-                else if (target === 'more') openMoreSheet();
+                else if (target === 'clients') loadClients();
                 // v4
                 else if (target === 'today') loadToday();
                 else if (target === 'history') loadHistory('week');
@@ -2329,10 +2227,6 @@
                 const action = btn.getAttribute('data-action');
                 const id = btn.getAttribute('data-id');
                 if (action === 'new-task') openNewTask();
-                else if (action === 'go-clients') { closeSheet(); loadClients(); }
-                else if (action === 'go-inventory') { closeSheet(); loadInventory(); }
-                else if (action === 'go-team') { closeSheet(); loadTeam(); }
-                else if (action === 'go-profile') { closeSheet(); openProfileSheet(); }
                 else if (action === 'enter-hours') openHoursEntry(parseInt(id, 10));
                 else if (action === 'finish-task') finishTask(parseInt(id, 10));
                 else if (action === 'finish-task-yes') doFinishTask(parseInt(id, 10));
@@ -2463,7 +2357,7 @@
             const tid = state.heCtx ? state.heCtx.task.id : null;
             state.heCtx = null;
             if (tid) openTaskSheet(tid);
-            else loadDashboard();
+            else goBackHome();
         });
 
         // Форма нового задания
@@ -2490,9 +2384,13 @@
         document.addEventListener('change', (ev) => {
             if (ev.target.id === 'repStart' || ev.target.id === 'repEnd') {
                 if (state.reportsTab === 'payouts') refreshPayPreview();
-                else if (isManager()) refreshManagerSummary();
-                else refreshWorkerSummary();
+                else refreshManagerSummary();
             }
+        });
+
+        // v4: сегменты «Люди · Инвентарь» на экране «Сотрудники»
+        document.querySelectorAll('#teamSegment .segment__btn').forEach((b) => {
+            b.addEventListener('click', () => setTeamTab(b.getAttribute('data-team-tab')));
         });
 
         // Кнопки шапок экранов
@@ -2526,14 +2424,13 @@
         if (lang) lang.addEventListener('change', () => {
             state.lang = normalizeLang(lang.value);
             applyI18n();
-            if (state.view === 'dashboard') renderDashboard();
-            else if (state.view === 'tasks') renderTasks();
+            if (state.view === 'tasks') renderTasks();
             else if (state.view === 'team') renderTeam();
             else if (state.view === 'clients') renderClients();
-            else if (state.view === 'inventory') renderInventory();
             else if (state.view === 'today') renderToday();
             else if (state.view === 'money') renderMoney();
             else if (state.view === 'manager-dash') renderManagerDash();
+            else if (state.view === 'reports') renderReportsBody();
         });
     }
 
@@ -2543,8 +2440,10 @@
             toast(t('taskFinished'), 'success');
             closeSheet();
             state.tasks = null;
-            if (state.view === 'dashboard') loadDashboard();
-            else loadTasks();
+            if (state.view === 'manager-dash') loadManagerDash();
+            else if (state.view === 'tasks') loadTasks();
+            else if (state.view === 'today') loadToday();
+            else goBackHome();
         } catch (err) {
             closeSheet();
             toast(err.message, 'error');
@@ -2646,7 +2545,7 @@
                 if (lang) lang.value = state.lang;
             }
             renderNav();
-            await loadDashboard();
+            await (isManager() ? loadManagerDash() : loadToday());
         } catch (err) {
             renderError(err.message || t('network.error'));
         }
