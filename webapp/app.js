@@ -187,6 +187,22 @@
             'todayEnterHours': 'Записать часы',
             'todayEntered': 'Записано: {n} ч',
             'todayNotEntered': 'Часы ещё не записаны',
+            // --- v5: работник, один экран ---
+            'menu': 'Меню',
+            'payCardTitle': 'К выплате за {m}',
+            'payCardEarnedAdv': 'начислено {e} · аванс {a}',
+            'todayHistoryTitle': 'История',
+            'allHistory': 'Вся история',
+            'myMoney': 'Мне причитается',
+            'myInventory': 'Мой инвентарь',
+            'language': 'Язык',
+            'hoursSheetTitle': 'Сколько часов сегодня?',
+            'hoursSheetFixTitle': 'Исправить часы',
+            'hoursMore': '…',
+            'hoursCustom': 'Своя цифра',
+            'recorded': 'Записано',
+            'fixNoReason': 'Укажите причину изменения',
+            'fixNotAllowed': 'Изменять часы может только руководитель',
             'histTitle': 'История',
             'histWeek': 'Неделя', 'histMonth': 'Месяц', 'histCustom': 'Свой',
             'histApply': 'Применить',
@@ -208,6 +224,25 @@
             'dashNoHours': 'нет часов',
             'dashOpenMatrix': 'Таблица часов',
             'dashOpenWorker': 'Карточка сотрудника',
+            // --- v5: руководитель ---
+            'segActive': 'Активные', 'segDone': 'Завершённые',
+            'attTitle': 'Требует внимания',
+            'attOk': 'Всё в порядке ✓',
+            'attNoHoursUser': 'Без часов: {name}',
+            'attNoHoursTask': 'Задание без записей: {title}',
+            'dashOnWork': 'На работе',
+            'dashHours': 'Часов',
+            'dashWithoutHours': 'Без часов',
+            'dashActiveTasks': 'Активные задания',
+            'fabNewTask': '+ Задание',
+            'menuPeople': 'Люди',
+            'menuClients': 'Заказчики и локации',
+            'moneyTotalToPay': 'К выплате всего',
+            'moneyEarnedAdv': 'начислено {e} · авансы {a}',
+            'moneyWorkers': 'Сотрудники',
+            'moneyOpenReports': 'Отчёты',
+            'moneyAddAdvance': '+ Аванс',
+            'moneyClosePeriod': 'Закрыть период',
             'matrixTitle': 'Таблица часов',
             'matrixEmpty': 'Нет данных',
             'sumTitle': 'Карточка сотрудника',
@@ -342,6 +377,22 @@
             'todayEnterHours': 'Записати години',
             'todayEntered': 'Записано: {n} год',
             'todayNotEntered': 'Години ще не записані',
+            // --- v5: працівник, один екран ---
+            'menu': 'Меню',
+            'payCardTitle': 'До виплати за {m}',
+            'payCardEarnedAdv': 'нараховано {e} · аванс {a}',
+            'todayHistoryTitle': 'Історія',
+            'allHistory': 'Вся історія',
+            'myMoney': 'Мені належить',
+            'myInventory': 'Мій інвентар',
+            'language': 'Мова',
+            'hoursSheetTitle': 'Скільки годин сьогодні?',
+            'hoursSheetFixTitle': 'Виправити години',
+            'hoursMore': '…',
+            'hoursCustom': 'Своя цифра',
+            'recorded': 'Записано',
+            'fixNoReason': 'Вкажіть причину зміни',
+            'fixNotAllowed': 'Змінювати години може тільки керівник',
             'histTitle': 'Історія',
             'histWeek': 'Тиждень', 'histMonth': 'Місяць', 'histCustom': 'Свій',
             'histApply': 'Застосувати',
@@ -363,6 +414,25 @@
             'dashNoHours': 'немає годин',
             'dashOpenMatrix': 'Таблиця годин',
             'dashOpenWorker': 'Картка працівника',
+            // --- v5: керівник ---
+            'segActive': 'Активні', 'segDone': 'Завершені',
+            'attTitle': 'Потребує уваги',
+            'attOk': 'Все в порядку ✓',
+            'attNoHoursUser': 'Без годин: {name}',
+            'attNoHoursTask': 'Завдання без записів: {title}',
+            'dashOnWork': 'На роботі',
+            'dashHours': 'Годин',
+            'dashWithoutHours': 'Без годин',
+            'dashActiveTasks': 'Активні завдання',
+            'fabNewTask': '+ Завдання',
+            'menuPeople': 'Люди',
+            'menuClients': 'Замовники та локації',
+            'moneyTotalToPay': 'До виплати разом',
+            'moneyEarnedAdv': 'нараховано {e} · аванси {a}',
+            'moneyWorkers': 'Працівники',
+            'moneyOpenReports': 'Звіти',
+            'moneyAddAdvance': '+ Аванс',
+            'moneyClosePeriod': 'Закрити період',
             'matrixTitle': 'Таблиця годин',
             'matrixEmpty': 'Немає даних',
             'sumTitle': 'Картка працівника',
@@ -497,6 +567,22 @@
             'todayEnterHours': 'Registrar horas',
             'todayEntered': 'Registrado: {n} h',
             'todayNotEntered': 'Horas aún no registradas',
+            // --- v5: trabajador, una pantalla ---
+            'menu': 'Menú',
+            'payCardTitle': 'A pagar por {m}',
+            'payCardEarnedAdv': 'acumulado {e} · adelanto {a}',
+            'todayHistoryTitle': 'Historial',
+            'allHistory': 'Todo el historial',
+            'myMoney': 'Me deben',
+            'myInventory': 'Mi inventario',
+            'language': 'Idioma',
+            'hoursSheetTitle': '¿Cuántas horas hoy?',
+            'hoursSheetFixTitle': 'Corregir horas',
+            'hoursMore': '…',
+            'hoursCustom': 'Cifra propia',
+            'recorded': 'Registrado',
+            'fixNoReason': 'Indique el motivo del cambio',
+            'fixNotAllowed': 'Solo el jefe puede cambiar las horas',
             'histTitle': 'Historial',
             'histWeek': 'Semana', 'histMonth': 'Mes', 'histCustom': 'Propio',
             'histApply': 'Aplicar',
@@ -518,6 +604,25 @@
             'dashNoHours': 'sin horas',
             'dashOpenMatrix': 'Tabla de horas',
             'dashOpenWorker': 'Ficha del empleado',
+            // --- v5: gerente ---
+            'segActive': 'Activas', 'segDone': 'Terminadas',
+            'attTitle': 'Requiere atención',
+            'attOk': 'Todo en orden ✓',
+            'attNoHoursUser': 'Sin horas: {name}',
+            'attNoHoursTask': 'Tarea sin registros: {title}',
+            'dashOnWork': 'En trabajo',
+            'dashHours': 'Horas',
+            'dashWithoutHours': 'Sin horas',
+            'dashActiveTasks': 'Tareas activas',
+            'fabNewTask': '+ Tarea',
+            'menuPeople': 'Personas',
+            'menuClients': 'Clientes y ubicaciones',
+            'moneyTotalToPay': 'A pagar en total',
+            'moneyEarnedAdv': 'acumulado {e} · adelantos {a}',
+            'moneyWorkers': 'Empleados',
+            'moneyOpenReports': 'Informes',
+            'moneyAddAdvance': '+ Adelanto',
+            'moneyClosePeriod': 'Cerrar período',
             'matrixTitle': 'Tabla de horas',
             'matrixEmpty': 'Sin datos',
             'sumTitle': 'Ficha del empleado',
@@ -798,16 +903,13 @@
      * ======================================================== */
     function renderNav() {
         const manager = isManager();
-        // Работник: Сегодня / История / Я.
-        // Руководитель: Сегодня / Задания / Сотрудники / Заказчики / Деньги.
+        // v5: работник — без вкладок (один экран, всё через ☰).
+        // Руководитель: Сегодня / Задания / Деньги.
+        const nav = $('#bottomNav');
+        if (nav) nav.hidden = !manager;
+        document.body.classList.toggle('no-nav', !manager);
         document.querySelectorAll('.bottom-nav__item').forEach((btn) => {
-            const target = btn.getAttribute('data-nav-target');
-            if (target === 'today' || target === 'history' || target === 'money') {
-                btn.hidden = manager;
-            } else {
-                // manager-dash, tasks, team, clients, reports
-                btn.hidden = !manager;
-            }
+            btn.hidden = !manager; // все оставшиеся вкладки — только руководителю
         });
     }
 
@@ -817,6 +919,13 @@
         });
         document.querySelectorAll('.bottom-nav__item').forEach((b) => {
             b.classList.toggle('is-active', b.getAttribute('data-nav-target') === name);
+        });
+        // v5: ☰ руководителя виден на его трёх вкладках
+        const mgrMenu = isManager() &&
+            ['manager-dash', 'tasks', 'money'].indexOf(name) !== -1;
+        ['#btnManagerMenu', '#btnManagerMenu2', '#btnManagerMenu3'].forEach((sel) => {
+            const btn = $(sel);
+            if (btn) btn.hidden = !mgrMenu;
         });
         closeSheet();
         state.view = name;
@@ -931,9 +1040,17 @@
      * ======================================================== */
     async function loadTasks() {
         showScreen('tasks');
-        $('#btnNewTask').hidden = !isManager();
+        const btnNewTask = $('#btnNewTask');
+        if (btnNewTask) btnNewTask.hidden = !isManager();
+        // v5 §3.2: сегменты Активные | Завершённые
+        if (!state.tasksSeg) state.tasksSeg = 'active';
+        document.querySelectorAll('#tasksSegment .segment__btn').forEach((b) => {
+            b.classList.toggle('is-active',
+                b.getAttribute('data-tasks-seg') === state.tasksSeg);
+        });
         try {
-            state.tasks = await api.getTasks();
+            state.tasks = await (state.tasksSeg === 'active'
+                ? api.getTasks() : api.getAllTasks());
             renderTasks();
         } catch (err) {
             setList('tasksList', '<p class="screen-message">' + escapeHtml(err.message) + '</p>');
@@ -941,7 +1058,13 @@
     }
 
     function renderTasks() {
-        const tasks = state.tasks || [];
+        let tasks = state.tasks || [];
+        // v5: фильтр по сегменту (getAllTasks отдаёт все статусы)
+        if (state.tasksSeg === 'active') {
+            tasks = tasks.filter((tk) => tk.status === 'active');
+        } else {
+            tasks = tasks.filter((tk) => tk.status === 'done');
+        }
         if (!tasks.length) {
             setList('tasksList', '<div class="empty"><div class="empty__text">' +
                 escapeHtml(isManager() ? t('dashEmpty') : t('dashEmptyWorker')) + '</div></div>');
@@ -964,9 +1087,8 @@
             state.sheetTaskId = taskId;
 
             const manager = isManager();
-            const reporter = !manager && (task.groups || []).some(
-                (g) => g.reporter && g.reporter.id === state.user.id);
-            const canEnter = (manager || reporter) && task.status === 'active';
+            // v5: роли «бригадир/учётчик» в UI нет — ввод за других только у руководителя
+            const canEnter = manager && task.status === 'active';
 
             const workers = (task.assignments || []).map((a) => {
                 const isRep = (task.groups || []).some(
@@ -1044,9 +1166,11 @@
     }
 
     /* ========================================================
-     * 12. ЭКРАН «ВВЕСТИ ЧАСЫ» (полноэкранный)
+     * 12. ЭКРАН «ВВЕСТИ ЧАСЫ» (полноэкранный; v5 — только руководитель,
+     *     у работника ввод в bottom sheet, см. 13b)
      * ======================================================== */
     async function openHoursEntry(taskId) {
+        if (!isManager()) { openWorkerHoursSheet(taskId, false); return; }
         closeSheet();
         showScreen('hours-entry');
         $('#heError').hidden = true;
@@ -1236,6 +1360,175 @@
             btn.disabled = false;
             updateSaveState();
         }
+    }
+
+    /* ========================================================
+     * 13b. v5: ввод часов работника — bottom sheet (§3.4)
+     * ======================================================== */
+    function openWorkerHoursSheet(taskId, fixMode) {
+        const data = state.meToday;
+        const task = data && (data.tasks || []).find((tk) => tk.id === taskId);
+        if (!task) return;
+        const existing = num(task.my_hours_today);
+        const fix = !!fixMode && existing > 0;
+        let picked = fix ? String(fmtHours(existing)) : '';
+
+        const sheet = openSheet(
+            '<h3 class="sheet__title">' +
+            escapeHtml(fix ? t('hoursSheetFixTitle') : t('hoursSheetTitle')) + '</h3>' +
+            '<div class="he-quick" id="whQuick">' +
+            ['6', '8', '10'].map((v) =>
+                '<button type="button" class="chip' + (picked === v ? ' chip--on' : '') +
+                '" data-wh="' + v + '">' + v + '</button>').join('') +
+            '<button type="button" class="chip" data-wh="more">' +
+            escapeHtml(t('hoursMore')) + '</button>' +
+            '</div>' +
+            '<div class="form-field" id="whCustomField" hidden>' +
+            '<span class="form-label">' + escapeHtml(t('hoursCustom')) + '</span>' +
+            '<input type="text" id="whCustom" inputmode="decimal" value="' +
+            escapeHtml(picked) + '" placeholder="—">' +
+            '</div>' +
+            (fix
+                ? '<div class="form-field"><span class="form-label">' +
+                  escapeHtml(t('hoursReason')) + '</span>' +
+                  '<input type="text" id="whReason" data-i18n-placeholder="hoursReasonHint"></div>'
+                : '') +
+            '<p class="form-error" id="whError" hidden></p>' +
+            '<button type="button" class="btn btn--primary btn--block" id="whSave">' +
+            escapeHtml(t('save')) + '</button>');
+
+        const errEl = sheet.querySelector('#whError');
+        const customField = sheet.querySelector('#whCustomField');
+        const custom = sheet.querySelector('#whCustom');
+        const save = sheet.querySelector('#whSave');
+
+        function value() {
+            const raw = (customField.hidden ? picked : custom.value.trim().replace(',', '.'));
+            return raw === '' ? 0 : parseFloat(raw);
+        }
+        function refresh() {
+            sheet.querySelectorAll('#whQuick .chip').forEach((c) => {
+                const v = c.getAttribute('data-wh');
+                c.classList.toggle('chip--on',
+                    v !== 'more' && !customField.hidden === false && v === String(value()));
+            });
+            save.disabled = !(value() > 0);
+        }
+
+        sheet.querySelector('#whQuick').addEventListener('click', (ev) => {
+            const chip = ev.target.closest('[data-wh]');
+            if (!chip) return;
+            const v = chip.getAttribute('data-wh');
+            if (v === 'more') {
+                customField.hidden = false;
+                custom.focus();
+            } else {
+                customField.hidden = true;
+                picked = v;
+                custom.value = v;
+            }
+            sheet.querySelectorAll('#whQuick .chip').forEach((c) => {
+                c.classList.toggle('chip--on',
+                    c.getAttribute('data-wh') === v && v !== 'more');
+            });
+            save.disabled = !(value() > 0);
+        });
+        custom.addEventListener('input', () => {
+            save.disabled = !(value() > 0);
+        });
+
+        save.addEventListener('click', async () => {
+            errEl.hidden = true;
+            const hours = value();
+            if (!(hours > 0 && hours <= 24)) {
+                errEl.textContent = t('hoursBad');
+                errEl.hidden = false;
+                return;
+            }
+            save.disabled = true;
+            try {
+                if (fix) {
+                    // API: правка часов — только руководитель
+                    // (app/services/work_entries.py:212). Работник получает 403 —
+                    // показываем его текст как есть, ничего не выдумываем.
+                    const entries = await api.taskEntries(taskId);
+                    const mine = (entries || []).find(
+                        (e) => e.work_date === todayIso() &&
+                            Number(e.user_id) === Number(state.user.id));
+                    if (!mine) throw new Error(t('error'));
+                    const reason = sheet.querySelector('#whReason');
+                    const r = reason ? reason.value.trim() : '';
+                    if (!r) throw new Error(t('fixNoReason'));
+                    await api.updateEntry(mine.id, {
+                        hours: hours.toFixed(2), reason: r
+                    });
+                } else {
+                    await api.createEntry({
+                        task_id: taskId, work_date: todayIso(),
+                        hours: hours.toFixed(2)
+                    });
+                }
+                closeSheet();
+                toast(t('recorded'), 'success');
+                state.meToday = null;
+                state.money = null;
+                await loadToday();
+            } catch (err) {
+                errEl.textContent = err.message || t('error');
+                errEl.hidden = false;
+                save.disabled = false;
+            }
+        });
+    }
+
+    /* ========================================================
+     * 13c. v5: меню ☰ работника (§3.3)
+     * ======================================================== */
+    function openWorkerMenu() {
+        const sheet = openSheet(
+            '<h3 class="sheet__title">' + escapeHtml(t('menu')) + '</h3>' +
+            '<button class="btn btn--ghost btn--block" data-action="open-history">' +
+            escapeHtml(t('allHistory')) + ' ›</button>' +
+            '<button class="btn btn--ghost btn--block" data-action="open-money">' +
+            escapeHtml(t('myMoney')) + ' ›</button>' +
+            '<button class="btn btn--ghost btn--block" data-action="open-inventory">' +
+            escapeHtml(t('myInventory')) + ' ›</button>' +
+            '<div class="form-field"><span class="form-label">' +
+            escapeHtml(t('language')) + '</span>' +
+            '<select id="menuLang" class="lang-select">' +
+            '<option value="ru">РУ</option><option value="uk">УК</option>' +
+            '<option value="es">ES</option></select></div>');
+        const sel = sheet.querySelector('#menuLang');
+        sel.value = state.lang;
+        sel.addEventListener('change', () => {
+            state.lang = normalizeLang(sel.value);
+            applyI18n();
+            if (state.view === 'today') renderToday();
+        });
+    }
+
+    /* --- v5 §3.3: меню ☰ руководителя (sheet снизу) --- */
+    function openManagerMenu() {
+        const sheet = openSheet(
+            '<h3 class="sheet__title">' + escapeHtml(t('menu')) + '</h3>' +
+            '<button class="btn btn--ghost btn--block" data-action="open-team">' +
+            escapeHtml(t('menuPeople')) + ' ›</button>' +
+            '<button class="btn btn--ghost btn--block" data-action="open-clients">' +
+            escapeHtml(t('menuClients')) + ' ›</button>' +
+            '<div class="form-field"><span class="form-label">' +
+            escapeHtml(t('language')) + '</span>' +
+            '<select id="menuLang" class="lang-select">' +
+            '<option value="ru">РУ</option><option value="uk">УК</option>' +
+            '<option value="es">ES</option></select></div>');
+        const sel = sheet.querySelector('#menuLang');
+        sel.value = state.lang;
+        sel.addEventListener('change', () => {
+            state.lang = normalizeLang(sel.value);
+            applyI18n();
+            if (state.view === 'manager-dash') renderManagerDash();
+            else if (state.view === 'tasks') renderTasks();
+            else if (state.view === 'money') renderMoney();
+        });
     }
 
     /* ========================================================
@@ -1607,6 +1900,11 @@
         // Подгружаем инвентарь при первом переходе на вкладку
         // (prev-гард не даёт loadInventory -> setTeamTab зациклиться)
         if (tab === 'inventory' && prev !== 'inventory' && !state.inventory) loadInventory();
+        // v5: у работника кнопки добавления скрыты всегда
+        if (!isManager()) {
+            $('#btnAddWorker').hidden = true;
+            $('#btnAddItem').hidden = true;
+        }
     }
 
     function renderTeam() {
@@ -1802,6 +2100,22 @@
     /* ========================================================
      * 17. ИНВЕНТАРЬ: сегмент внутри экрана «Сотрудники»
      * ======================================================== */
+    // v5: «Мой инвентарь» из меню ☰ работника — фильтр по держателю=я
+    // (API: /inventory?holder_id=..., app/routers/inventory.py:47).
+    async function loadInventoryMine() {
+        showScreen('team');
+        setTeamTab('inventory');
+        const list = $('#inventoryList');
+        if (list) list.innerHTML = '<div class="skeleton skeleton--card"></div>';
+        try {
+            state.inventory = await api.request(
+                '/inventory?holder_id=' + entry_id(state.user.id));
+            renderInventory();
+        } catch (err) {
+            setList('inventoryList', '<p class="screen-message">' + escapeHtml(err.message) + '</p>');
+        }
+    }
+
     async function loadInventory() {
         // Рендерим внутри screenTeam: активный сегмент «Инвентарь»
         showScreen('team');
@@ -1912,6 +2226,11 @@
         showScreen('loading');
         try {
             state.meToday = await api.meToday();
+            // v5: деньги для карточки «К выплате» (не блокирует экран)
+            api.meMoney().then((m) => {
+                state.money = m;
+                if (state.view === 'today') renderTodayPayCard();
+            }).catch(() => {});
             renderToday();
         } catch (err) { renderError(err.message); }
     }
@@ -1925,38 +2244,107 @@
             showScreen('today');
             return;
         }
-        const myTotal = data.tasks.reduce((s, tk) => s + num(tk.my_hours_today), 0);
+
+        // --- карточки заданий на сегодня ---
         const cards = data.tasks.map((tk) => {
+            const entered = num(tk.my_hours_today) > 0;
             const workers = (tk.workers || []).map((w) =>
-                escapeHtml(w.name) +
+                '<span class="chip chip--static">' + escapeHtml(w.name) +
                 (w.hours_today !== null && w.hours_today !== undefined
                     ? ' ' + escapeHtml(fmtHours(w.hours_today)) + escapeHtml(t('hoursUnit'))
-                    : '') +
-                (w.is_reporter
-                    ? ' <span class="badge badge--reporter">' + escapeHtml(t('role.reporter')) + '</span>'
-                    : '')
-            ).join(', ');
-            const entered = num(tk.my_hours_today) > 0;
-            return '<div class="card card--tap" data-task-id="' + tk.id + '" role="button" tabindex="0">' +
+                    : '') + '</span>'
+            ).join('');
+            const action = entered
+                ? '<button class="btn btn--ghost btn--block card__enter today-done" data-action="fix-hours" data-id="' + tk.id + '">' +
+                  '✓ ' + escapeHtml(t('todayEntered', { n: fmtHours(tk.my_hours_today) })) +
+                  ' · ' + escapeHtml(t('editTask')) + '</button>'
+                : '<button class="btn btn--primary btn--block card__enter" data-action="enter-hours" data-id="' + tk.id + '">' +
+                  escapeHtml(t('todayEnterHours')) + '</button>';
+            return '<div class="card">' +
                 '<div class="card-title">' + escapeHtml(tk.title) + '</div>' +
                 '<div class="card-sub"><span>' +
                 [tk.client_name, (tk.location_names || []).join(', ')]
                     .filter(Boolean).map(escapeHtml).join(' · ') + '</span></div>' +
-                (workers ? '<div class="card-sub"><span>' + workers + '</span></div>' : '') +
-                '<div class="card-sub"><span class="' + (entered ? '' : 'muted') + '">' +
-                escapeHtml(entered
-                    ? t('todayEntered', { n: fmtHours(tk.my_hours_today) })
-                    : t('todayNotEntered')) + '</span></div>' +
-                '<button class="btn btn--primary btn--block card__enter" data-action="enter-hours" data-id="' + tk.id + '">' +
-                escapeHtml(t('todayEnterHours')) + '</button>' +
+                (workers ? '<div class="chip-row">' + workers + '</div>' : '') +
+                action +
                 '</div>';
         }).join('');
-        body.innerHTML =
-            (myTotal > 0
-                ? '<p class="muted my-hours">' + escapeHtml(t('todayMyHours', { n: fmtHours(myTotal) })) + '</p>'
-                : '') +
-            '<div class="list">' + cards + '</div>';
+
+        body.innerHTML = '<div class="list">' + cards + '</div>' +
+            '<div id="todayPayCard"></div>' +
+            '<h3 class="sheet__h3">' + escapeHtml(t('todayHistoryTitle')) + '</h3>' +
+            '<div id="todayHistList"><div class="skeleton skeleton--card"></div></div>' +
+            '<button class="btn btn--ghost btn--block" data-action="open-history">' +
+            escapeHtml(t('allHistory')) + ' ›</button>';
+
+        renderTodayPayCard();
+        loadTodayHistory();
         showScreen('today');
+    }
+
+    /* --- v5: карточка «К выплате» на главном экране работника --- */
+    function monthName(d) {
+        const loc = state.lang === 'uk' ? 'uk-UA'
+            : state.lang === 'es' ? 'es-ES' : 'ru-RU';
+        try {
+            return new Date(d + 'T00:00:00').toLocaleDateString(loc, { month: 'long' });
+        } catch (e) { return d; }
+    }
+
+    function renderTodayPayCard() {
+        const slot = $('#todayPayCard');
+        if (!slot) return;
+        const m = state.money;
+        if (!m) { slot.innerHTML = ''; return; }
+        // v5: если открытый период тянется с epoch (закрытых выплат нет),
+        // показываем текущий месяц, а не «январь» из даты epoch.
+        const today = new Date();
+        const ps = m.period_start ? new Date(m.period_start + 'T00:00:00') : null;
+        const sameMonth = ps && ps.getFullYear() === today.getFullYear()
+            && ps.getMonth() === today.getMonth();
+        const monthLabel = sameMonth ? monthName(m.period_start)
+            : today.toLocaleDateString(
+                state.lang === 'uk' ? 'uk-UA' : state.lang === 'es' ? 'es-ES' : 'ru-RU',
+                { month: 'long' });
+        slot.innerHTML =
+            '<div class="card card--tap" data-action="open-money" role="button" tabindex="0">' +
+            '<div class="card-sub"><span>' +
+            escapeHtml(t('payCardTitle', { m: monthLabel })) + '</span></div>' +
+            '<div class="stat__value">' + escapeHtml(num(m.to_pay).toFixed(2)) + '</div>' +
+            '<div class="card-sub"><span class="muted">' +
+            escapeHtml(t('payCardEarnedAdv', {
+                e: num(m.earned).toFixed(2), a: num(m.advances).toFixed(2)
+            })) + '</span></div>' +
+            '</div>';
+    }
+
+    /* --- v5: последние ~5 записей истории на главном экране --- */
+    async function loadTodayHistory() {
+        const box = $('#todayHistList');
+        if (!box) return;
+        try {
+            const rows = await api.meHistory();
+            const recent = rows.slice(0, 5);
+            if (!recent.length) {
+                box.innerHTML = '<p class="screen-message">' +
+                    escapeHtml(t('histEmpty')) + '</p>';
+                return;
+            }
+            box.innerHTML = recent.map((r) =>
+                '<div class="row-line"><span>' +
+                escapeHtml(fmtDateHuman(r.date)) + ' · ' +
+                escapeHtml(r.location || r.task_title || '—') +
+                (r.corrected
+                    ? ' <span class="badge badge--warn" title="' +
+                      escapeHtml(r.corrected_reason || '') + '">' +
+                      escapeHtml(t('histCorrected')) + '</span>'
+                    : '') + '</span>' +
+                '<span class="row-line__meta">' + escapeHtml(fmtHours(r.hours)) + ' ' +
+                escapeHtml(t('hoursUnit')) + '</span></div>'
+            ).join('');
+        } catch (err) {
+            box.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
+        }
     }
 
     /* ========================================================
@@ -2031,6 +2419,8 @@
         const m = state.money;
         const body = $('#moneyBody');
         if (!m) { showScreen('money'); return; }
+        // v5 §3.2: у руководителя «Деньги» — сводка по всем сотрудникам
+        if (isManager()) { renderMoneyManager(body); return; }
         const lp = m.last_payout;
         body.innerHTML =
             '<p class="muted my-hours">' + escapeHtml(t('moneyPeriod', { d: fmtDateHuman(m.period_start) })) + '</p>' +
@@ -2064,6 +2454,55 @@
         showScreen('money');
     }
 
+    /* --- v5 §3.2: «Деньги» руководителя: сводка + список сотрудников --- */
+    async function renderMoneyManager(body) {
+        body.innerHTML = '<div class="skeleton skeleton--card"></div>';
+        try {
+            const [users, entries] = await Promise.all([
+                state.users || api.getUsers(),
+                api.getEntries('date_from=' + monthRange()[0] + '&date_to=' + monthRange()[1])
+            ]);
+            state.users = users;
+            const byUser = {};
+            entries.forEach((e) => {
+                byUser[e.user_id] = (byUser[e.user_id] || 0) + num(e.hours);
+            });
+            const rows = users.filter((u) => u.is_active).map((u) => {
+                const h = byUser[u.id] || 0;
+                return '<button class="row-line row-line--btn" data-action="open-user-summary" data-user="' + u.id + '">' +
+                    '<span>' + escapeHtml(u.name) + '</span>' +
+                    '<span class="row-line__meta">' + escapeHtml(fmtHours(h)) + ' ' +
+                    escapeHtml(t('hoursUnit')) + '</span></button>';
+            }).join('');
+            // Итог по данным /api/me/money руководителя (его собственная сводка
+            // не показательна для команды) — считаем начисленное из записей.
+            const totalHours = entries.reduce((s, e) => s + num(e.hours), 0);
+            const totalGross = entries.reduce(
+                (s, e) => s + num(e.hours) * num(e.rate_snapshot), 0);
+            body.innerHTML =
+                '<div class="card">' +
+                '<div class="card-sub"><span>' + escapeHtml(t('moneyTotalToPay')) + '</span></div>' +
+                '<div class="stat__value">' + totalGross.toFixed(2) + '</div>' +
+                '<div class="card-sub"><span class="muted">' +
+                escapeHtml(t('moneyEarnedAdv', {
+                    e: totalGross.toFixed(2),
+                    a: escapeHtml(fmtHours(totalHours)) + ' ' + escapeHtml(t('hoursUnit'))
+                })) + '</span></div>' +
+                '</div>' +
+                '<h3 class="sheet__h3">' + escapeHtml(t('moneyWorkers')) + '</h3>' +
+                (rows || '<p class="screen-message">' + escapeHtml(t('empty')) + '</p>') +
+                '<button class="row-line row-line--btn" data-action="pay-advance-open">' +
+                '<span>' + escapeHtml(t('moneyAddAdvance')) + '</span></button>' +
+                '<button class="row-line row-line--btn" data-action="open-reports">' +
+                '<span>' + escapeHtml(t('moneyOpenReports')) + ' ›</span></button>' +
+                '<button class="btn btn--danger btn--block" data-action="pay-close" style="margin-top:12px">' +
+                escapeHtml(t('moneyClosePeriod')) + '</button>';
+        } catch (err) {
+            body.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
+        }
+        showScreen('money');
+    }
+
     /* ========================================================
      * 19d. v4: ДАШБОРД РУКОВОДИТЕЛЯ
      * ======================================================== */
@@ -2079,45 +2518,63 @@
         const d = state.dash;
         const body = $('#managerDashBody');
         if (!d) { showScreen('manager-dash'); return; }
-        const noHours = d.tasks_no_hours || [];
+        // v5 §3.2: «без часов» — люди, у которых нет записи за сегодня
+        const noHoursUsers = [];
+        (d.tasks || []).forEach((tk) => (tk.workers || []).forEach((w) => {
+            const has = w.hours_today !== null && w.hours_today !== undefined && num(w.hours_today) > 0;
+            if (!has && !noHoursUsers.some((u) => u.id === w.user_id)) {
+                noHoursUsers.push({ id: w.user_id, name: w.name });
+            }
+        }));
+        const noHoursTasks = d.tasks_no_hours || [];
+        const attItems = [];
+        noHoursUsers.forEach((u) => {
+            attItems.push('<button class="row-line row-line--btn" data-action="open-user-summary" data-user="' + u.id + '">' +
+                '<span><span class="dash-no-hours">●</span> ' +
+                escapeHtml(t('attNoHoursUser', { name: u.name })) + '</span></button>');
+        });
+        noHoursTasks.forEach((tid) => {
+            const tk = (d.tasks || []).find((x) => x.id === tid);
+            if (tk) {
+                attItems.push('<button class="row-line row-line--btn" data-action="open-matrix" data-id="' + tk.id + '">' +
+                    '<span><span class="dash-no-hours">●</span> ' +
+                    escapeHtml(t('attNoHoursTask', { title: tk.title })) + '</span></button>');
+            }
+        });
+        // v5 §3.2: активные задания — карточки с chips (зелёный «Имя 8», красный «Имя —»)
         const cards = (d.tasks || []).map((tk) => {
-            const workers = (tk.workers || []).map((w) => {
+            const chips = (tk.workers || []).map((w) => {
                 const has = w.hours_today !== null && w.hours_today !== undefined && num(w.hours_today) > 0;
-                return '<span data-dash-user="' + w.user_id + '" class="' + (has ? '' : 'dash-no-hours') + '">' +
+                return '<span class="chip chip--static' + (has ? ' chip--ok' : ' chip--miss') + '" data-dash-user="' + w.user_id + '">' +
                     escapeHtml(w.name) + ' ' +
-                    escapeHtml(has ? fmtHours(w.hours_today) + escapeHtml(t('hoursUnit')) : t('dashNoHours')) + '</span>';
-            }).join(', ');
+                    (has ? escapeHtml(fmtHours(w.hours_today)) : '—') + '</span>';
+            }).join('');
             return '<div class="card card--tap" data-task-id="' + tk.id + '" role="button" tabindex="0">' +
                 '<div class="card-title">' + escapeHtml(tk.title) + '</div>' +
                 '<div class="card-sub"><span>' +
                 [tk.client_name, (tk.location_names || []).join(', ')]
                     .filter(Boolean).map(escapeHtml).join(' · ') + '</span></div>' +
-                (workers ? '<div class="card-sub"><span>' + workers + '</span></div>' : '') +
-                '<div class="card-sub">' +
-                '<button class="btn btn-small" data-action="enter-hours" data-id="' + tk.id + '">' +
-                escapeHtml(t('enterHours')) + '</button>' +
-                '<button class="btn btn-small" data-action="open-matrix" data-id="' + tk.id + '">' +
-                escapeHtml(t('dashOpenMatrix')) + '</button>' +
-                '</div>' +
+                (chips ? '<div class="chip-row">' + chips + '</div>' : '') +
                 '</div>';
         }).join('');
         body.innerHTML =
-            '<button class="btn btn--primary btn--block" data-action="new-task">' +
-            escapeHtml(t('dashNewTask')) + '</button>' +
             '<div class="stat-row stat-row--3">' +
             '<div class="stat"><span class="stat__value">' + d.workers_count + '</span>' +
-            '<span class="stat__label">' + escapeHtml(t('dashWorkers')) + '</span></div>' +
+            '<span class="stat__label">' + escapeHtml(t('dashOnWork')) + '</span></div>' +
             '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHours(d.hours_today)) + '</span>' +
-            '<span class="stat__label">' + escapeHtml(t('dashHoursToday')) + '</span></div>' +
-            '<div class="stat"><span class="stat__value' + (noHours.length ? ' dash-warn' : '') + '">' +
-            noHours.length + '</span>' +
-            '<span class="stat__label">' + escapeHtml(t('dashNoHoursTasks')) + '</span></div>' +
+            '<span class="stat__label">' + escapeHtml(t('dashHours')) + '</span></div>' +
+            '<div class="stat"><span class="stat__value' + (noHoursUsers.length ? ' dash-warn' : '') + '">' +
+            noHoursUsers.length + '</span>' +
+            '<span class="stat__label">' + escapeHtml(t('dashWithoutHours')) + '</span></div>' +
             '</div>' +
-            (noHours.length
-                ? '<p class="dash-warn-text">' + escapeHtml(t('dashNoHoursWarn', { n: noHours.length })) + '</p>'
-                : '') +
+            '<h3 class="sheet__h3">' + escapeHtml(t('attTitle')) + '</h3>' +
+            (attItems.length
+                ? '<div class="card">' + attItems.join('') + '</div>'
+                : '<p class="screen-message">' + escapeHtml(t('attOk')) + '</p>') +
+            '<h3 class="sheet__h3">' + escapeHtml(t('dashActiveTasks')) + '</h3>' +
             '<div class="list">' + (cards || '<div class="empty"><div class="empty__text">' +
-                escapeHtml(t('dashNoTasksToday')) + '</div></div>') + '</div>';
+                escapeHtml(t('dashNoTasksToday')) + '</div></div>') + '</div>' +
+            '<button class="fab" data-action="new-task" aria-label="' + escapeHtml(t('dashNewTask')) + '">+</button>';
         showScreen('manager-dash');
     }
 
@@ -2227,7 +2684,18 @@
                 const action = btn.getAttribute('data-action');
                 const id = btn.getAttribute('data-id');
                 if (action === 'new-task') openNewTask();
-                else if (action === 'enter-hours') openHoursEntry(parseInt(id, 10));
+                else if (action === 'enter-hours') {
+                    if (isManager()) openHoursEntry(parseInt(id, 10));
+                    else openWorkerHoursSheet(parseInt(id, 10), false);
+                }
+                else if (action === 'fix-hours') openWorkerHoursSheet(parseInt(id, 10), true);
+                else if (action === 'open-history') { closeSheet(); loadHistory('week'); }
+                else if (action === 'open-money') { closeSheet(); loadMoney(); }
+                else if (action === 'open-inventory') { closeSheet(); loadInventoryMine(); }
+                else if (action === 'open-team') { closeSheet(); loadTeam(); }
+                else if (action === 'open-clients') { closeSheet(); loadClients(); }
+                else if (action === 'open-reports') { closeSheet(); loadReports(); }
+                else if (action === 'pay-advance-open') { closeSheet(); loadReports(); }
                 else if (action === 'finish-task') finishTask(parseInt(id, 10));
                 else if (action === 'finish-task-yes') doFinishTask(parseInt(id, 10));
                 else if (action === 'edit-task') editTaskSheet(parseInt(id, 10));
@@ -2308,6 +2776,22 @@
                 chip.classList.toggle('chip--on');
                 if (kind === 'worker') renderReporterChips();
             }
+        });
+
+        // v5: меню ☰ работника
+        const workerMenuBtn = $('#btnWorkerMenu');
+        if (workerMenuBtn) workerMenuBtn.addEventListener('click', openWorkerMenu);
+        // v5: меню ☰ руководителя (на трёх его экранах)
+        ['#btnManagerMenu', '#btnManagerMenu2', '#btnManagerMenu3'].forEach((sel) => {
+            const btn = $(sel);
+            if (btn) btn.addEventListener('click', openManagerMenu);
+        });
+        // v5: сегменты «Активные | Завершённые» на «Заданиях»
+        document.querySelectorAll('#tasksSegment .segment__btn').forEach((b) => {
+            b.addEventListener('click', () => {
+                state.tasksSeg = b.getAttribute('data-tasks-seg');
+                loadTasks();
+            });
         });
 
         // Экран ввода часов

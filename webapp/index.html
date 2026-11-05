@@ -9,8 +9,8 @@
     <!-- Telegram Mini App SDK (обязательный скрипт для работы внутри Telegram) -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <!-- Стили приложения (v=8: навигация по ролям, сегменты Люди·Инвентарь) -->
-    <link rel="stylesheet" href="/app/static/styles.css?v=8">
+    <!-- Стили приложения (v=10: v5 — руководитель: 3 вкладки, Сегодня/Задания/Деньги, ☰) -->
+    <link rel="stylesheet" href="/app/static/styles.css?v=10">
 </head>
 <body>
 
@@ -60,7 +60,11 @@
             <section class="screen" id="screenTasks" data-screen-name="tasks" hidden>
                 <div class="screen-header">
                     <h2 data-i18n="tasksTitle">Задания</h2>
-                    <button class="btn btn--primary" id="btnNewTask" hidden data-i18n="tasksNew">Новое задание</button>
+                    <button class="icon-btn" id="btnManagerMenu" aria-label="Меню" hidden>☰</button>
+                </div>
+                <div class="segment" id="tasksSegment">
+                    <button class="segment__btn is-active" data-tasks-seg="active" data-i18n="segActive">Активные</button>
+                    <button class="segment__btn" data-tasks-seg="done" data-i18n="segDone">Завершённые</button>
                 </div>
                 <div class="list" id="tasksList">
                     <!-- Карточки заданий будет добавлять app.js -->
@@ -117,7 +121,10 @@
 
             <!-- Экран: деньги руководителя (вкладки: Выплаты | Отчёты) -->
             <section class="screen" id="screenReports" data-screen-name="reports" hidden>
-                <h2 data-i18n="moneyTitle">Деньги</h2>
+                <div class="screen-header">
+                    <h2 data-i18n="moneyTitle">Деньги</h2>
+                    <button class="icon-btn" id="btnManagerMenu2" aria-label="Меню" hidden>☰</button>
+                </div>
                 <div class="segment" id="reportsSegment">
                     <button class="segment__btn is-active" data-reports-tab="payouts" data-i18n="tabPayouts">Выплаты</button>
                     <button class="segment__btn" data-reports-tab="summary" data-i18n="tabReports">Отчёты</button>
@@ -202,8 +209,12 @@
             </section>
 
             <!-- Экран: сегодня (v4, работник/менеджер) -->
+            <!-- Экран: работник — единственный главный экран (v5, §3.1) -->
             <section class="screen" id="screenToday" data-screen-name="today" hidden>
-                <h2 data-i18n="todayTitle">Сегодня</h2>
+                <div class="screen-header">
+                    <h2 data-i18n="todayTitle">Сегодня</h2>
+                    <button class="icon-btn" id="btnWorkerMenu" aria-label="Меню">☰</button>
+                </div>
                 <div id="todayBody"></div>
             </section>
 
@@ -233,7 +244,10 @@
 
             <!-- Экран: дашборд руководителя (v4) -->
             <section class="screen" id="screenManagerDash" data-screen-name="manager-dash" hidden>
-                <h2 data-i18n="dashTitle">Сегодня</h2>
+                <div class="screen-header">
+                    <h2 data-i18n="dashTitle">Сегодня</h2>
+                    <button class="icon-btn" id="btnManagerMenu3" aria-label="Меню" hidden>☰</button>
+                </div>
                 <div id="managerDashBody"></div>
             </section>
 
@@ -286,24 +300,11 @@
         </main>
 
         <!-- ============================================= -->
-        <!-- НИЖНЯЯ НАВИГАЦИЯ: 8 кнопок, инлайн SVG.        -->
-        <!-- Работник: Сегодня / История / Я.              -->
-        <!-- Руководитель: Сегодня / Задания / Сотрудники / -->
-        <!-- Заказчики / Деньги. Видимость — renderNav().   -->
+        <!-- НИЖНЯЯ НАВИГАЦИЯ (v5): только руководитель.    -->
+        <!-- Сегодня · Задания · Деньги. Работник — без     -->
+        <!-- вкладок (renderNav() скрывает навигацию).      -->
         <!-- ============================================= -->
         <nav class="bottom-nav" id="bottomNav">
-            <button class="bottom-nav__item" data-nav-target="today" hidden>
-                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-                <span class="nav-label" data-i18n="navToday">Сегодня</span>
-            </button>
-            <button class="bottom-nav__item" data-nav-target="history" hidden>
-                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l2.5 2.5"/><path d="M3.05 11a9 9 0 1 1 .5 4"/><path d="M3 22v-5h5"/></svg>
-                <span class="nav-label" data-i18n="navHistory">История</span>
-            </button>
-            <button class="bottom-nav__item" data-nav-target="money" hidden>
-                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M15 9.5c0-1.4-1.3-2-3-2s-3 .6-3 2 1.3 1.8 3 2.2 3 .9 3 2.3-1.3 2-3 2-3-.6-3-2"/></svg>
-                <span class="nav-label" data-i18n="navMe">Я</span>
-            </button>
             <button class="bottom-nav__item" data-nav-target="manager-dash" hidden>
                 <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
                 <span class="nav-label" data-i18n="dashTitle">Сегодня</span>
@@ -312,16 +313,8 @@
                 <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
                 <span class="nav-label" data-i18n="navTasks">Задания</span>
             </button>
-            <button class="bottom-nav__item" data-nav-target="team" hidden>
-                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.2 3.4-5 6.5-5s5.7 1.8 6.5 5"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 15.2c2.8.2 4.8 1.8 5.5 4.5"/></svg>
-                <span class="nav-label" data-i18n="navTeam">Сотрудники</span>
-            </button>
-            <button class="bottom-nav__item" data-nav-target="clients" hidden>
-                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
-                <span class="nav-label" data-i18n="navClients">Заказчики</span>
-            </button>
-            <button class="bottom-nav__item" data-nav-target="reports" hidden>
-                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+            <button class="bottom-nav__item" data-nav-target="money" hidden>
+                <svg class="bottom-nav__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M15 9.5c0-1.4-1.3-2-3-2s-3 .6-3 2 1.3 1.8 3 2.2 3 .9 3 2.3-1.3 2-3 2-3-.6-3-2"/></svg>
                 <span class="nav-label" data-i18n="navMoney">Деньги</span>
             </button>
         </nav>
@@ -347,8 +340,8 @@
         })();
     </script>
 
-    <!-- Логика приложения (v=8: навигация по ролям, инвентарь внутри «Сотрудники») -->
-    <script src="/app/static/app.js?v=8"></script>
+    <!-- Логика приложения (v=10: v5 — руководитель: 3 вкладки, Сегодня/Задания/Деньги, ☰) -->
+    <script src="/app/static/app.js?v=10"></script>
 
 </body>
 </html>

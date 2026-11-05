@@ -552,6 +552,66 @@ h3 { font-size: 16px; }
 }
 
 /* ============================================================
+   v5: работник — один экран
+   ============================================================ */
+.icon-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: var(--surface-2);
+    border-radius: var(--r-md);
+    color: var(--text);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.icon-btn:active { transform: scale(.95); }
+
+.chip--static { cursor: default; }
+.chip--static:active { transform: none; }
+
+/* ============================================================
+   v5: руководитель — Сегодня / Задания / Деньги
+   ============================================================ */
+.chip--ok {
+    background: rgba(74, 222, 128, .16);
+    color: var(--accent);
+}
+.chip--miss {
+    background: rgba(248, 113, 113, .14);
+    color: var(--danger);
+}
+.fab {
+    position: fixed;
+    right: 16px;
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px) + 12px);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 28px;
+    line-height: 1;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+    cursor: pointer;
+    z-index: 40;
+}
+.fab:active { transform: scale(.94); }
+body.no-nav .fab { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+
+.today-done {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* Работник без нижней навигации: контент до низа */
+body.no-nav .app-content {
+    padding-bottom: calc(var(--pad) + env(safe-area-inset-bottom));
+}
+
+/* ============================================================
    СЕГМЕНТЫ (вкладки отчётов) — pill 44px
    ============================================================ */
 .segment {
