@@ -21,7 +21,10 @@
      * ======================================================== */
     const CONFIG = {
         apiBase: (window.APP_CONFIG && window.APP_CONFIG.apiBase) || '/api',
-        defaultLang: 'ru'
+        defaultLang: 'ru',
+        // username бота для кнопки «Открыть бота» (без @); можно переопределить
+        // через window.APP_CONFIG.botUsername, вписав в index.html перед app.js
+        botUsername: (window.APP_CONFIG && window.APP_CONFIG.botUsername) || 'agrofirmbot'
     };
 
     /* ========================================================
@@ -244,6 +247,9 @@
             'moneyOpenReports': 'Отчёты',
             'moneyAddAdvance': '+ Аванс',
             'moneyClosePeriod': 'Закрыть период',
+            'webapp_not_registered': 'Вы ещё не в системе. Откройте бота и отправьте свой номер — после одобрения руководителем появится доступ.',
+            'webapp_deactivated': 'Доступ отключён. Обратитесь к руководителю.',
+            'open_bot_btn': 'Открыть бота',
             'matrixTitle': 'Таблица часов',
             'matrixEmpty': 'Нет данных',
             'sumTitle': 'Карточка сотрудника',
@@ -435,6 +441,9 @@
             'moneyOpenReports': 'Звіти',
             'moneyAddAdvance': '+ Аванс',
             'moneyClosePeriod': 'Закрити період',
+            'webapp_not_registered': 'Вас ще немає в системі. Відкрийте бота та надішліть свій номер — після схвалення керівником з\'явиться доступ.',
+            'webapp_deactivated': 'Доступ вимкнено. Зверніться до керівника.',
+            'open_bot_btn': 'Відкрити бота',
             'matrixTitle': 'Таблиця годин',
             'matrixEmpty': 'Немає даних',
             'sumTitle': 'Картка працівника',
@@ -626,6 +635,9 @@
             'moneyOpenReports': 'Informes',
             'moneyAddAdvance': '+ Adelanto',
             'moneyClosePeriod': 'Cerrar período',
+            'webapp_not_registered': 'Aún no está en el sistema. Abra el bot y envíe su número — cuando el responsable lo apruebe, tendrá acceso.',
+            'webapp_deactivated': 'Acceso desactivado. Contacte al responsable.',
+            'open_bot_btn': 'Abrir el bot',
             'matrixTitle': 'Tabla de horas',
             'matrixEmpty': 'Sin datos',
             'sumTitle': 'Ficha del empleado',
@@ -882,7 +894,13 @@
             if (!response.ok) {
                 let detail = data && data.detail ? data.detail : 'HTTP ' + response.status;
                 if (typeof detail !== 'string') detail = JSON.stringify(detail);
-                throw new Error(detail);
+                const err = new Error(detail);
+                // код ошибки от API (напр. 401 not_registered/deactivated)
+                if (data && data.detail && typeof data.detail === 'object' && data.detail.code) {
+                    err.code = data.detail.code;
+                }
+                err.status = response.status;
+                throw err;
             }
             return data;
         },
@@ -2768,6 +2786,17 @@
             });
         });
 
+        // Кнопка «Открыть бота» на экране логина (незарегистрированный пользователь)
+        const btnOpenBot = $('#btnOpenBot');
+        if (btnOpenBot) {
+            btnOpenBot.addEventListener('click', () => {
+                const username = (CONFIG.botUsername || 'agrofirmbot').replace('@', '');
+                const url = 'https://t.me/' + username;
+                if (tg && tg.openTelegramLink) tg.openTelegramLink(url);
+                else window.open(url, '_blank');
+            });
+        }
+
         // Делегированные клики по data-action
         document.addEventListener('click', (ev) => {
             const btn = ev.target.closest('[data-action]');
@@ -3088,11 +3117,14 @@
         }
     }
 
-    function renderError(message) {
+    function renderError(message, code) {
         $('#screenLoading').hidden = true;
         const login = $('#screenLogin');
         login.hidden = false;
         login.querySelector('[data-i18n="loginSubtitle"]').textContent = message;
+        // Кнопка «Открыть бота» — только для незарегистрированных (заявка через бота)
+        const btn = $('#btnOpenBot');
+        if (btn) btn.hidden = code !== 'not_registered';
     }
 
     /* ========================================================
@@ -3113,6 +3145,18 @@
 
         try {
             state.user = await api.getMe();
+        } catch (err) {
+            // 401 с кодом: понятное сообщение вместо «Проверка данных...»
+            if (err.code === 'not_registered') {
+                renderError(t('webapp_not_registered'), 'not_registered');
+            } else if (err.code === 'deactivated') {
+                renderError(t('webapp_deactivated'), 'deactivated');
+            } else {
+                renderError(err.message || t('network.error'));
+            }
+            return;
+        }
+        try {
             if (state.user.lang) {
                 state.lang = normalizeLang(state.user.lang);
                 applyI18n();

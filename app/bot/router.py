@@ -10,7 +10,7 @@ Webhook бота: привязка аккаунта по номеру телеф
 Вся бизнес-логика — сервисы модуля 5, здесь только разбор сообщений.
 """
 import re
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 
 from fastapi import APIRouter, Body, Depends, Header, HTTPException
@@ -20,7 +20,10 @@ from sqlalchemy.orm import Session
 from app.bot.i18n import t
 from app.bot.telegram import WEBHOOK_SECRET, send_message
 from app.db import get_db
-from app.models import Task, TaskAssignment, TaskGroup, TaskStatus, User
+from app.models import (
+    AccessRequest, AccessRequestStatus, Task, TaskAssignment, TaskGroup,
+    TaskStatus, User,
+)
 from app.services import work_entries as svc
 from app.services.work_entries import WorkEntryError
 
@@ -127,7 +130,7 @@ def _normalize_phone(phone: str) -> str:
     return "".join(ch for ch in phone if ch.isdigit())[-9:]  # последние 9 цифр
 
 
-def _handle_contact(db: Session, tg_id: int, contact: dict) -> str:
+def _handle_contact(db: Session, tg_id: int, contact: dict, from_user: dict) -> str:
     # Привязать можно только СВОЙ контакт
     if contact.get("user_id") != tg_id:
         return t("ru", "contact_not_found")
@@ -142,7 +145,50 @@ def _handle_contact(db: Session, tg_id: int, contact: dict) -> str:
                 u.tg_id = tg_id
                 db.commit()
                 return t(u.lang, "linked_ok", name=u.name)
-    return t("ru", "contact_not_found")
+
+    # Телефона нет среди users — поток заявки (SPEC §12/§28):
+    # человек сам делится номером, руководитель одобряет.
+    lang = (from_user.get("language_code") or "ru")[:2]
+    lang = lang if lang in ("ru", "uk", "es") else "ru"
+    name = (contact.get("first_name") or from_user.get("first_name")
+            or from_user.get("username") or "Без имени")
+    phone = contact.get("phone_number") or ""
+
+    existing = db.execute(
+        select(AccessRequest).where(
+            AccessRequest.tg_id == tg_id,
+            AccessRequest.status == AccessRequestStatus.pending)
+    ).scalar_one_or_none()
+    if existing:
+        return t(lang, "request_pending")
+
+    req = AccessRequest(tg_id=tg_id, name=name, phone=phone, lang=lang)
+    db.add(req)
+    db.commit()
+
+    # уведомить всех активных руководителей с кнопками решения
+    username = from_user.get("username")
+    username_part = f"\nUsername: @{username}" if username else ""
+    managers = db.execute(
+        select(User).where(User.is_manager.is_(True), User.is_active.is_(True))
+    ).scalars().all()
+    for m in managers:
+        if m.tg_id:
+            kb = {
+                "inline_keyboard": [[
+                    {"text": t(m.lang, "approve_btn"),
+                     "callback_data": f"acc:approve:{req.id}"},
+                    {"text": t(m.lang, "reject_btn"),
+                     "callback_data": f"acc:reject:{req.id}"},
+                ]]
+            }
+            send_message(
+                m.tg_id,
+                t(m.lang, "mgr_new_request", name=name, phone=phone,
+                  username=username_part),
+                reply_markup=kb,
+            )
+    return t(lang, "request_sent")
 
 
 def _contact_keyboard(lang) -> dict:
@@ -151,6 +197,77 @@ def _contact_keyboard(lang) -> dict:
         "resize_keyboard": True,
         "one_time_keyboard": True,
     }
+
+
+# ---------- заявки на доступ: решение руководителя ----------
+
+def _handle_callback(db: Session, cbq: dict) -> None:
+    """Inline-кнопки «Одобрить/Отклонить» у заявки (callback_data acc:approve:<id>)."""
+    data = cbq.get("data") or ""
+    parts = data.split(":")
+    if len(parts) != 3 or parts[0] != "acc":
+        return
+    action, req_id = parts[1], parts[2]
+    if action not in ("approve", "reject") or not req_id.isdigit():
+        return
+
+    from_tg = cbq["from"]["id"]
+    manager = db.execute(
+        select(User).where(User.tg_id == from_tg, User.is_manager.is_(True),
+                           User.is_active.is_(True))
+    ).scalar_one_or_none()
+    if manager is None:
+        _answer_callback(cbq, "❌ Решать заявки может только руководитель")
+        return
+
+    req = db.get(AccessRequest, int(req_id))
+    if req is None or req.status != AccessRequestStatus.pending:
+        _answer_callback(cbq, "Заявка уже обработана")
+        return
+
+    if action == "approve":
+        user = User(
+            tg_id=req.tg_id, name=req.name, phone=req.phone,
+            lang=req.lang, is_active=True, is_manager=False,
+        )
+        db.add(user)
+        req.status = AccessRequestStatus.approved
+        req.decided_at = datetime.utcnow()
+        req.decided_by = manager.id
+        db.commit()
+        _answer_callback(cbq, "✅ Одобрено")
+        send_message(req.tg_id, t(req.lang, "approved_ok"))
+        send_message(
+            from_tg,
+            t(manager.lang, "mgr_approved_confirm", name=req.name, phone=req.phone),
+        )
+    else:
+        req.status = AccessRequestStatus.rejected
+        req.decided_at = datetime.utcnow()
+        req.decided_by = manager.id
+        db.commit()
+        _answer_callback(cbq, "❌ Отклонено")
+        send_message(req.tg_id, t(req.lang, "rejected_info"))
+        send_message(
+            from_tg,
+            t(manager.lang, "mgr_rejected_confirm", name=req.name, phone=req.phone),
+        )
+
+
+def _answer_callback(cbq: dict, text: str) -> None:
+    """answerCallbackQuery — всплывающий ответ на нажатие кнопки."""
+    import httpx
+    from app.bot.telegram import BOT_TOKEN
+    if not BOT_TOKEN:
+        return
+    try:
+        httpx.post(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/answerCallbackQuery",
+            json={"callback_query_id": cbq["id"], "text": text},
+            timeout=10,
+        )
+    except httpx.HTTPError:
+        pass  # ответ на кнопку не критичен
 
 
 # ---------- webhook ----------
@@ -165,13 +282,17 @@ def telegram_webhook(
         raise HTTPException(403, "bad secret")
 
     msg = update.get("message")
+    cbq = update.get("callback_query")
+    if cbq:
+        _handle_callback(db, cbq)
+        return {"ok": True}
     if not msg:
         return {"ok": True}  # другие типы апдейтов игнорируем
     chat_id = msg["chat"]["id"]
     tg_id = msg["from"]["id"]
 
     if msg.get("contact"):
-        send_message(chat_id, _handle_contact(db, tg_id, msg["contact"]))
+        send_message(chat_id, _handle_contact(db, tg_id, msg["contact"], msg["from"]))
         return {"ok": True}
 
     user = db.execute(

@@ -69,5 +69,17 @@
   "moneyWorkers": "Empleados",
   "moneyOpenReports": "Informes",
   "moneyAddAdvance": "+ Adelanto",
-  "moneyClosePeriod": "Cerrar período"
+  "moneyClosePeriod": "Cerrar período",
+  "request_sent": "Solicitud enviada al responsable. Cuando sea aprobada, recibirá acceso.",
+  "request_pending": "Su solicitud ya está en revisión. El responsable la verá y tomará una decisión.",
+  "approved_ok": "✅ ¡Acceso concedido! Abra la miniapp desde el menú del bot o escriba aquí sus horas, por ejemplo: 8",
+  "rejected_info": "Solicitud rechazada por el responsable.",
+  "mgr_new_request": "🔔 Nueva solicitud de acceso:\nNombre: {name}\nTeléfono: {phone}{username}\n\nApruébela para conceder acceso.",
+  "mgr_approved_confirm": "✅ Aprobado: {name} ({phone}) ha recibido acceso.",
+  "mgr_rejected_confirm": "❌ Rechazada: solicitud de {name} ({phone}).",
+  "approve_btn": "✅ Aprobar",
+  "reject_btn": "❌ Rechazar",
+  "webapp_not_registered": "Aún no está en el sistema. Abra el bot y envíe su número — cuando el responsable lo apruebe, tendrá acceso.",
+  "webapp_deactivated": "Acceso desactivado. Contacte al responsable.",
+  "open_bot_btn": "Abrir el bot"
 }

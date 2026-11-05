@@ -50,9 +50,16 @@ def me(
     except json.JSONDecodeError:
         raise HTTPException(401, "Некорректные данные пользователя")
     user = db.query(User).filter(User.tg_id == tg_id).first()
-    if not user or not user.is_active:
-        logger.warning("me: tg_id=%s не найден в базе или деактивирован", tg_id)
-        raise HTTPException(401, "Пользователь не зарегистрирован или деактивирован")
+    if not user:
+        logger.warning("me: tg_id=%s не найден в базе", tg_id)
+        raise HTTPException(
+            401, {"code": "not_registered",
+                   "detail": "Пользователь не зарегистрирован"})
+    if not user.is_active:
+        logger.warning("me: tg_id=%s деактивирован", tg_id)
+        raise HTTPException(
+            401, {"code": "deactivated",
+                   "detail": "Пользователь деактивирован"})
 
     # Часы/заработок — из отчёта по пользователю (та же логика, что /api/reports/user)
     from app.models import WorkEntry

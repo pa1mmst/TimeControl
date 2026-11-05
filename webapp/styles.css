@@ -1,22 +1,22 @@
 /* ============================================================
  * Time Control — Telegram Mini App
- * File: webapp/styles.css  (v=6)
- * Единая тёмная палитра, карточки без рамок, кнопки 48px,
- * радиусы 12/16/20, bottom sheet с backdrop-blur,
+ * File: webapp/styles.css  (v=12)
+ * Светлая палитра (белый фон, тёмный текст), карточки без рамок,
+ * кнопки 48px, радиусы 12/16/20, bottom sheet с backdrop-blur,
  * toast / skeleton / empty.
  * ============================================================ */
 
 :root {
-    --bg: #0E1412;
-    --surface: #161E1B;
-    --surface-2: #1E2825;
-    --border: rgba(255, 255, 255, .08);
-    --accent: #4ADE80;
-    --accent-ink: #052E16;
-    --text: #E8EDEA;
-    --muted: #8A9691;
-    --danger: #F87171;
-    --warn: #FBBF24;
+    --bg: #FFFFFF;
+    --surface: #F6F7F8;
+    --surface-2: #ECEEF0;
+    --border: rgba(0, 0, 0, .08);
+    --accent: #16A34A;
+    --accent-ink: #FFFFFF;
+    --text: #111827;
+    --muted: #6B7280;
+    --danger: #DC2626;
+    --warn: #B45309;
     --r-lg: 20px;
     --r-md: 16px;
     --r-sm: 12px;
@@ -121,7 +121,7 @@ h3 { font-size: 16px; }
     background: var(--surface);
     border-radius: var(--r-md);
     padding: var(--pad);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
 }
 
 .card--tap {
@@ -164,7 +164,7 @@ h3 { font-size: 16px; }
     background: var(--surface);
     border-radius: var(--r-md);
     padding: 14px 12px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -194,34 +194,34 @@ h3 { font-size: 16px; }
     line-height: 1.4;
     text-transform: uppercase;
     letter-spacing: .04em;
-    background: rgba(138, 150, 145, .16);
+    background: rgba(107, 114, 128, .12);
     color: var(--muted);
 }
 
 .badge--active {
-    background: rgba(74, 222, 128, .14);
+    background: rgba(22, 163, 74, .12);
     color: var(--accent);
 }
 
 .badge--done {
-    background: rgba(74, 222, 128, .22);
+    background: rgba(22, 163, 74, .18);
     color: var(--accent);
 }
 
-.badge--draft { background: rgba(138, 150, 145, .16); color: var(--muted); }
-.badge--cancelled { background: rgba(248, 113, 113, .14); color: var(--danger); }
+.badge--draft { background: rgba(107, 114, 128, .12); color: var(--muted); }
+.badge--cancelled { background: rgba(220, 38, 38, .10); color: var(--danger); }
 .badge--wait {
-    background: rgba(251, 191, 36, .14);
+    background: rgba(180, 83, 9, .10);
     color: var(--warn);
 }
 .badge--reporter {
-    background: rgba(96, 165, 250, .16);
-    color: #60A5FA;
+    background: rgba(37, 99, 235, .10);
+    color: #2563EB;
     text-transform: none;
     letter-spacing: 0;
 }
 .badge--warn {
-    background: rgba(251, 191, 36, .14);
+    background: rgba(180, 83, 9, .10);
     color: var(--warn);
     text-transform: none;
     letter-spacing: 0;
@@ -245,7 +245,7 @@ h3 { font-size: 16px; }
     font-variant-numeric: tabular-nums;
 }
 .matrix th, .matrix td {
-    border: 1px solid var(--border, rgba(255, 255, 255, .08));
+    border: 1px solid var(--border, rgba(0, 0, 0, .08));
     padding: 6px 8px;
     text-align: center;
     white-space: nowrap;
@@ -289,7 +289,7 @@ h3 { font-size: 16px; }
 }
 
 .btn--danger {
-    background: rgba(248, 113, 113, .14);
+    background: rgba(220, 38, 38, .10);
     color: var(--danger);
 }
 
@@ -342,7 +342,7 @@ h3 { font-size: 16px; }
     border-radius: var(--r-md);
     padding: 12px var(--pad);
     cursor: pointer;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
     transition: transform .15s var(--ease-out);
 }
 .row-line--btn:active { transform: scale(.98); }
@@ -368,7 +368,7 @@ h3 { font-size: 16px; }
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    color: #052E16;
+    color: #FFFFFF;
     font-size: 13px;
     font-weight: 700;
     display: inline-flex;
@@ -390,7 +390,7 @@ h3 { font-size: 16px; }
 .sheet__backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, .45);
+    background: rgba(15, 23, 42, .32);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     z-index: 40;
@@ -575,11 +575,11 @@ h3 { font-size: 16px; }
    v5: руководитель — Сегодня / Задания / Деньги
    ============================================================ */
 .chip--ok {
-    background: rgba(74, 222, 128, .16);
+    background: rgba(22, 163, 74, .14);
     color: var(--accent);
 }
 .chip--miss {
-    background: rgba(248, 113, 113, .14);
+    background: rgba(220, 38, 38, .10);
     color: var(--danger);
 }
 .fab {
@@ -594,7 +594,7 @@ h3 { font-size: 16px; }
     color: var(--accent-ink);
     font-size: 28px;
     line-height: 1;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .12);
     cursor: pointer;
     z-index: 40;
 }
@@ -811,7 +811,7 @@ body.no-nav .app-content {
     border-radius: var(--r-sm);
     padding: 12px 18px;
     font-size: 14px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
     z-index: 50;
     animation: toast-in .25s var(--ease-out);
 }

@@ -272,6 +272,38 @@ class InventoryItem(Base):
     holder: Mapped["User"] = relationship(back_populates="inventory")
 
 
+# ---------- Заявки на доступ ----------
+
+class AccessRequestStatus(str, enum.Enum):
+    pending = "pending"    # ждёт решения руководителя
+    approved = "approved"  # одобрено, User создан
+    rejected = "rejected"  # отклонено
+
+
+class AccessRequest(Base):
+    """
+    Заявка на доступ от незнакомца (SPEC §12/§28: человек сам делится номером,
+    руководитель одобряет). Создаётся ботом, если телефона нет среди users.
+    Один человек (tg_id) — одна активная заявка: повторный контакт не создаёт дубль.
+    """
+    __tablename__ = "access_requests"
+    __table_args__ = (
+        UniqueConstraint("tg_id", "status", name="uq_access_tg_status"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tg_id: Mapped[int] = mapped_column(unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(120))
+    phone: Mapped[str] = mapped_column(String(32))
+    lang: Mapped[str] = mapped_column(Enum(Lang), default=Lang.ru)
+    status: Mapped[AccessRequestStatus] = mapped_column(
+        Enum(AccessRequestStatus), default=AccessRequestStatus.pending
+    )
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    decided_at: Mapped[datetime | None]
+    decided_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"))
+
+
 # ---------- Аудит ----------
 
 class AuditLog(Base):
