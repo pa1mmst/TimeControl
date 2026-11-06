@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.bot.notifications import notify_task_assigned, notify_task_changed
 from app.db import get_db
-from app.deps import get_actor, require_manager
+from app.deps import require_actor, require_manager_dep
 from app.models import (
     Task, TaskLocation, TaskGroup, TaskAssignment,
     Client, Location, User, WorkEntry, TaskStatus,
@@ -27,6 +27,11 @@ from app.schemas import (
 )
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
+
+# Права доступа (аудит, п.1–3):
+# - GET "" и GET /{task_id} — любой аутентифицированный (require_actor);
+# - всё остальное (создание/правка/назначения/группы) — руководитель
+#   (require_manager_dep) — ставится параметром actor в каждой функции.
 
 
 # ---------- Вспомогательные ----------
@@ -58,13 +63,10 @@ def _set_locations(task: Task, location_ids: list[int], db: Session):
 def create_task(
     data: TaskCreate,
     db: Session = Depends(get_db),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_manager_dep),
 ):
-    # actor из initData приоритетен; без initData — старое поведение:
-    # created_by из тела, никаких manager-проверок.
-    created_by = actor.id if actor else data.created_by
-    if actor is not None:
-        require_manager(actor)
+    # created_by из подписанного initData; поле из тела игнорируем.
+    created_by = actor.id
     if not db.get(Client, data.client_id):
         raise HTTPException(404, "Заказчик не найден")
     if not db.get(User, created_by):
@@ -91,7 +93,11 @@ def create_task(
 
 
 @router.get("", response_model=list[TaskShortOut])
-def list_tasks(status: str | None = None, db: Session = Depends(get_db)):
+def list_tasks(
+    status: str | None = None,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_actor),  # noqa: B008
+):
     """Список заданий, можно фильтровать: ?status=active"""
     q = db.query(Task).options(
         # Без N+1: локации, назначения с user и client грузим заранее
@@ -139,7 +145,11 @@ def list_tasks(status: str | None = None, db: Session = Depends(get_db)):
 
 
 @router.get("/{task_id}", response_model=TaskOut)
-def get_task(task_id: int, db: Session = Depends(get_db)):
+def get_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_actor),  # noqa: B008
+):
     return _get_task(task_id, db)
 
 
@@ -148,12 +158,9 @@ def update_task(
     task_id: int,
     data: TaskUpdate,
     db: Session = Depends(get_db),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_manager_dep),  # noqa: B008
 ):
-    # Руководительские действия: initData-actor обязан быть is_manager;
-    # без initData — старое поведение: никаких проверок.
-    if actor is not None:
-        require_manager(actor)
+    # Руководительское действие: actor обязан быть is_manager.
     task = _get_task(task_id, db)
     old_status = task.status
     payload = data.model_dump(exclude_unset=True)
@@ -182,10 +189,8 @@ def assign_user(
     task_id: int,
     data: AssignmentCreate,
     db: Session = Depends(get_db),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_manager_dep),
 ):
-    if actor is not None:
-        require_manager(actor)
     task = _get_task(task_id, db)
     user = db.get(User, data.user_id)
     if not user or not user.is_active:
@@ -208,11 +213,9 @@ def assign_user(
 def move_assignment(
     task_id: int, user_id: int, data: AssignmentUpdate,
     db: Session = Depends(get_db),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_manager_dep),
 ):
     """Переместить человека в группу (group_id) или сделать одиночкой (null)."""
-    if actor is not None:
-        require_manager(actor)
     a = (
         db.query(TaskAssignment)
         .filter_by(task_id=task_id, user_id=user_id)
@@ -231,7 +234,11 @@ def move_assignment(
 
 
 @router.delete("/{task_id}/assignments/{user_id}")
-def unassign_user(task_id: int, user_id: int, db: Session = Depends(get_db)):
+def unassign_user(
+    task_id: int, user_id: int,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_manager_dep),
+):
     a = (
         db.query(TaskAssignment)
         .filter_by(task_id=task_id, user_id=user_id)
@@ -268,10 +275,8 @@ def create_group(
     task_id: int,
     data: GroupCreate,
     db: Session = Depends(get_db),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_manager_dep),
 ):
-    if actor is not None:
-        require_manager(actor)
     task = _get_task(task_id, db)
     # Учётчик автоматически считается участником группы
     member_ids = set(data.member_ids) | {data.reporter_id}
@@ -301,7 +306,11 @@ def create_group(
 
 
 @router.delete("/{task_id}/groups/{group_id}")
-def delete_group(task_id: int, group_id: int, db: Session = Depends(get_db)):
+def delete_group(
+    task_id: int, group_id: int,
+    db: Session = Depends(get_db),
+    actor: User = Depends(require_manager_dep),
+):
     """Распустить группу: участники остаются на задании как одиночки."""
     group = db.get(TaskGroup, group_id)
     if not group or group.task_id != task_id:

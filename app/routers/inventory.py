@@ -1,13 +1,23 @@
-"""Инвентарь (SPEC п.20): предмет + у кого. Без истории движения."""
+"""Инвентарь (SPEC п.20): предмет + у кого. Без истории движения.
+
+Все эндпоинты — только для руководителя (аудит, п.1–3, п.6):
+router-level dependency require_manager_dep; actor из подписанного initData.
+Изменения фиксируются в журнале (log_change).
+"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.deps import get_actor, require_manager
+from app.deps import require_manager_dep
 from app.models import InventoryItem, User
 from app.schemas import InventoryCreate, InventoryUpdate, InventoryOut
+from app.services.audit import log_change
 
-router = APIRouter(prefix="/api/inventory", tags=["inventory"])
+router = APIRouter(
+    prefix="/api/inventory",
+    tags=["inventory"],
+    dependencies=[Depends(require_manager_dep)],
+)
 
 
 def _check_holder(holder_id: int | None, db: Session):
@@ -21,15 +31,16 @@ def _check_holder(holder_id: int | None, db: Session):
 def create_item(
     data: InventoryCreate,
     db: Session = Depends(get_db),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_manager_dep),
 ):
-    # require_manager ТОЛЬКО при подписанном initData (actor is not None).
-    # Без заголовка — старое поведение без проверок (e2e-скрипт, старые клиенты).
-    if actor is not None:
-        require_manager(actor)
     _check_holder(data.holder_id, db)
     item = InventoryItem(**data.model_dump())
     db.add(item)
+    db.flush()
+    log_change(
+        db, actor_id=actor.id, entity="inventory", entity_id=item.id,
+        field="created", old_value=None, new_value=item.name,
+    )
     db.commit()
     db.refresh(item)
     return item
@@ -54,12 +65,10 @@ def update_item(
     item_id: int,
     data: InventoryUpdate,
     db: Session = Depends(get_db),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_manager_dep),
 ):
     """Переименовать, передать другому человеку или вернуть на склад
     (прислать "holder_id": null)."""
-    if actor is not None:
-        require_manager(actor)
     item = db.get(InventoryItem, item_id)
     if not item:
         raise HTTPException(404, "Предмет не найден")
@@ -67,7 +76,13 @@ def update_item(
     if "holder_id" in payload:
         _check_holder(payload["holder_id"], db)
     for field, value in payload.items():
-        setattr(item, field, value)
+        old = getattr(item, field)
+        if str(old) != str(value):
+            log_change(
+                db, actor_id=actor.id, entity="inventory", entity_id=item.id,
+                field=field, old_value=old, new_value=value,
+            )
+            setattr(item, field, value)
     db.commit()
     db.refresh(item)
     return item
@@ -77,14 +92,17 @@ def update_item(
 def delete_item(
     item_id: int,
     db: Session = Depends(get_db),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_manager_dep),
 ):
     """Списать предмет (сломался/потерян). История по SPEC п.20 не нужна."""
-    if actor is not None:
-        require_manager(actor)
     item = db.get(InventoryItem, item_id)
     if not item:
         raise HTTPException(404, "Предмет не найден")
+    name = item.name
     db.delete(item)
+    log_change(
+        db, actor_id=actor.id, entity="inventory", entity_id=item_id,
+        field="deleted", old_value=name, new_value=None,
+    )
     db.commit()
     return {"ok": True}

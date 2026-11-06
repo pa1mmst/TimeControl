@@ -9,6 +9,7 @@ Webhook бота: привязка аккаунта по номеру телеф
     "8 /g5" (за группу) и "8 /t12" (за себя), человек копирует нужную.
 Вся бизнес-логика — сервисы модуля 5, здесь только разбор сообщений.
 """
+import hmac
 import re
 from datetime import date, datetime
 from decimal import Decimal
@@ -278,7 +279,10 @@ def telegram_webhook(
     secret: str | None = Header(None, alias="X-Telegram-Bot-Api-Secret-Token"),
     db: Session = Depends(get_db),
 ):
-    if secret != WEBHOOK_SECRET:
+    if not WEBHOOK_SECRET:
+        # Секрет не настроен — webhook не должен работать вообще (аудит, п.4).
+        raise HTTPException(503, "webhook не настроен")
+    if not hmac.compare_digest(secret or "", WEBHOOK_SECRET):
         raise HTTPException(403, "bad secret")
 
     msg = update.get("message")

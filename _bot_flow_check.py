@@ -137,6 +137,10 @@ db.expire_all()
 users777 = db.query(User).filter(User.tg_id == 777).count()
 check("17. повторный approve: дублей User нет", users777 == 1, f"users={users777}")
 
+# --- 7. webhook с неверным секретом отклонён (аудит, п.4) ---
+r = client.post("/bot/webhook", json=upd, headers={"X-Telegram-Bot-Api-Secret-Token": "wrong"})
+check("18. webhook с неверным секретом -> 403", r.status_code == 403, r.text[:60])
+
 print()
 print(f"ИТОГ: {sum(1 for _, ok in results if ok)}/{len(results)} пройдено")
 db.close()

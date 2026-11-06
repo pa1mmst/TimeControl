@@ -1,16 +1,28 @@
 # -*- coding: utf-8 -*-
-"""Сквозная проверка главного сценария SPEC через реальный API."""
+"""Сквозная проверка главного сценария SPEC через реальный API.
+
+Этап 1 аудита: все запросы идут с подписанным initData
+(X-Telegram-Init-Data), fallback на X-Actor-Id удалён.
+Руководитель сеется напрямую в БД (POST /api/users теперь manager-only).
+"""
+import hashlib
+import hmac
 import io
+import json
 import os
 import sys
+import time
 from datetime import date
 from decimal import Decimal
+from urllib.parse import urlencode
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 # --- Изолированная тестовая база: ДО любого импорта app ---
 # app/db.py читает DATABASE_URL при импорте, поэтому env выставляем заранее.
 os.environ["DATABASE_URL"] = "sqlite:///./_e2e_test.db"
+os.environ["BOT_TOKEN"] = "12345:test-e2e-token"
+os.environ["BOT_WEBHOOK_SECRET"] = "test"
 try:
     os.remove("_e2e_test.db")
 except OSError:
@@ -20,12 +32,9 @@ from fastapi.testclient import TestClient
 from app.main import app
 import app.bot.notifications as notif_mod
 from app.db import SessionLocal, engine, Base
-from app.models import TaskLocation
+from app.models import TaskLocation, User
 
 # --- Создание таблиц в чистой тестовой базе ---
-# Раньше таблицы создавались отдельным скриптом (python -m app.create_tables),
-# рабочая база agrowork.db уже их содержала. Тестовая база чистая —
-# создаём схему здесь (импорт app.models выше регистрирует все модели).
 Base.metadata.create_all(bind=engine)
 
 client = TestClient(app)
@@ -44,32 +53,61 @@ def check(name, ok, info=""):
 
 D1, D2 = date(2026, 8, 24), date(2026, 8, 25)
 
+# ---------- Подписанный initData (алгоритм как в app/auth.py) ----------
+BOT_TOKEN = "12345:test-e2e-token"
+
+def make_init_data(tg_id: int) -> str:
+    user = json.dumps({"id": tg_id, "first_name": "Т", "language_code": "ru"},
+                      ensure_ascii=False)
+    pairs = {"user": user, "auth_date": str(int(time.time()))}
+    data_check_string = "\n".join(f"{k}={pairs[k]}" for k in sorted(pairs))
+    secret_key = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
+    pairs["hash"] = hmac.new(secret_key, data_check_string.encode(),
+                             hashlib.sha256).hexdigest()
+    return urlencode(pairs)
+
+def init_for(u: dict) -> dict:
+    """Заголовки initData пользователя (tg_id = 100000 + user_id)."""
+    return {"X-Telegram-Init-Data": make_init_data(100000 + u["id"])}
+
 # ---------- 1. Работники ----------
-boss = client.post("/api/users", json={
-    "name": "Босс", "is_manager": True, "hourly_rate": "0"}).json()
+# Руководителя сеем напрямую в БД: POST /api/users теперь только для
+# руководителя (аудит, п.1–3), как в _bot_flow_check.py.
+db = SessionLocal()
+boss_db = User(name="Босс", is_manager=True, is_active=True, tg_id=100001)
+db.add(boss_db)
+db.commit()
+boss = {"id": boss_db.id, "name": "Босс"}
+db.close()
+boss_h = init_for(boss)
+
 w1 = client.post("/api/users", json={
-    "name": "Иван", "hourly_rate": "10.00", "phone": "+380991111111"}).json()
+    "name": "Иван", "hourly_rate": "10.00", "phone": "+380991111111"},
+    headers=boss_h).json()
 w2 = client.post("/api/users", json={
-    "name": "Петро", "hourly_rate": "12.50", "phone": "+380992222222"}).json()
+    "name": "Петро", "hourly_rate": "12.50", "phone": "+380992222222"},
+    headers=boss_h).json()
 w3 = client.post("/api/users", json={
-    "name": "Оксана", "hourly_rate": "15.00", "phone": "+380993333333"}).json()
+    "name": "Оксана", "hourly_rate": "15.00", "phone": "+380993333333"},
+    headers=boss_h).json()
 check("1. созданы руководитель + 3 работника",
       all(u.get("id") for u in (boss, w1, w2, w3)),
       f"ids: boss={boss['id']}, {w1['id']}/{w2['id']}/{w3['id']}")
 
 # tg_id, чтобы уведомления "доходили"
 db = SessionLocal()
-from app.models import User
-for uid in (boss["id"], w1["id"], w2["id"], w3["id"]):
+for uid in (w1["id"], w2["id"], w3["id"]):
     db.get(User, uid).tg_id = 100000 + uid
 db.commit(); db.close()
 
 # ---------- 2. Заказчик с 2 локациями ----------
-cl = client.post("/api/clients", json={"name": "Агро-Ферма Тест"}).json()
+cl = client.post("/api/clients", json={"name": "Агро-Ферма Тест"},
+                 headers=boss_h).json()
 loc1 = client.post(f"/api/clients/{cl['id']}/locations", json={
-    "name": "Поле №1", "address": "с. Тестовое 1", "map_url": "https://maps.example/1"}).json()
+    "name": "Поле №1", "address": "с. Тестовое 1", "map_url": "https://maps.example/1"},
+    headers=boss_h).json()
 loc2 = client.post(f"/api/clients/{cl['id']}/locations", json={
-    "name": "Теплица", "address": "с. Тестовое 2"}).json()
+    "name": "Теплица", "address": "с. Тестовое 2"}, headers=boss_h).json()
 check("2. заказчик + 2 локации", cl.get("id") and loc1.get("id") and loc2.get("id"),
       f"client={cl['id']}, locs={loc1['id']},{loc2['id']}")
 
@@ -78,13 +116,15 @@ task = client.post("/api/tasks", json={
     "title": "Сбор урожая", "description": "Помидоры", "client_id": cl["id"],
     "location_ids": [loc1["id"], loc2["id"]],
     "date_start": D1.isoformat(), "date_end": D2.isoformat(),
-    "created_by": boss["id"]}).json()
+    "created_by": boss["id"]}, headers=boss_h).json()
 tid = task["id"]
 for uid in (w1["id"], w2["id"], w3["id"]):
-    r = client.post(f"/api/tasks/{tid}/assignments", json={"user_id": uid})
+    r = client.post(f"/api/tasks/{tid}/assignments", json={"user_id": uid},
+                    headers=boss_h)
     assert r.status_code in (200, 201), r.text
 group = client.post(f"/api/tasks/{tid}/groups", json={
-    "reporter_id": w1["id"], "member_ids": [w2["id"], w3["id"]]}).json()
+    "reporter_id": w1["id"], "member_ids": [w2["id"], w3["id"]]},
+    headers=boss_h).json()
 check("3. задание + 3 назначения + группа (учётчик Иван)", bool(group.get("id")),
       f"task={tid}, group={group['id']}, reporter={group['reporter']['name']}")
 
@@ -96,7 +136,7 @@ db.commit(); db.close()
 
 # ---------- 4. Уведомления при переводе в active ----------
 SENT.clear()
-r = client.patch(f"/api/tasks/{tid}", json={"status": "active"})
+r = client.patch(f"/api/tasks/{tid}", json={"status": "active"}, headers=boss_h)
 assert r.status_code == 200, r.text
 recipients = sorted(c for c, _ in SENT)
 check("4a. уведомление получили все 3 назначенных (не босс)",
@@ -115,13 +155,13 @@ print("--- сообщение учётчику ---\n" + msg_reporter + "\n------
 # ---------- 5. Групповой ввод часов ----------
 H = client.post("/work-entries/group", json={
     "group_id": group["id"], "work_date": D1.isoformat(), "hours": "8",
-    "location_id": loc1["id"]}, headers={"X-Actor-Id": str(w1["id"])})
+    "location_id": loc1["id"]}, headers=init_for(w1))
 assert H.status_code == 201, H.text
 body = H.json()
 check("5a. групповой ввод: создано 3 записи", len(body["created"]) == 3,
       f"created={len(body['created'])}, skipped={body['skipped']}")
 entries = client.get("/work-entries", params={"task_id": tid},
-                     headers={"X-Actor-Id": str(boss["id"])}).json()
+                     headers=boss_h).json()
 per_user = {}
 for e in entries:
     if e["work_date"] == D1.isoformat():
@@ -131,7 +171,6 @@ check("5b. у каждого из 3 участников своя запись �
           Decimal(per_user[u][0]["hours"]) == 8 for u in (w1["id"], w2["id"], w3["id"])),
       str({u: [e["hours"] for e in per_user.get(u, [])] for u in (w1['id'], w2['id'], w3['id'])}))
 check("5c. entered_by = учётчик",
-      all(e["entered_by"] == w1["id"] for e in per_user.values() for e in [e[0]] if e["work_date"] == D1.isoformat()) if False else
       all(e["entered_by"] == w1["id"] for lst in per_user.values() for e in lst))
 
 # ---------- 6. Правка часов + история ----------
@@ -139,11 +178,10 @@ target = per_user[w2["id"]][0]
 SENT.clear()
 r = client.patch(f"/work-entries/{target['id']}",
                  json={"hours": "6", "reason": "ушёл на 2 ч раньше"},
-                 headers={"X-Actor-Id": str(boss["id"])})
+                 headers=boss_h)
 assert r.status_code == 200, r.text
 check("6a. руководитель исправил часы 8 -> 6", Decimal(r.json()["hours"]) == 6)
-hist = client.get(f"/work-entries/{target['id']}/history",
-                  headers={"X-Actor-Id": str(boss["id"])}).json()
+hist = client.get(f"/work-entries/{target['id']}/history", headers=boss_h).json()
 check("6b. история изменений видна", len(hist) == 1
       and Decimal(hist[0]["old_value"]) == 8 and Decimal(hist[0]["new_value"]) == 6
       and hist[0]["reason"] == "ушёл на 2 ч раньше",
@@ -157,15 +195,16 @@ check("6c. работнику пришло уведомление о правк�
 # второй день: 8 ч каждому
 H2 = client.post("/work-entries/group", json={
     "group_id": group["id"], "work_date": D2.isoformat(), "hours": "8",
-    "location_id": loc1["id"]}, headers={"X-Actor-Id": str(w1["id"])})
+    "location_id": loc1["id"]}, headers=init_for(w1))
 assert H2.status_code == 201, H2.text
 adv = client.post("/api/payroll/advances", json={
     "user_id": w2["id"], "amount": "50", "date": D1.isoformat(),
-    "comment": "на дорогу", "created_by": boss["id"]})
+    "comment": "на дорогу", "created_by": boss["id"]}, headers=boss_h)
 assert adv.status_code in (200, 201), adv.text
 
 prev = client.get("/api/payroll/preview",
-                  params={"start": D1.isoformat(), "end": D2.isoformat()}).json()
+                  params={"start": D1.isoformat(), "end": D2.isoformat()},
+                  headers=boss_h).json()
 rows = {r["user_id"]: r for r in prev}
 exp = {
     w1["id"]: (16, 160, 0, 160),      # 10.00 * 16
@@ -185,7 +224,7 @@ check("7a. preview: часы/начислено/аванс/к выплате с�
 
 closed = client.post("/api/payroll/close", json={
     "period_start": D1.isoformat(), "period_end": D2.isoformat(),
-    "created_by": boss["id"]})
+    "created_by": boss["id"]}, headers=boss_h)
 assert closed.status_code == 200, closed.text
 payouts = {p["user_id"]: p for p in closed.json()}
 check("7b. период закрыт: payout каждому с верным net",
@@ -194,14 +233,14 @@ check("7b. период закрыт: payout каждому с верным net"
 # отметить выплаченным
 pid = payouts[w1["id"]]["id"]
 r = client.patch(f"/api/payroll/payouts/{pid}",
-                 json={"status": "paid", "actor_id": boss["id"]})
+                 json={"status": "paid", "actor_id": boss["id"]}, headers=boss_h)
 check("7c. выплата отмечена paid", r.status_code == 200 and r.json()["status"] == "paid")
 
 # ---------- 8. Дополнительные сценарии ----------
 # 8.1 дубликат группового ввода за тот же день — пропуск, не ошибка
 dup = client.post("/work-entries/group", json={
     "group_id": group["id"], "work_date": D1.isoformat(), "hours": "8"},
-    headers={"X-Actor-Id": str(w1["id"])})
+    headers=init_for(w1))
 check("8.1 повторный групповой ввод: дубль пропущен, ошибок нет",
       dup.status_code == 201 and len(dup.json()["created"]) == 0
       and len(dup.json()["skipped"]) == 3, dup.text[:100])
@@ -209,34 +248,34 @@ check("8.1 повторный групповой ввод: дубль пропу
 # 8.2 права: работник не может вводить за группу, где он не учётчик
 r = client.post("/work-entries/group", json={
     "group_id": group["id"], "work_date": D2.isoformat(), "hours": "4"},
-    headers={"X-Actor-Id": str(w3["id"])})
+    headers=init_for(w3))
 check("8.2 не-учётчик не может вводить за группу (403)",
       r.status_code == 403, r.text[:80])
 
 # 8.3 права: работник не может править часы
 r = client.patch(f"/work-entries/{target['id']}", json={"hours": "1"},
-                 headers={"X-Actor-Id": str(w2["id"])})
+                 headers=init_for(w2))
 check("8.3 работник не может править часы (403)", r.status_code == 403, r.text[:80])
 
 # 8.4 права: работник видит только свои записи
-r = client.get("/work-entries", headers={"X-Actor-Id": str(w3["id"])})
+r = client.get("/work-entries", headers=init_for(w3))
 check("8.4 работник видит только свои записи",
       r.status_code == 200 and all(e["user_id"] == w3["id"] for e in r.json()))
 
 # 8.5 пересечение периодов
 r = client.post("/api/payroll/close", json={
     "period_start": D1.isoformat(), "period_end": D2.isoformat(),
-    "created_by": boss["id"]})
+    "created_by": boss["id"]}, headers=boss_h)
 check("8.5 пересекающийся период отклонён (400)", r.status_code == 400, r.text[:80])
 
 # 8.6 аванс из закрытого периода нельзя менять
 r = client.patch(f"/api/payroll/advances/{adv.json()['id']}",
-                 json={"amount": "10", "actor_id": boss["id"], "reason": "test"})
+                 json={"amount": "10", "actor_id": boss["id"], "reason": "test"},
+                 headers=boss_h)
 check("8.6 аванс закрытого периода защищён (400)", r.status_code == 400, r.text[:80])
 
 # 8.7 сводка по заданию
-r = client.get(f"/work-entries/task/{tid}/summary",
-               headers={"X-Actor-Id": str(boss["id"])})
+r = client.get(f"/work-entries/task/{tid}/summary", headers=boss_h)
 s = r.json()
 check("8.7 сводка по заданию: итог 46 ч (16+14+16)",
       r.status_code == 200 and Decimal(s["total_hours"]) == 46,
@@ -244,36 +283,40 @@ check("8.7 сводка по заданию: итог 46 ч (16+14+16)",
 
 # 8.8 отчёты
 r = client.get(f"/api/reports/user/{w2['id']}",
-              params={"start": D1.isoformat(), "end": D2.isoformat()})
+               params={"start": D1.isoformat(), "end": D2.isoformat()},
+               headers=boss_h)
 check("8.8 отчёт по работнику отдаёт часы", r.status_code == 200, str(r.json())[:120])
 
 # 8.9 нельзя снять с задания человека с часами
-r = client.delete(f"/api/tasks/{tid}/assignments/{w2['id']}")
+r = client.delete(f"/api/tasks/{tid}/assignments/{w2['id']}", headers=boss_h)
 check("8.9 снятие с задания при наличии часов запрещено (400)",
       r.status_code == 400, r.text[:80])
 
 # 8.10 локация чужого заказчика не привязывается
-other = client.post("/api/clients", json={"name": "Чужой"}).json()
-oloc = client.post(f"/api/clients/{other['id']}/locations", json={"name": "Чужая"}).json()
-r = client.patch(f"/api/tasks/{tid}", json={"location_ids": [oloc["id"]]})
+other = client.post("/api/clients", json={"name": "Чужой"}, headers=boss_h).json()
+oloc = client.post(f"/api/clients/{other['id']}/locations", json={"name": "Чужая"},
+                   headers=boss_h).json()
+r = client.patch(f"/api/tasks/{tid}", json={"location_ids": [oloc["id"]]},
+                 headers=boss_h)
 check("8.10 локация чужого заказчика отклонена (400)", r.status_code == 400, r.text[:80])
 
 # 8.11 изменение активного задания -> уведомление "изменено"
 SENT.clear()
-r = client.patch(f"/api/tasks/{tid}", json={"description": "Помидоры черри"})
+r = client.patch(f"/api/tasks/{tid}", json={"description": "Помидоры черри"},
+                 headers=boss_h)
 check("8.11 изменение активного задания шлёт уведомления всем (3 шт)",
       r.status_code == 200 and len(SENT) == 3, f"отправлено: {len(SENT)}")
 
 # 8.12 часы по неактивному заданию запрещены
 r = client.post("/work-entries", json={
     "task_id": tid, "work_date": D2.isoformat(), "hours": "2"},
-    headers={"X-Actor-Id": str(w1["id"])})
+    headers=init_for(w1))
 # запись уже есть за D2 -> 409; создадим на др. дату нельзя — задание active.
 # деактивируем задание и попробуем
-client.patch(f"/api/tasks/{tid}", json={"status": "done"})
+client.patch(f"/api/tasks/{tid}", json={"status": "done"}, headers=boss_h)
 r = client.post("/work-entries", json={
     "task_id": tid, "work_date": "2026-08-26", "hours": "2"},
-    headers={"X-Actor-Id": str(w1["id"])})
+    headers=init_for(w1))
 check("8.12 часы по завершённому заданию запрещены (409)",
       r.status_code == 409, r.text[:80])
 
@@ -285,19 +328,19 @@ task2 = client.post("/api/tasks", json={
     "title": "Дашборд-тест", "client_id": cl["id"],
     "location_ids": [loc1["id"]],
     "date_start": TODAY, "date_end": TODAY,
-    "created_by": boss["id"]}).json()
+    "created_by": boss["id"]}, headers=boss_h).json()
 t2 = task2["id"]
-client.post(f"/api/tasks/{t2}/assignments", json={"user_id": w1["id"]})
+client.post(f"/api/tasks/{t2}/assignments", json={"user_id": w1["id"]}, headers=boss_h)
 client.post(f"/api/tasks/{t2}/groups", json={
-    "reporter_id": w1["id"], "member_ids": [w1["id"]]})
-client.patch(f"/api/tasks/{t2}", json={"status": "active"})
+    "reporter_id": w1["id"], "member_ids": [w1["id"]]}, headers=boss_h)
+client.patch(f"/api/tasks/{t2}", json={"status": "active"}, headers=boss_h)
 # вводим часы за сегодня от имени назначенного работника
 H3 = client.post("/work-entries", json={
     "task_id": t2, "work_date": TODAY, "hours": "5", "location_id": loc1["id"]},
-    headers={"X-Actor-Id": str(w1["id"])})
+    headers=init_for(w1))
 assert H3.status_code == 201, H3.text
 
-lst = client.get("/api/tasks", params={"status": "active"}).json()
+lst = client.get("/api/tasks", params={"status": "active"}, headers=boss_h).json()
 dash = next(t for t in lst if t["id"] == t2)
 check("9a. client_name заполнен", dash["client_name"] == "Агро-Ферма Тест",
       str(dash["client_name"]))
@@ -314,7 +357,7 @@ check("9d. hours_today > 0 (5 ч за сегодня)",
 from decimal import Decimal as _D
 
 # 10a. /api/me/today — Иван назначен на активное задание t2 (сегодня)
-r = client.get("/api/me/today", headers={"X-Actor-Id": str(w1["id"])})
+r = client.get("/api/me/today", headers=init_for(w1))
 mt = r.json()
 mt_task = next((t for t in mt["tasks"] if t["id"] == t2), None)
 check("10a. me/today: активное задание, мои часы, флаг учётчика",
@@ -325,7 +368,7 @@ check("10a. me/today: активное задание, мои часы, флаг
       str(mt)[:150])
 
 # 10b. /api/me/history — у Петро есть правка 8 -> 6 с причиной
-r = client.get("/api/me/history", headers={"X-Actor-Id": str(w2["id"])})
+r = client.get("/api/me/history", headers=init_for(w2))
 h = r.json()
 corrected = [e for e in h if e["corrected"]]
 check("10b. me/history: правка видна с причиной",
@@ -335,7 +378,7 @@ check("10b. me/history: правка видна с причиной",
       str(corrected[:1])[:150])
 
 # 10c. /api/me/money — период закрыт (7b), значит открытый период после D2
-r = client.get("/api/me/money", headers={"X-Actor-Id": str(w2["id"])})
+r = client.get("/api/me/money", headers=init_for(w2))
 m = r.json()
 check("10c. me/money: открытый период после последнего закрытия, нули",
       r.status_code == 200
@@ -346,7 +389,7 @@ check("10c. me/money: открытый период после последне�
       str(m)[:200])
 
 # 10d. /api/dashboard/today — руководитель
-r = client.get("/api/dashboard/today", headers={"X-Actor-Id": str(boss["id"])})
+r = client.get("/api/dashboard/today", headers=boss_h)
 d = r.json()
 check("10d. dashboard/today: 1 работник с часами, 5 ч, t2 не в tasks_no_hours",
       r.status_code == 200 and d["workers_count"] == 1
@@ -356,7 +399,7 @@ check("10d. dashboard/today: 1 работник с часами, 5 ч, t2 не �
       str({k: d[k] for k in ("workers_count", "hours_today", "tasks_no_hours")}))
 
 # 10e. /api/tasks/{id}/matrix — руководитель
-r = client.get(f"/api/tasks/{tid}/matrix", headers={"X-Actor-Id": str(boss["id"])})
+r = client.get(f"/api/tasks/{tid}/matrix", headers=boss_h)
 mx = r.json()
 row_w2 = next((row for row in mx["rows"] if row["user_id"] == w2["id"]), None)
 check("10e. matrix: даты D1-D2, у Петро 8 и 6 ч",
@@ -368,7 +411,7 @@ check("10e. matrix: даты D1-D2, у Петро 8 и 6 ч",
 
 # 10f. /api/users/{id}/summary — руководитель; у Петро закрытый период,
 # поэтому hours_period = 0, но last_entries видны
-r = client.get(f"/api/users/{w2['id']}/summary", headers={"X-Actor-Id": str(boss["id"])})
+r = client.get(f"/api/users/{w2['id']}/summary", headers=boss_h)
 s = r.json()
 check("10f. user summary: ставка, открытый период, последние записи",
       r.status_code == 200 and _D(str(s["rate"])) == _D("12.50")
@@ -379,18 +422,26 @@ check("10f. user summary: ставка, открытый период, посл�
       str(s)[:200])
 
 # 10g. права: не-руководителю запрещены manager-эндпоинты (403)
-r1 = client.get("/api/dashboard/today", headers={"X-Actor-Id": str(w2["id"])})
-r2 = client.get(f"/api/tasks/{tid}/matrix", headers={"X-Actor-Id": str(w2["id"])})
-r3 = client.get(f"/api/users/{w1['id']}/summary", headers={"X-Actor-Id": str(w2["id"])})
+r1 = client.get("/api/dashboard/today", headers=init_for(w2))
+r2 = client.get(f"/api/tasks/{tid}/matrix", headers=init_for(w2))
+r3 = client.get(f"/api/users/{w1['id']}/summary", headers=init_for(w2))
 check("10g. не-руководитель получает 403 на dashboard/matrix/summary",
       r1.status_code == 403 and r2.status_code == 403 and r3.status_code == 403,
       f"{r1.status_code}/{r2.status_code}/{r3.status_code}")
+
+# ---------- 11. Анонимный доступ закрыт (аудит, п.1–3) ----------
+r = client.get("/api/users")
+check("11a. GET /api/users без заголовков -> 401", r.status_code == 401, r.text[:80])
+r = client.get("/api/users", headers={"X-Actor-Id": "1"})
+check("11b. GET /api/users с поддельным X-Actor-Id -> 401", r.status_code == 401, r.text[:80])
+r = client.post("/api/users", json={"name": "Hacker", "hourly_rate": "1"})
+check("11c. POST /api/users без заголовков -> 401", r.status_code == 401, r.text[:80])
+r = client.get("/api/payroll/payouts")
+check("11d. GET /api/payroll/payouts без заголовков -> 401", r.status_code == 401, r.text[:80])
 
 print()
 fails = [n for n, ok, _ in results if not ok]
 print(f"ИТОГ: {len(results) - len(fails)}/{len(results)} пройдено")
 if fails:
     print("Провалены:", *fails, sep="\n  - ")
-print(f"ИТОГ: {len(results) - len(fails)}/{len(results)} пройдено")
-if fails:
-    print("Провалены:", *fails, sep="\n  - ")
+sys.exit(0 if not fails else 1)

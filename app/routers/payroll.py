@@ -1,11 +1,17 @@
-"""API денег: авансы, расчёт периода, выплаты."""
+"""API денег: авансы, расчёт периода, выплаты.
+
+Все эндпоинты — только для руководителя (аудит, п.1–3):
+router-level dependency require_manager_dep; actor берётся из подписанного
+initData, actor_id из тела запроса игнорируется (схемы не менялись,
+чтобы не ломать фронтенд).
+"""
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db import get_db
-from app.deps import get_actor, require_manager
+from app.deps import require_manager_dep
 from app.models import Advance, Payout, User, AuditLog
 from app.schemas import (
     AdvanceCreate, AdvanceUpdate, AdvanceOut,
@@ -13,7 +19,11 @@ from app.schemas import (
 )
 from app.services import payroll as payroll_service
 
-router = APIRouter(prefix="/api/payroll", tags=["payroll"])
+router = APIRouter(
+    prefix="/api/payroll",
+    tags=["payroll"],
+    dependencies=[Depends(require_manager_dep)],
+)
 
 
 # ---------- Авансы ----------
@@ -22,18 +32,13 @@ router = APIRouter(prefix="/api/payroll", tags=["payroll"])
 def create_advance(
     data: AdvanceCreate,
     db: Session = Depends(get_db),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_manager_dep),
 ):
-    # Эндпоинт руководителя: при initData — require_manager.
-    # Без initData — старое поведение: никаких проверок, created_by из тела.
-    if actor is not None:
-        require_manager(actor)
     if not db.get(User, data.user_id):
         raise HTTPException(404, "Сотрудник не найден")
     payload = data.model_dump()
-    # Actor из подписанного initData приоритетен над полем в теле.
-    if actor is not None:
-        payload["created_by"] = actor.id
+    # Actor из подписанного initData; поле created_by из тела игнорируем.
+    payload["created_by"] = actor.id
     a = Advance(**payload)
     db.add(a)
     db.commit()
@@ -63,7 +68,7 @@ def update_advance(
     advance_id: int,
     data: AdvanceUpdate,
     db: Session = Depends(get_db),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_manager_dep),
 ):
     a = db.get(Advance, advance_id)
     if not a:
@@ -83,13 +88,9 @@ def update_advance(
         raise HTTPException(400, "Аванс уже учтён в закрытом периоде выплат")
 
     payload = data.model_dump(exclude_unset=True)
-    actor_id = payload.pop("actor_id")
+    payload.pop("actor_id", None)  # actor_id из тела игнорируем
     reason = payload.pop("reason", None)
-    # Эндпоинт руководителя: initData приоритетен; без initData —
-    # старое поведение: actor_id из тела, никаких проверок.
-    if actor is not None:
-        require_manager(actor)
-        actor_id = actor.id
+    actor_id = actor.id  # actor из подписанного initData
     for field, value in payload.items():
         old = getattr(a, field)
         if str(old) != str(value):
@@ -116,14 +117,8 @@ def preview(start: date, end: date, db: Session = Depends(get_db)):
 def close_period(
     data: PayrollClose,
     db: Session = Depends(get_db),
-    actor: User | None = Depends(get_actor),
 ):
     """Зафиксировать период: создаёт payout каждому сотруднику."""
-    # Эндпоинт руководителя: при initData — require_manager.
-    # Без initData — старое поведение: никаких проверок (created_by в теле
-    # нужен только схеме, сервис его не использует).
-    if actor is not None:
-        require_manager(actor)
     if data.period_end < data.period_start:
         raise HTTPException(400, "Конец периода раньше начала")
     try:
@@ -155,14 +150,11 @@ def update_payout_status(
     payout_id: int,
     data: PayoutStatusUpdate,
     db: Session = Depends(get_db),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_manager_dep),
 ):
     p = db.get(Payout, payout_id)
     if not p:
         raise HTTPException(404, "Выплата не найдена")
-    # Actor из initData приоритетен над actor_id из тела; без initData —
-    # старое поведение: actor_id из тела, никаких проверок.
-    effective_actor_id = actor.id if actor is not None else data.actor_id
-    if actor is not None:
-        require_manager(actor)
+    # Actor из подписанного initData; actor_id из тела игнорируем.
+    effective_actor_id = actor.id
     return payroll_service.set_payout_status(db, p, data.status, effective_actor_id)

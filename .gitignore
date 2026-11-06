@@ -96,3 +96,8 @@ project.json
 
 # случайный артефакт npm (буквальная папка %TEMP%)
 %TEMP%/
+
+# Локальные артефакты аудита и разовые скрипты (не для git)
+_audit_out/
+_pw_tmp/
+_manager_crash_test.js

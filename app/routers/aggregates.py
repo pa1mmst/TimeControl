@@ -4,21 +4,19 @@
 Правила:
 - только GET, ничего не пишет (даже аудит);
 - деньги — Decimal (как в services/payroll.py);
-- actor: подписанный initData (get_actor) приоритетен; без initData —
-  fallback на X-Actor-Id (старые клиенты и _e2e_check.py);
-- manager-эндпоинты: require_manager для initData-actor,
-  fallback_actor_is_manager для X-Actor-Id;
+- actor: подписанный initData (require_actor / require_manager_dep),
+  fallback на X-Actor-Id удалён (аудит, п.1–3);
 - без N+1: selectinload и агрегатные запросы.
 """
 from datetime import date, timedelta
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from app.db import get_db
-from app.deps import get_actor, require_manager, fallback_actor_is_manager
+from app.deps import require_actor, require_manager_dep
 from app.models import (
     User, Task, TaskAssignment, TaskGroup, TaskStatus,
     WorkEntry, Advance, Payout, PayoutStatus, AuditLog, InventoryItem,
@@ -31,42 +29,8 @@ EPOCH = date(1970, 1, 1)  # "начало времён" для открытог�
 
 # ---------- Общий актор ----------
 
-def _resolve_actor(
-    actor: User | None,
-    x_actor_id: int | None,
-    db: Session,
-) -> User:
-    """initData-actor приоритетен; иначе X-Actor-Id (как в старых роутерах)."""
-    if actor is not None:
-        return actor
-    if x_actor_id is None:
-        raise HTTPException(401, "Требуется авторизация (initData или X-Actor-Id)")
-    user = db.get(User, x_actor_id)
-    if not user or not user.is_active:
-        raise HTTPException(401, "Неизвестный или деактивированный пользователь")
-    return user
-
-
-def _actor_dep(
-    actor: User | None = Depends(get_actor),
-    x_actor_id: int | None = Header(None, alias="X-Actor-Id"),
-    db: Session = Depends(get_db),
-) -> User:
-    return _resolve_actor(actor, x_actor_id, db)
-
-
-def _manager_dep(
-    actor: User | None = Depends(get_actor),
-    x_actor_id: int | None = Header(None, alias="X-Actor-Id"),
-    db: Session = Depends(get_db),
-) -> User:
-    if actor is not None:
-        return require_manager(actor)
-    if x_actor_id is None:
-        raise HTTPException(401, "Требуется авторизация (initData или X-Actor-Id)")
-    fallback_actor_is_manager(x_actor_id, db)
-    return db.get(User, x_actor_id)
-
+# Actor берётся из подписанного initData: require_actor (любой
+# аутентифицированный) и require_manager_dep (руководитель) — см. app/deps.py.
 
 # ---------- Общие помощники ----------
 
@@ -181,7 +145,7 @@ def _hours_per_user_day(
 @router.get("/api/me/today")
 def me_today(
     db: Session = Depends(get_db),
-    me: User = Depends(_actor_dep),
+    me: User = Depends(require_actor),
 ):
     today = date.today()
     tasks = _active_today_filter(
@@ -231,7 +195,7 @@ def me_history(
     date_from: date | None = None,
     date_to: date | None = None,
     db: Session = Depends(get_db),
-    me: User = Depends(_actor_dep),
+    me: User = Depends(require_actor),
 ):
     q = (
         db.query(WorkEntry)
@@ -284,7 +248,7 @@ def me_history(
 @router.get("/api/me/money")
 def me_money(
     db: Session = Depends(get_db),
-    me: User = Depends(_actor_dep),
+    me: User = Depends(require_actor),
 ):
     start = _open_period_start(db, me.id)
     money = _money_for(db, me, start)
@@ -297,7 +261,7 @@ def me_money(
 @router.get("/api/dashboard/today")
 def dashboard_today(
     db: Session = Depends(get_db),
-    manager: User = Depends(_manager_dep),
+    manager: User = Depends(require_manager_dep),
 ):
     today = date.today()
     tasks = _active_today_filter(
@@ -359,7 +323,7 @@ def dashboard_today(
 def task_matrix(
     task_id: int,
     db: Session = Depends(get_db),
-    manager: User = Depends(_manager_dep),
+    manager: User = Depends(require_manager_dep),
 ):
     task = db.get(Task, task_id)
     if not task:
@@ -431,7 +395,7 @@ def task_matrix(
 def user_summary(
     user_id: int,
     db: Session = Depends(get_db),
-    manager: User = Depends(_manager_dep),
+    manager: User = Depends(require_manager_dep),
 ):
     user = db.get(User, user_id)
     if not user:

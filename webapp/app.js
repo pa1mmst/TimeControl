@@ -857,7 +857,7 @@
     });
 
     /* ========================================================
-     * 7. API client (initData + X-Actor-Id)
+     * 7. API client (initData — единственный способ авторизации)
      * ======================================================== */
     function entry_id(value) {
         const n = parseInt(value, 10);
@@ -874,7 +874,6 @@
                 : base + path;
             const headers = { 'Content-Type': 'application/json' };
             if (tg && tg.initData) headers['X-Telegram-Init-Data'] = tg.initData;
-            if (state.user && state.user.id) headers['X-Actor-Id'] = String(state.user.id);
             if (options.headers) Object.assign(headers, options.headers);
 
             let response;

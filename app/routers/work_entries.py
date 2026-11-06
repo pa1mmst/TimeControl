@@ -1,11 +1,15 @@
-"""API учёта времени. Вся бизнес-логика — в services/work_entries.py."""
+"""API учёта времени. Вся бизнес-логика — в services/work_entries.py.
+
+Все эндпоинты требуют подписанный initData (аудит, п.1–3):
+Depends(require_actor). Разграничение работник/руководитель/учётчик —
+в сервисном слое (app/services/work_entries.py), он не менялся.
+"""
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-# Если зависимости в вашем каркасе лежат не в app.deps — поправьте импорт.
-from app.deps import get_db, get_current_user, get_actor
+from app.deps import get_db, require_actor
 from app.models import User
 from app.schemas.work_entries import (
     AuditRecordOut, GroupEntryCreate, GroupEntryResult, TaskSummaryOut,
@@ -28,12 +32,11 @@ def _handle(fn, *args, **kwargs):
 def create_entry(
     payload: WorkEntryCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_actor),
 ):
     """Индивидуальная запись: работник за себя, руководитель — за любого."""
     return _handle(
-        svc.create_entry, db, actor=actor or current_user,
+        svc.create_entry, db, actor=actor,
         task_id=payload.task_id, work_date=payload.work_date,
         hours=payload.hours, location_id=payload.location_id,
         user_id=payload.user_id,
@@ -44,12 +47,11 @@ def create_entry(
 def create_group_entries(
     payload: GroupEntryCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_actor),
 ):
     """Групповой ввод учётчика: одно действие -> запись каждому участнику."""
     created, skipped = _handle(
-        svc.create_group_entries, db, actor=actor or current_user,
+        svc.create_group_entries, db, actor=actor,
         group_id=payload.group_id, work_date=payload.work_date,
         hours=payload.hours, location_id=payload.location_id,
         exclude_user_ids=payload.exclude_user_ids,
@@ -62,12 +64,11 @@ def update_hours(
     entry_id: int,
     payload: WorkEntryUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-    actor: User | None = Depends(get_actor),
+    actor: User = Depends(require_actor),
 ):
     """Правка часов: только руководитель, изменение фиксируется в AuditLog."""
     return _handle(
-        svc.update_hours, db, actor=actor or current_user,
+        svc.update_hours, db, actor=actor,
         entry_id=entry_id, new_hours=payload.hours, reason=payload.reason,
     )
 
@@ -79,11 +80,11 @@ def list_entries(
     date_from: date | None = Query(None),
     date_to: date | None = Query(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    actor: User = Depends(require_actor),
 ):
     """Работник получает только свои записи; руководитель — с любыми фильтрами."""
     return _handle(
-        svc.list_entries, db, actor=current_user,
+        svc.list_entries, db, actor=actor,
         user_id=user_id, task_id=task_id,
         date_from=date_from, date_to=date_to,
     )
@@ -93,26 +94,26 @@ def list_entries(
 def task_summary(
     task_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    actor: User = Depends(require_actor),
 ):
     """Сводка по заданию: по людям, по группам ввода, итог (SPEC п.11)."""
-    return _handle(svc.task_summary, db, actor=current_user, task_id=task_id)
+    return _handle(svc.task_summary, db, actor=actor, task_id=task_id)
 
 
 @router.get("/{entry_id}", response_model=WorkEntryOut)
 def get_entry(
     entry_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    actor: User = Depends(require_actor),
 ):
-    return _handle(svc.get_entry, db, actor=current_user, entry_id=entry_id)
+    return _handle(svc.get_entry, db, actor=actor, entry_id=entry_id)
 
 
 @router.get("/{entry_id}/history", response_model=list[AuditRecordOut])
 def entry_history(
     entry_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    actor: User = Depends(require_actor),
 ):
     """История изменений записи: видна владельцу и руководителю (SPEC п.9)."""
-    return _handle(svc.get_entry_history, db, actor=current_user, entry_id=entry_id)
+    return _handle(svc.get_entry_history, db, actor=actor, entry_id=entry_id)

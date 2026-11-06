@@ -15,7 +15,8 @@ log = logging.getLogger("bot")
 
 BOT_TOKEN = os.getenv("BOT_TOKEN", "")
 WEBHOOK_URL = os.getenv("BOT_WEBHOOK_URL", "")
-WEBHOOK_SECRET = os.getenv("BOT_WEBHOOK_SECRET", "change-me")
+# Без дефолта (аудит, п.4): секрет по умолчанию "change-me" — известная строка.
+WEBHOOK_SECRET = os.getenv("BOT_WEBHOOK_SECRET", "")
 
 _API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
@@ -45,8 +46,11 @@ def send_message(chat_id: int, text: str, reply_markup: dict | None = None) -> b
 
 def setup_webhook() -> None:
     """Регистрирует webhook. Вызвать один раз (или на старте приложения)."""
-    if not (BOT_TOKEN and WEBHOOK_URL):
-        log.warning("BOT_TOKEN/BOT_WEBHOOK_URL не заданы, webhook не установлен")
+    if not (BOT_TOKEN and WEBHOOK_URL and WEBHOOK_SECRET):
+        log.error(
+            "BOT_TOKEN/BOT_WEBHOOK_URL/BOT_WEBHOOK_SECRET не заданы — "
+            "webhook НЕ установлен"
+        )
         return
     r = httpx.post(
         f"{_API}/setWebhook",

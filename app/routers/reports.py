@@ -10,12 +10,18 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.db import get_db
+from app.deps import require_manager_dep
 from app.models import (
     User, Client, Location, Task, TaskAssignment, TaskGroup,
     WorkEntry, Payout,
 )
 
-router = APIRouter(prefix="/api/reports", tags=["reports"])
+# Все отчёты — только для руководителя (аудит, п.1–3).
+router = APIRouter(
+    prefix="/api/reports",
+    tags=["reports"],
+    dependencies=[Depends(require_manager_dep)],
+)
 
 
 def _date_filter(q, start: date | None, end: date | None):

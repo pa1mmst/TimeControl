@@ -1,4 +1,5 @@
 """Главный файл приложения. Подключает все модули (роутеры)."""
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -13,7 +14,14 @@ from app.bot.router import router as bot_router
 from app.bot.telegram import setup_webhook
 from app.routers import users, clients, tasks, work_entries, payroll, reports, inventory, miniapp, aggregates
 
-app = FastAPI(title="AgroWork")
+# В проде (ENV=prod) документация API закрыта (аудит, п.5).
+_IS_PROD = os.getenv("ENV") == "prod"
+app = FastAPI(
+    title="AgroWork",
+    docs_url=None if _IS_PROD else "/docs",
+    redoc_url=None if _IS_PROD else "/redoc",
+    openapi_url=None if _IS_PROD else "/openapi.json",
+)
 
 app.include_router(miniapp.router)
 app.include_router(users.router)
