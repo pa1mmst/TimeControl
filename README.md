@@ -17,14 +17,17 @@ Telegram-бот и Telegram Mini App.
 - `tools/` — служебные скрипты: `audit_probe_authz.py` (проба авторизации, запускается
   и напрямую, и из `test_authz.py` как subprocess).
 - `files/ui/` — скриншоты интерфейса. `_prompts/` — задания исполнителю по UI v3.
-- `migrations/` — пока пусто (таблицы создаются через `app.create_tables`).
+- `migrations/` — Alembic: `alembic upgrade head` создаёт/обновляет схему
+  (baseline `6d41b18de2d6` + индексы/уникальность `af675026fb58`); URL базы —
+  из `app.db` (окружение), не из `alembic.ini`.
+- `alembic.ini` — конфиг Alembic (пути скриптов; URL базы берётся из окружения).
 
 ## Запуск локально (Windows)
 ```
 python -m venv venv
 venv\Scripts\pip install -r requirements.txt
 copy .env.example .env          (и заполнить переменные)
-venv\Scripts\python -m app.create_tables
+venv\Scripts\python -m alembic upgrade head
 venv\Scripts\uvicorn app.main:app --reload
 ```
 Проверка: http://127.0.0.1:8000/health → `{"status":"ok"}`, Mini App: http://127.0.0.1:8000/app

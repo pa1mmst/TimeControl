@@ -1,5 +1,6 @@
 """Главный файл приложения. Подключает все модули (роутеры)."""
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -24,6 +25,14 @@ from app.routers import (
     work_entries,
 )
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Старт/остановка приложения (замена устаревшего on_event, аудит п.15)."""
+    setup_webhook()  # no-op, если BOT_TOKEN/BOT_WEBHOOK_URL не заданы
+    yield
+
+
 # В проде (ENV=prod) документация API закрыта (аудит, п.5).
 _IS_PROD = os.getenv("ENV") == "prod"
 app = FastAPI(
@@ -31,6 +40,7 @@ app = FastAPI(
     docs_url=None if _IS_PROD else "/docs",
     redoc_url=None if _IS_PROD else "/redoc",
     openapi_url=None if _IS_PROD else "/openapi.json",
+    lifespan=lifespan,
 )
 
 app.include_router(miniapp.router)
@@ -43,10 +53,6 @@ app.include_router(reports.router)
 app.include_router(inventory.router)
 app.include_router(bot_router)
 app.include_router(aggregates.router)  # агрегатные read-only эндпоинты Mini App v4
-
-@app.on_event("startup")
-def _bot_webhook():
-    setup_webhook()  # no-op, если BOT_TOKEN/BOT_WEBHOOK_URL не заданы
 
 # ---- Telegram Mini App (статика) ----
 _WEBAPP_DIR = Path(__file__).resolve().parent.parent / "webapp"

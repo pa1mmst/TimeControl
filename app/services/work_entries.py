@@ -13,6 +13,7 @@ from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.bot.notifications import notify_hours_corrected
@@ -148,7 +149,16 @@ def create_entry(
         db, user=target, task_id=task_id, work_date=work_date,
         hours=hours, location_id=location_id, entered_by=actor.id,
     )
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # Гонка при двойном нажатии/офлайн-синке: уникальность БД
+        # (uq_we_user_task_date) сработала раньше проверки в коде (аудит, п.27).
+        db.rollback()
+        raise WorkEntryError(
+            409, "Запись за этот день по этому заданию уже существует. "
+                 "Изменить часы может руководитель."
+        ) from None
     db.refresh(entry)
     return entry
 
@@ -199,7 +209,17 @@ def create_group_entries(
             hours=hours, location_id=location_id, entered_by=actor.id,
         ))
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # Гонка при офлайн-синке: часть записей уже создана параллельным
+        # запросом — уникальность БД (uq_we_user_task_date) отклонила вставку.
+        db.rollback()
+        raise WorkEntryError(
+            409,
+            "Часть записей уже существует (конфликт при синхронизации). "
+            "Повторите отправку — существующие записи будут пропущены.",
+        ) from None
     for e in created:
         db.refresh(e)
     return created, skipped

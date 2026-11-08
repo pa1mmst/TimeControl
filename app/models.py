@@ -15,6 +15,7 @@ from datetime import date, datetime
 from sqlalchemy import (
     Enum,
     ForeignKey,
+    Index,
     Numeric,
     String,
     Text,
@@ -205,6 +206,14 @@ class WorkEntry(Base):
     Записи НИКОГДА не удаляются: правки только через UPDATE + AuditLog.
     """
     __tablename__ = "work_entries"
+    __table_args__ = (
+        # Одна запись = один человек + один день + одно задание (SPEC п.7).
+        # Уникальность на уровне БД закрывает гонку при двойном нажатии
+        # и при офлайн-синке (аудит, п.27).
+        UniqueConstraint("user_id", "task_id", "work_date", name="uq_we_user_task_date"),
+        Index("ix_we_user_date", "user_id", "work_date"),
+        Index("ix_we_task_date", "task_id", "work_date"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
@@ -233,6 +242,9 @@ class WorkEntry(Base):
 class Advance(Base):
     """Аванс — вычитается при расчёте периода (SPEC п.17)."""
     __tablename__ = "advances"
+    __table_args__ = (
+        Index("ix_adv_user_date", "user_id", "date"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
@@ -249,6 +261,9 @@ class Payout(Base):
     чтобы выплата не "поплыла", если потом исправят часы задним числом.
     """
     __tablename__ = "payouts"
+    __table_args__ = (
+        Index("ix_payout_user_period", "user_id", "period_start"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
@@ -319,6 +334,9 @@ class AuditLog(Base):
     old/new_value хранятся строками, чтобы одна таблица покрывала любые поля.
     """
     __tablename__ = "audit_log"
+    __table_args__ = (
+        Index("ix_audit_entity", "entity", "entity_id"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     actor_id: Mapped[int] = mapped_column(ForeignKey("users.id"))

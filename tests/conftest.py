@@ -17,6 +17,12 @@ try:
     os.remove(_DB_FILE)
 except OSError:
     pass
+# WAL-режим (app/db.py) создаёт файлы -wal/-shm рядом с базой — их тоже убрать.
+for _side in ("-wal", "-shm"):
+    try:
+        os.remove(_DB_FILE + _side)
+    except OSError:
+        pass
 
 import hashlib
 import hmac

@@ -1,11 +1,29 @@
 # Статус проекта
 
-_Обновлено: 06.11.2026_
+_Обновлено: 08.11.2026_
 
 > Логи старых чатов Skales потеряны при переустановке. Этот файл — главный источник
 > «где мы остановились». Обновлять после каждого шага.
 
 ## Где мы сейчас
+- **Этап 3A аудита закрыт (08.11.2026): Alembic + WAL + индексы.** По AUDIT.md
+  выполнены пункты 15 (частично), 27, 29: Alembic подключён (`alembic.ini`,
+  `migrations/env.py` с URL из `app.db`, baseline `6d41b18de2d6` + ревизия
+  `af675026fb58` с составными индексами и уникальностью
+  `uq_we_user_task_date`); прагмы SQLite на каждое соединение в `app/db.py`
+  (WAL, busy_timeout=5000, foreign_keys=ON); составные индексы
+  `ix_we_user_date`, `ix_we_task_date`, `ix_adv_user_date`,
+  `ix_payout_user_period`, `ix_audit_entity`; гонка дублей в
+  `services/work_entries.py` обрабатывается как 409 (IntegrityError);
+  `on_event("startup")` заменён на `lifespan`; `tests/test_db_migrations.py`
+  (3 теста: таблицы, уникальность, индексы); `alembic==1.20.1` в requirements;
+  README обновлён (запуск через `alembic upgrade head`).
+  Проверки: pytest **82 passed** (79 + 3 миграции), ruff **All checks passed**,
+  `node --check` OK; миграция на чистой базе — обе ревизии, WAL и уникальность
+  подтверждены через PRAGMA.
+  Правки выполняла GLM-5.3-Flash (делегирование), приёмка, тест миграций,
+  requirements/README/STATUS — основная модель.
+  Осталось в этапе 3: пункты 7, 8, 10, 16, 17 (бот/время/Decimal/бэкапы).
 - **Этап 2 аудита закрыт (07.11.2026): тесты и CI.** По AUDIT.md выполнены пункты
   11, 18, 22, 23: все 79 проверок перенесены из самописных скриптов в pytest
   (`tests/`: conftest с фикстурами fresh_db/client/fake_telegram и подписанным
