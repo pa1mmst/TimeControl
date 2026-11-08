@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.deps import require_manager_dep
 from app.models import InventoryItem, User
-from app.schemas import InventoryCreate, InventoryUpdate, InventoryOut
+from app.schemas import InventoryCreate, InventoryOut, InventoryUpdate
 from app.services.audit import log_change
 
 router = APIRouter(

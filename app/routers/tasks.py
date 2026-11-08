@@ -17,13 +17,26 @@ from app.bot.notifications import notify_task_assigned, notify_task_changed
 from app.db import get_db
 from app.deps import require_actor, require_manager_dep
 from app.models import (
-    Task, TaskLocation, TaskGroup, TaskAssignment,
-    Client, Location, User, WorkEntry, TaskStatus,
+    Client,
+    Location,
+    Task,
+    TaskAssignment,
+    TaskGroup,
+    TaskLocation,
+    TaskStatus,
+    User,
+    WorkEntry,
 )
 from app.schemas import (
-    TaskCreate, TaskUpdate, TaskOut, TaskShortOut,
-    AssignmentCreate, AssignmentUpdate, AssignmentOut,
-    GroupCreate, GroupOut,
+    AssignmentCreate,
+    AssignmentOut,
+    AssignmentUpdate,
+    GroupCreate,
+    GroupOut,
+    TaskCreate,
+    TaskOut,
+    TaskShortOut,
+    TaskUpdate,
 )
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
@@ -96,7 +109,7 @@ def create_task(
 def list_tasks(
     status: str | None = None,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_actor),  # noqa: B008
+    actor: User = Depends(require_actor),
 ):
     """Список заданий, можно фильтровать: ?status=active"""
     q = db.query(Task).options(
@@ -139,7 +152,7 @@ def list_tasks(
                 }
                 for a in t.assignments
             ],
-            "hours_today": hours_map.get(t.id, Decimal("0")),
+            "hours_today": hours_map.get(t.id, Decimal(0)),
         }))
     return out
 
@@ -148,7 +161,7 @@ def list_tasks(
 def get_task(
     task_id: int,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_actor),  # noqa: B008
+    actor: User = Depends(require_actor),
 ):
     return _get_task(task_id, db)
 
@@ -158,7 +171,7 @@ def update_task(
     task_id: int,
     data: TaskUpdate,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_manager_dep),  # noqa: B008
+    actor: User = Depends(require_manager_dep),
 ):
     # Руководительское действие: actor обязан быть is_manager.
     task = _get_task(task_id, db)

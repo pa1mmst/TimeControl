@@ -49,6 +49,7 @@ logs/
 *.pid
 
 # ===== Test / coverage =====
+_pytest_run.db
 .pytest_cache/
 .coverage
 .coverage.*

@@ -11,7 +11,11 @@ Telegram-бот и Telegram Mini App.
   `services/` (бизнес-логика: часы, выплаты, журнал), `bot/` (Telegram-бот), `i18n/` (ru/uk/es).
 - `app/routers/aggregates.py` — сводные запросы для экранов Mini App v4.
 - `webapp/` — Mini App (`index.html`, `app.js`, `styles.css`), отдаётся на `/` и `/app`.
-- `_e2e_check.py` — сквозная проверка API (сейчас это единственная проверка; переезд в `tests/` запланирован).
+- `tests/` — pytest-тесты: `test_e2e.py` (сквозной сценарий, 43), `test_bot_flow.py` (поток
+  доступа бота, 18), `test_me_401.py` (коды /api/users/me, 4), `test_authz.py` (авторизация
+  401/403, 14). Общие фикстуры — `tests/conftest.py`.
+- `tools/` — служебные скрипты: `audit_probe_authz.py` (проба авторизации, запускается
+  и напрямую, и из `test_authz.py` как subprocess).
 - `files/ui/` — скриншоты интерфейса. `_prompts/` — задания исполнителю по UI v3.
 - `migrations/` — пока пусто (таблицы создаются через `app.create_tables`).
 
@@ -34,8 +38,9 @@ venv\Scripts\uvicorn app.main:app --reload
 | `DATABASE_URL` / `DB_PATH` | база данных; по умолчанию `sqlite:///./agrowork.db` |
 
 ## Проверка
-`check.bat` — запускает `_e2e_check.py` на отдельной тестовой базе `_e2e_test.db`,
-пишет результат в `_last_check.txt`, печатает `CHECK: OK` или `CHECK: FAILED`.
+`check.bat` — запускает `pytest -q` (79 тестов на временной базе `_pytest_run.db`, сама
+создаётся и игнорируется git), печатает `CHECK: OK` или `CHECK: FAILED`.
+CI (GitHub Actions, `.github/workflows/ci.yml`) на каждый push: ruff → pytest → pip-audit.
 **Ничего не коммитит и не пушит** — это делается вручную после просмотра изменений.
 
 ## Правила работы

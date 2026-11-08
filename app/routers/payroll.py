@@ -12,10 +12,15 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.deps import require_manager_dep
-from app.models import Advance, Payout, User, AuditLog
+from app.models import Advance, AuditLog, Payout, User
 from app.schemas import (
-    AdvanceCreate, AdvanceUpdate, AdvanceOut,
-    PayrollRow, PayrollClose, PayoutOut, PayoutStatusUpdate,
+    AdvanceCreate,
+    AdvanceOut,
+    AdvanceUpdate,
+    PayoutOut,
+    PayoutStatusUpdate,
+    PayrollClose,
+    PayrollRow,
 )
 from app.services import payroll as payroll_service
 

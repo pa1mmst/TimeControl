@@ -3,8 +3,8 @@
     python -m app.create_tables
 Скрипт безопасен: существующие таблицы и данные не трогает.
 """
-from app.db import Base, engine
 from app import models  # noqa: F401  — импорт регистрирует все модели
+from app.db import Base, engine
 
 if __name__ == "__main__":
     Base.metadata.create_all(bind=engine)

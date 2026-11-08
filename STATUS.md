@@ -6,6 +6,25 @@ _Обновлено: 06.11.2026_
 > «где мы остановились». Обновлять после каждого шага.
 
 ## Где мы сейчас
+- **Этап 2 аудита закрыт (07.11.2026): тесты и CI.** По AUDIT.md выполнены пункты
+  11, 18, 22, 23: все 79 проверок перенесены из самописных скриптов в pytest
+  (`tests/`: conftest с фикстурами fresh_db/client/fake_telegram и подписанным
+  initData, `test_e2e.py` 43, `test_bot_flow.py` 18, `test_me_401.py` 4,
+  `test_authz.py` 14 — включая subprocess-запуск пробы с ENV=prod для /docs);
+  старые скрипты `_e2e_check.py`, `_bot_flow_check.py`, `_me_401_check.py`
+  удалены; `pyproject.toml` (pytest testpaths + ruff: line-length 100,
+  B008 игнор — ложное для FastAPI Depends); `ruff check --fix` по app/ и tests/
+  (128 → 0 замечаний, включая ручные правки: `utcnow()` → `now(UTC)` в боте,
+  `check=False` в subprocess-тесте); `requirements-dev.txt` (pytest 9.2.0,
+  ruff 0.17.4, bandit 1.9.4, pip-audit 2.10.1); CI GitHub Actions
+  (`.github/workflows/ci.yml`: ruff → pytest → pip-audit на push/PR);
+  `check.bat` переписан на pytest; README обновлён.
+  Проверки: pytest **79 passed** (код 0), ruff **All checks passed** (код 0),
+  pip-audit requirements.txt — без уязвимостей, `node --check` OK.
+  Правки выполняла GLM-5.3-Flash (делегирование, части A/B/C), приёмка,
+  ручные фиксы ruff и обновление README/STATUS — основная модель.
+  Следующий шаг — этап 3 плана AUDIT.md (надёжность данных: п. 7, 8, 10, 15,
+  16, 17, 27, 29).
 - **Этап 1 аудита закрыт (06.11.2026): анонимный доступ устранён.** По AUDIT.md
   выполнены пункты 1–6, 21: `require_actor`/`require_manager_dep` в `app/deps.py`
   (fallback на `X-Actor-Id` и ветки «без initData» удалены), роутеры users/clients/
@@ -144,7 +163,8 @@ _Обновлено: 06.11.2026_
 3. **← СЕЙЧАС:** проверить макет на телефоне, лучше с 1–2 работниками.
    Живое приложение: бот `@agrofirmbot` → Mini App (прод теперь на свежем коде).
 4. Обновить документ концепции под v5, получить «ок».
-5. Поставить pytest, перенести `_e2e_check.py` в `tests/`.
+5. ~~Поставить pytest, перенести `_e2e_check.py` в `tests/`.~~ (готово, этап 2 аудита:
+   79 pytest-тестов, CI на GitHub Actions)
 6. Каркас по ролям, удалить экраны v3.
 7. Экраны по одному, каждый с проверкой; напоминания в боте.
 8. Работа без связи (SPEC §22), переводы, приёмка.

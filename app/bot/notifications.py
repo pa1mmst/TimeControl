@@ -9,7 +9,13 @@ from sqlalchemy.orm import Session
 from app.bot.i18n import t
 from app.bot.telegram import send_message
 from app.models import (
-    Task, TaskAssignment, TaskGroup, TaskLocation, Location, User, WorkEntry,
+    Location,
+    Task,
+    TaskAssignment,
+    TaskGroup,
+    TaskLocation,
+    User,
+    WorkEntry,
 )
 
 

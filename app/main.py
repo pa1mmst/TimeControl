@@ -12,7 +12,17 @@ from fastapi.staticfiles import StaticFiles
 
 from app.bot.router import router as bot_router
 from app.bot.telegram import setup_webhook
-from app.routers import users, clients, tasks, work_entries, payroll, reports, inventory, miniapp, aggregates
+from app.routers import (
+    aggregates,
+    clients,
+    inventory,
+    miniapp,
+    payroll,
+    reports,
+    tasks,
+    users,
+    work_entries,
+)
 
 # В проде (ENV=prod) документация API закрыта (аудит, п.5).
 _IS_PROD = os.getenv("ENV") == "prod"

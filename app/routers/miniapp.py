@@ -5,12 +5,7 @@ Telegram передаёт initData — подписанную строку с д
 Подпись проверяем HMAC-SHA256: ключ = HMAC(bot_token, "WebAppData").
 Если подпись верна — initData пришёл от Telegram, подделать нельзя.
 """
-import hashlib
-import hmac
 import logging
-import os
-import time
-from urllib.parse import parse_qsl
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session

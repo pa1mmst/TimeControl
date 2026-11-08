@@ -12,15 +12,20 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import (
-    Task, TaskAssignment, TaskGroup, TaskLocation, TaskStatus,
-    User, WorkEntry,
-)
-from app.services.audit import log_change, history_for
 from app.bot.notifications import notify_hours_corrected
+from app.models import (
+    Task,
+    TaskAssignment,
+    TaskGroup,
+    TaskLocation,
+    TaskStatus,
+    User,
+    WorkEntry,
+)
+from app.services.audit import history_for, log_change
 
 ENTITY = "work_entries"
 

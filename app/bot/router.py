@@ -11,7 +11,7 @@ Webhook бота: привязка аккаунта по номеру телеф
 """
 import hmac
 import re
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from fastapi import APIRouter, Body, Depends, Header, HTTPException
@@ -22,8 +22,13 @@ from app.bot.i18n import t
 from app.bot.telegram import WEBHOOK_SECRET, send_message
 from app.db import get_db
 from app.models import (
-    AccessRequest, AccessRequestStatus, Task, TaskAssignment, TaskGroup,
-    TaskStatus, User,
+    AccessRequest,
+    AccessRequestStatus,
+    Task,
+    TaskAssignment,
+    TaskGroup,
+    TaskStatus,
+    User,
 )
 from app.services import work_entries as svc
 from app.services.work_entries import WorkEntryError
@@ -233,7 +238,7 @@ def _handle_callback(db: Session, cbq: dict) -> None:
         )
         db.add(user)
         req.status = AccessRequestStatus.approved
-        req.decided_at = datetime.utcnow()
+        req.decided_at = datetime.now(UTC).replace(tzinfo=None)
         req.decided_by = manager.id
         db.commit()
         _answer_callback(cbq, "✅ Одобрено")
@@ -244,7 +249,7 @@ def _handle_callback(db: Session, cbq: dict) -> None:
         )
     else:
         req.status = AccessRequestStatus.rejected
-        req.decided_at = datetime.utcnow()
+        req.decided_at = datetime.now(UTC).replace(tzinfo=None)
         req.decided_by = manager.id
         db.commit()
         _answer_callback(cbq, "❌ Отклонено")
@@ -258,6 +263,7 @@ def _handle_callback(db: Session, cbq: dict) -> None:
 def _answer_callback(cbq: dict, text: str) -> None:
     """answerCallbackQuery — всплывающий ответ на нажатие кнопки."""
     import httpx
+
     from app.bot.telegram import BOT_TOKEN
     if not BOT_TOKEN:
         return

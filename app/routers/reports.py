@@ -12,8 +12,12 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.deps import require_manager_dep
 from app.models import (
-    User, Client, Location, Task, TaskAssignment, TaskGroup,
-    WorkEntry, Payout,
+    Client,
+    Location,
+    Payout,
+    Task,
+    User,
+    WorkEntry,
 )
 
 # Все отчёты — только для руководителя (аудит, п.1–3).

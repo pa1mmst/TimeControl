@@ -18,8 +18,16 @@ from sqlalchemy.orm import Session, selectinload
 from app.db import get_db
 from app.deps import require_actor, require_manager_dep
 from app.models import (
-    User, Task, TaskAssignment, TaskGroup, TaskStatus,
-    WorkEntry, Advance, Payout, PayoutStatus, AuditLog, InventoryItem,
+    Advance,
+    AuditLog,
+    InventoryItem,
+    Payout,
+    Task,
+    TaskAssignment,
+    TaskGroup,
+    TaskStatus,
+    User,
+    WorkEntry,
 )
 
 router = APIRouter(tags=["aggregates"])
@@ -182,7 +190,7 @@ def me_today(
             "client_name": t.client.name if t.client else None,
             "location_names": [loc.name for loc in t.locations],
             "workers": workers,
-            "my_hours_today": hours_map.get((t.id, me.id), Decimal("0")),
+            "my_hours_today": hours_map.get((t.id, me.id), Decimal(0)),
             "is_reporter": me.id in reporters.get(t.id, set()),
         })
     return {"date": today, "tasks": out}
@@ -310,7 +318,7 @@ def dashboard_today(
         "date": today,
         "workers_count": len(workers_with_hours),
         "hours_today": sum(
-            (h for h in hours_map.values() if h > 0), Decimal("0")
+            (h for h in hours_map.values() if h > 0), Decimal(0)
         ).quantize(Decimal("0.01")),
         "tasks_no_hours": tasks_no_hours,
         "tasks": out_tasks,

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.db import get_db
 from app.deps import require_manager_dep
 from app.models import User
-from app.schemas import UserCreate, UserUpdate, UserOut
+from app.schemas import UserCreate, UserOut, UserUpdate
 from app.services.audit import log_change
 
 router = APIRouter(
@@ -43,7 +43,7 @@ def list_users(include_inactive: bool = False, db: Session = Depends(get_db)):
     """По умолчанию показываем только активных (SPEC п.14)."""
     q = db.query(User)
     if not include_inactive:
-        q = q.filter(User.is_active == True)  # noqa: E712
+        q = q.filter(User.is_active == True)
     return q.order_by(User.name).all()
 
 

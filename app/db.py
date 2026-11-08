@@ -2,7 +2,7 @@
 import os
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 # Путь к SQLite задаётся переменными окружения DATABASE_URL или DB_PATH.
 # По умолчанию — как раньше: файл agrowork.db в корне проекта.
@@ -26,7 +26,6 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 class Base(DeclarativeBase):
     """Базовый класс для всех моделей."""
-    pass
 
 
 def get_db():

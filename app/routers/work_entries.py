@@ -12,8 +12,13 @@ from sqlalchemy.orm import Session
 from app.deps import get_db, require_actor
 from app.models import User
 from app.schemas.work_entries import (
-    AuditRecordOut, GroupEntryCreate, GroupEntryResult, TaskSummaryOut,
-    WorkEntryCreate, WorkEntryOut, WorkEntryUpdate,
+    AuditRecordOut,
+    GroupEntryCreate,
+    GroupEntryResult,
+    TaskSummaryOut,
+    WorkEntryCreate,
+    WorkEntryOut,
+    WorkEntryUpdate,
 )
 from app.services import work_entries as svc
 from app.services.work_entries import WorkEntryError

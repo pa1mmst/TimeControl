@@ -10,10 +10,14 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.deps import require_manager_dep
-from app.models import Client, Location, TaskLocation, WorkEntry, User
+from app.models import Client, Location, TaskLocation, User, WorkEntry
 from app.schemas import (
-    ClientCreate, ClientUpdate, ClientOut,
-    LocationCreate, LocationUpdate, LocationOut,
+    ClientCreate,
+    ClientOut,
+    ClientUpdate,
+    LocationCreate,
+    LocationOut,
+    LocationUpdate,
 )
 from app.services.audit import log_change
 
@@ -30,7 +34,7 @@ router = APIRouter(
 def create_client(
     data: ClientCreate,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_manager_dep),  # noqa: B008
+    actor: User = Depends(require_manager_dep),
 ):
     client = Client(**data.model_dump())
     db.add(client)
@@ -48,7 +52,7 @@ def create_client(
 def list_clients(include_inactive: bool = False, db: Session = Depends(get_db)):
     q = db.query(Client)
     if not include_inactive:
-        q = q.filter(Client.is_active == True)  # noqa: E712
+        q = q.filter(Client.is_active == True)
     return q.order_by(Client.name).all()
 
 
@@ -65,7 +69,7 @@ def update_client(
     client_id: int,
     data: ClientUpdate,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_manager_dep),  # noqa: B008
+    actor: User = Depends(require_manager_dep),
 ):
     client = db.get(Client, client_id)
     if not client:
@@ -90,7 +94,7 @@ def create_location(
     client_id: int,
     data: LocationCreate,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_manager_dep),  # noqa: B008
+    actor: User = Depends(require_manager_dep),
 ):
     if not db.get(Client, client_id):
         raise HTTPException(404, "Заказчик не найден")
@@ -122,7 +126,7 @@ def list_locations(client_id: int, db: Session = Depends(get_db)):
 def update_location(
     client_id: int, location_id: int, data: LocationUpdate,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_manager_dep),  # noqa: B008
+    actor: User = Depends(require_manager_dep),
 ):
     loc = db.get(Location, location_id)
     if not loc or loc.client_id != client_id:
@@ -144,7 +148,7 @@ def update_location(
 def delete_location(
     client_id: int, location_id: int,
     db: Session = Depends(get_db),
-    actor: User = Depends(require_manager_dep),  # noqa: B008
+    actor: User = Depends(require_manager_dep),
 ):
     """Удалить локацию заказчика. Связки с заданиями (task_locations)
     снимаются; локацию, по которой уже есть часы, удалять нельзя —

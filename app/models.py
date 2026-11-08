@@ -10,15 +10,20 @@
 - pay_type — задел под сдельную оплату (сейчас всегда 'hourly').
 """
 import enum
-from datetime import datetime, date
+from datetime import date, datetime
 
 from sqlalchemy import (
-    ForeignKey, String, Text, Numeric, Enum, UniqueConstraint, func,
+    Enum,
+    ForeignKey,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
-
 
 # ---------- Перечисления (Enum) ----------
 

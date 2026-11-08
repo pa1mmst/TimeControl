@@ -15,7 +15,12 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models import (
-    User, WorkEntry, Advance, Payout, PayoutStatus, AuditLog,
+    Advance,
+    AuditLog,
+    Payout,
+    PayoutStatus,
+    User,
+    WorkEntry,
 )
 
 CENT = Decimal("0.01")

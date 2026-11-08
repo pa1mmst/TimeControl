@@ -3,12 +3,12 @@ Pydantic-схемы: формат данных, которые API приним�
 Отделены от models.py: модели — это база данных, схемы — это "анкеты"
 для входящих и исходящих запросов.
 """
-from datetime import datetime, date
+from datetime import date, datetime
 from decimal import Decimal
+
 from pydantic import BaseModel, ConfigDict
 
-from app.models import Lang, TaskStatus, PayoutStatus
-
+from app.models import Lang, PayoutStatus, TaskStatus
 
 # ---------- Сотрудники ----------
 
@@ -17,7 +17,7 @@ class UserCreate(BaseModel):
     name: str
     phone: str | None = None
     lang: Lang = Lang.ru
-    hourly_rate: Decimal = Decimal("0")
+    hourly_rate: Decimal = Decimal(0)
     is_manager: bool = False
 
 
@@ -185,7 +185,7 @@ class TaskShortOut(BaseModel):
     client_name: str | None = None
     location_names: list[str] = []
     workers: list[WorkerOut] = []
-    hours_today: Decimal = Decimal("0")
+    hours_today: Decimal = Decimal(0)
 
 
 class TaskOut(BaseModel):
