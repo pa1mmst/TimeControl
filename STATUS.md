@@ -6,6 +6,26 @@ _Обновлено: 10.11.2026_
 > «где мы остановились». Обновлять после каждого шага.
 
 ## Где мы сейчас
+- **Этап 4 аудита закрыт (10.11.2026): рефакторинг кода + инфраструктура.**
+  4A (код, делегировано модели и принято после ревью):
+  п. 12 — `miniapp.py` вычищен (`tg_id_from_init_data` из `app/auth.py`,
+  удалены `_check_signature`, локальный json-разбор, мёртвые импорты);
+  п. 26 — `/api/users/me` считает итоги одним агрегатным SQL
+  (`func.sum` + `coalesce`) вместо выгрузки всех записей;
+  п. 14+25 — создан `app/services/reports.py` (вся логика 4 отчётов),
+  роутер тонкий, N+1 закрыт `selectinload` (task/location/user);
+  п. 28 — `telegram.py`: модульный `httpx.Client` + `ThreadPoolExecutor(4)`,
+  `send_message` fire-and-forget (HTTP-запрос не ждёт Telegram).
+  4B (инфра, основная модель):
+  п. 19 — разовые скрипты → `tools/`, 27 скриншотов → `docs/screenshots/`,
+  дизайн-макет → `docs/design/`, устаревший корневой `index.html` удалён,
+  `.gitignore`/README обновлены;
+  п. 9+30 — `deploy/Caddyfile` (rate-limit API 60/мин и вебхука 30/мин,
+  security headers, CSP, encode zstd/gzip, кэш версионированной статики);
+  п. 24 — `.github/dependabot.yml` (pip + github-actions, ежемесячно).
+  Проверки: pytest **82 passed**, ruff **All checks passed**.
+  Отложено осознанно: п. 20 (разбить `webapp/app.js` 3180 строк на модули) —
+  высокий риск регрессий без UI-тестов, делать отдельно с браузерными пробами.
 - **Этап 3B аудита закрыт (10.11.2026): бот/время/Decimal/бэкапы.** По AUDIT.md
   выполнены пункты 7, 8, 10, 16, 17: HTML-экранирование всех параметров сообщений
   бота центрально в `app/bot/i18n.py` (`html.escape` в `t()`) + ручные f-строки в

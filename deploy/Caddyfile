@@ -1,0 +1,56 @@
+# Пример конфигурации Caddy для продакшена TimeControl (аудит, п.9 и п.30).
+# Копируем на сервер: /etc/caddy/Caddyfile и правим домен.
+#
+# Что закрывает:
+#  - п.9: rate-limit для API и вебхука бота + базовые security headers
+#  - п.30: сжатие zstd/gzip для статики (app.js ~3200 строк)
+
+timecontrol.duckdns.org {
+	# --- Сжатие статики (п.30) ---
+	encode zstd gzip
+
+	# --- Security headers (п.9) ---
+	header {
+		# Запрет встраивания в iframe (кликджекинг)
+		X-Frame-Options "DENY"
+		# Блокировка MIME-sniffing
+		X-Content-Type-Options "nosniff"
+		# Referrer только same-origin
+		Referrer-Policy "same-origin"
+		# CSP: Mini App живёт внутри Telegram, скрипты только свои + Telegram SDK
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://telegram.org; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'"
+		-Server
+	}
+
+	# --- Rate-limit API и вебхука (п.9) ---
+	# Требует плагин caddy-ratelimit (xcaddy build --with github.com/mholt/caddy-ratelimit).
+	# 60 запросов/мин на IP для API — с запасом для офлайн-синка Mini App.
+	@rateapi path /api/*
+	rate_limit @rateapi {
+		zone dynamic_api {
+			key    {remote_host}
+			events 60
+			window 1m
+		}
+	}
+
+	# Вебхук бота: строже, Telegram не шлёт чаще пары запросов в секунду
+	@ratebot path /bot/webhook
+	rate_limit @ratebot {
+		zone dynamic_bot {
+			key    {remote_host}
+			events 30
+			window 1m
+		}
+	}
+
+	# --- Кэш статики (п.30): версионированные файлы кэшируем надолго ---
+	@versioned {
+		path *.js *.css
+		query v=*
+	}
+	header @versioned Cache-Control "public, max-age=31536000, immutable"
+
+	# Прокси в uvicorn
+	reverse_proxy 127.0.0.1:8000
+}

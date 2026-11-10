@@ -1,0 +1,24 @@
+# Dependabot (аудит, п.24): ежемесячные плановые обновления зависимостей.
+# PR поднимаются автоматически, мержить только после зелёного CI
+# (ruff → pytest → pip-audit).
+
+version: 2
+updates:
+  # Python-зависимости приложения
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "dependencies"
+    # В requirements.txt версии закреплены (п.21): Dependabot поднимает
+    # PR на обновление pin-версий, мерж осознанный
+    versioning-strategy: "lockfile-only"
+
+  # GitHub Actions (ruff/pytest/pip-audit версии)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "ci"

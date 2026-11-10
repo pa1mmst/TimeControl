@@ -88,8 +88,8 @@ _worker_probe.js
 _shots/
 _shots_v5.js
 _seed_v5_shots.py
-files/ui/*.txt
-files/ui/*.json
+# files/ — только игнорируемые артефакты разовых проб (п.19 аудита)
+files/ui/
 files/images/
 
 # ===== Old Skales service file =====

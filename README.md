@@ -15,8 +15,12 @@ Telegram-бот и Telegram Mini App.
   доступа бота, 18), `test_me_401.py` (коды /api/users/me, 4), `test_authz.py` (авторизация
   401/403, 14). Общие фикстуры — `tests/conftest.py`.
 - `tools/` — служебные скрипты: `audit_probe_authz.py` (проба авторизации, запускается
-  и напрямую, и из `test_authz.py` как subprocess).
-- `files/ui/` — скриншоты интерфейса. `_prompts/` — задания исполнителю по UI v3.
+  и напрямую, и из `test_authz.py` как subprocess), `backup_db.py` (бэкап SQLite),
+  `_*.js`/`_*.py` — разовые браузерные пробы (Playwright, не нужны в проде).
+- `docs/` — `screenshots/` (скриншоты интерфейса), `design/` (макет v5 и референсы).
+- `_prompts/` — задания исполнителю по UI v3/v5 (история разработки).
+- `deploy/` — примеры конфигурации продакшена (Caddyfile: rate-limit, security headers).
+- `.github/` — CI (ruff → pytest → pip-audit) и Dependabot (ежемесячные обновления зависимостей).
 - `migrations/` — Alembic: `alembic upgrade head` создаёт/обновляет схему
   (baseline `6d41b18de2d6` + индексы/уникальность `af675026fb58`); URL базы —
   из `app.db` (окружение), не из `alembic.ini`.
@@ -39,6 +43,10 @@ venv\Scripts\uvicorn app.main:app --reload
 | `BOT_WEBHOOK_URL` | публичный адрес для вебхука бота (без него вебхук не ставится) |
 | `BOT_WEBHOOK_SECRET` | секрет для проверки запросов от Telegram |
 | `DATABASE_URL` / `DB_PATH` | база данных; по умолчанию `sqlite:///./agrowork.db` |
+
+Уведомления бота отправляются асинхронно через пул потоков (аудит, п.28) —
+HTTP-запрос не ждёт Telegram. При остановке сервера неотправленные уведомления
+теряются (осознанно: уведомление не должно блокировать бизнес-операцию).
 
 ## Бэкапы
 Ежедневный бэкап базы (аудит, п. 8):

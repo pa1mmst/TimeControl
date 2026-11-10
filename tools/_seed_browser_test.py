@@ -1,8 +1,11 @@
 import os
+
 os.environ['DATABASE_URL'] = 'sqlite:///./_browser_test.db'
-from app.db import Base, engine
+
 from sqlalchemy.orm import Session
+
 import app.models as m
+from app.db import Base, engine
 
 for cls in (m.User, m.Client, m.Location, m.Task, m.TaskLocation):
     print(cls.__name__, [c.name for c in cls.__table__.columns])
@@ -28,4 +31,4 @@ if not w:
 cl = s.query(m.Client).first() or mk(m.Client, name='Test Farm')
 loc = s.query(m.Location).first() or mk(m.Location, name='Field 1', client_id=cl.id)
 s.commit()
-print('SEED mg=%s w=%s client=%s loc=%s tasks=%s' % (mg.id, w.id, cl.id, loc.id, s.query(m.Task).count()))
+print(f'SEED mg={mg.id} w={w.id} client={cl.id} loc={loc.id} tasks={s.query(m.Task).count()}')

@@ -4,25 +4,23 @@
 Telegram передаёт initData — подписанную строку с данными пользователя.
 Подпись проверяем HMAC-SHA256: ключ = HMAC(bot_token, "WebAppData").
 Если подпись верна — initData пришёл от Telegram, подделать нельзя.
+
+Проверка подписи и разбор user — единая функция tg_id_from_init_data
+из app/auth.py (аудит, п.12): здесь дублей больше нет.
 """
 import logging
 
 from fastapi import APIRouter, Depends, Header, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.auth import check_init_data  # единая проверка подписи (см. app/auth.py)
+from app.auth import tg_id_from_init_data
 from app.db import get_db
-from app.models import User
+from app.models import User, WorkEntry
 
 logger = logging.getLogger("miniapp")  # причины отказа 401 — видно в journalctl
 
 router = APIRouter(prefix="/api/users", tags=["miniapp"])
-
-
-def _check_signature(init_data: str) -> dict:
-    """Проверяет подпись initData. Делегирует общей функции в app/auth.py
-    (код проверки вынесен туда без изменений — фикс 4a4219f сохранён)."""
-    return check_init_data(init_data)
 
 
 @router.get("/me")
@@ -31,36 +29,28 @@ def me(
     db: Session = Depends(get_db),
 ):
     """Кто я: данные пользователя по подписанному initData из Telegram."""
-    pairs = _check_signature(x_telegram_init_data)
+    tg_id = tg_id_from_init_data(x_telegram_init_data)
 
-    try:
-        tg_user = pairs.get("user")
-        if not tg_user:
-            raise HTTPException(401, "Нет данных пользователя в initData")
-        import json
-        tg_user = json.loads(tg_user)
-        tg_id = tg_user.get("id")
-        if not tg_id:
-            raise HTTPException(401, "Нет id пользователя в initData")
-    except json.JSONDecodeError:
-        raise HTTPException(401, "Некорректные данные пользователя")
     user = db.query(User).filter(User.tg_id == tg_id).first()
     if not user:
         logger.warning("me: tg_id=%s не найден в базе", tg_id)
         raise HTTPException(
             401, {"code": "not_registered",
-                   "detail": "Пользователь не зарегистрирован"})
+                  "detail": "Пользователь не зарегистрирован"})
     if not user.is_active:
         logger.warning("me: tg_id=%s деактивирован", tg_id)
         raise HTTPException(
             401, {"code": "deactivated",
-                   "detail": "Пользователь деактивирован"})
+                  "detail": "Пользователь деактивирован"})
 
-    # Часы/заработок — из отчёта по пользователю (та же логика, что /api/reports/user)
-    from app.models import WorkEntry
-    entries = db.query(WorkEntry).filter(WorkEntry.user_id == user.id).all()
-    total_hours = sum((e.hours for e in entries), 0)
-    total_earned = sum((e.hours * e.rate_snapshot for e in entries), 0)
+    # Часы/заработок — один агрегатный запрос, без выгрузки всех записей
+    # (аудит, п.26). Деньги — Decimal: coalesce держит тип Numeric суммы.
+    total_hours, total_earned = db.query(
+        func.coalesce(func.sum(WorkEntry.hours), 0),
+        func.coalesce(
+            func.sum(WorkEntry.hours * WorkEntry.rate_snapshot), 0
+        ),
+    ).filter(WorkEntry.user_id == user.id).one()
 
     return {
         "id": user.id,

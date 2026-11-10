@@ -5,9 +5,15 @@
   BOT_WEBHOOK_URL    — публичный URL, например https://example.com/bot/webhook
   BOT_WEBHOOK_SECRET — произвольная строка; Telegram будет присылать её
                        в заголовке, чтобы никто чужой не дёргал webhook
+
+Уведомления уходят асинхронно через пул потоков (аудит, п.28):
+10 получателей больше не держат HTTP-запрос до 100 с. Отправка
+fire-and-forget: при остановке сервера неотправленные уведомления
+теряются — для уведомлений это осознанное решение.
 """
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 
@@ -20,28 +26,41 @@ WEBHOOK_SECRET = os.getenv("BOT_WEBHOOK_SECRET", "")
 
 _API = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
+# Один клиент на модуль: reuse соединений вместо нового TLS на каждое
+# сообщение. Пул потоков: send_message только ставит задачу в очередь
+# и сразу возвращается — HTTP-запрос бота не ждёт Telegram.
+_client = httpx.Client(timeout=10)
+_executor = ThreadPoolExecutor(
+    max_workers=4, thread_name_prefix="tg-send"
+)
 
-def send_message(chat_id: int, text: str, reply_markup: dict | None = None) -> bool:
-    """
-    Отправка сообщения. Ошибки НЕ поднимаются наверх: недоставленное
-    уведомление не должно ломать бизнес-операцию (создание задания,
-    правку часов и т.д.). Возвращает True/False.
-    """
-    if not BOT_TOKEN:
-        log.warning("BOT_TOKEN не задан, сообщение не отправлено")
-        return False
+
+def _post_send_message(chat_id: int, text: str, reply_markup: dict | None) -> None:
+    """Фактический POST в воркере. Ошибки только в лог, не наверх."""
     payload: dict = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
     if reply_markup is not None:
         payload["reply_markup"] = reply_markup
     try:
-        r = httpx.post(f"{_API}/sendMessage", json=payload, timeout=10)
+        r = _client.post(f"{_API}/sendMessage", json=payload)
         if r.status_code != 200:
             log.warning("sendMessage %s: %s", r.status_code, r.text[:300])
-            return False
-        return True
     except httpx.HTTPError as e:
         log.warning("sendMessage failed: %s", e)
+
+
+def send_message(chat_id: int, text: str, reply_markup: dict | None = None) -> bool:
+    """
+    Отправка сообщения — fire-and-forget через пул потоков (аудит, п.28):
+    ставит задачу в очередь и сразу возвращает True. Ошибки доставки
+    логируются в воркере и НЕ поднимаются наверх: недоставленное
+    уведомление не должно ломать бизнес-операцию (создание задания,
+    правку часов и т.д.).
+    """
+    if not BOT_TOKEN:
+        log.warning("BOT_TOKEN не задан, сообщение не отправлено")
         return False
+    _executor.submit(_post_send_message, chat_id, text, reply_markup)
+    return True
 
 
 def setup_webhook() -> None:
@@ -52,13 +71,12 @@ def setup_webhook() -> None:
             "webhook НЕ установлен"
         )
         return
-    r = httpx.post(
+    r = _client.post(
         f"{_API}/setWebhook",
         json={
             "url": WEBHOOK_URL,
             "secret_token": WEBHOOK_SECRET,
             "allowed_updates": ["message", "callback_query"],
         },
-        timeout=10,
     )
     log.info("setWebhook: %s %s", r.status_code, r.text[:200])
