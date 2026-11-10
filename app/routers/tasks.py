@@ -6,7 +6,6 @@ API заданий: создание, назначение людей, груп�
 - одиночки на задании = assignment с group_id = NULL (п.3, п.11);
 - учётчик — назначаемая роль внутри задания, не тип сотрудника (п.13).
 """
-from datetime import date
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -38,6 +37,7 @@ from app.schemas import (
     TaskShortOut,
     TaskUpdate,
 )
+from app.tz import today_local
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
 
@@ -123,7 +123,7 @@ def list_tasks(
     tasks = q.order_by(Task.id.desc()).all()
 
     # hours_today: один агрегатный запрос по всем заданиям сразу
-    today = date.today()
+    today = today_local()
     hours_map: dict[int, Decimal] = dict(
         db.query(WorkEntry.task_id, func.coalesce(func.sum(WorkEntry.hours), 0))
         .filter(WorkEntry.task_id.in_([t.id for t in tasks] or [0]))

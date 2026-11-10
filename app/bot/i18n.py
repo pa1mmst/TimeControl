@@ -1,4 +1,5 @@
 """Загрузка переводов из app/i18n/*.json (SPEC: ни одной строки текста в коде)."""
+import html
 import json
 from pathlib import Path
 
@@ -17,7 +18,15 @@ def _load(lang: str) -> dict:
 
 
 def t(lang, key: str, **kwargs) -> str:
-    """t(user.lang, 'hours_saved_self', hours=8, task='Сбор урожая')"""
+    """t(user.lang, 'hours_saved_self', hours=8, task='Сбор урожая')
+
+    Значения экранируются как HTML (сообщения отправляются с parse_mode=HTML):
+    '<' в названии задания не ломает отправку и не позволяет вставить разметку.
+    Числа и даты экранирование не ломает.
+    """
     code = getattr(lang, "value", lang) or _DEFAULT
     text = _load(code).get(key) or _load(_DEFAULT).get(key) or key
-    return text.format(**kwargs) if kwargs else text
+    if not kwargs:
+        return text
+    safe = {k: html.escape(str(v), quote=False) for k, v in kwargs.items()}
+    return text.format(**safe)

@@ -68,6 +68,6 @@ def me(
         "name": user.name,
         "lang": user.lang.value if user.lang else "ru",
         "is_manager": user.is_manager,
-        "total_hours": float(total_hours),
-        "total_earned": float(total_earned),
+        "total_hours": total_hours,
+        "total_earned": total_earned,
     }

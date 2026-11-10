@@ -55,13 +55,15 @@ def check_init_data(init_data: str) -> dict:
         raise HTTPException(401, "Подпись initData не совпадает")
 
     auth_date = pairs.get("auth_date")
-    if auth_date:
-        try:
-            if time.time() - int(auth_date) > 86400:
-                logger.warning("initData: устарел (auth_date=%s)", auth_date)
-                raise HTTPException(401, "initData устарел")
-        except ValueError:
-            raise HTTPException(401, "Некорректный auth_date")
+    if not auth_date:
+        raise HTTPException(401, "Нет auth_date в initData")
+    try:
+        window = int(os.getenv("INIT_DATA_MAX_AGE", "21600"))  # 6 ч
+        if time.time() - int(auth_date) > window:
+            logger.warning("initData: устарел (auth_date=%s)", auth_date)
+            raise HTTPException(401, "initData устарел")
+    except ValueError:
+        raise HTTPException(401, "Некорректный auth_date")
 
     return pairs
 

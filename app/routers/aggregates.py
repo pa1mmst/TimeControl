@@ -29,6 +29,7 @@ from app.models import (
     User,
     WorkEntry,
 )
+from app.tz import today_local
 
 router = APIRouter(tags=["aggregates"])
 
@@ -155,7 +156,7 @@ def me_today(
     db: Session = Depends(get_db),
     me: User = Depends(require_actor),
 ):
-    today = date.today()
+    today = today_local()
     tasks = _active_today_filter(
         db.query(Task)
         .options(
@@ -271,7 +272,7 @@ def dashboard_today(
     db: Session = Depends(get_db),
     manager: User = Depends(require_manager_dep),
 ):
-    today = date.today()
+    today = today_local()
     tasks = _active_today_filter(
         db.query(Task)
         .options(
@@ -339,7 +340,7 @@ def task_matrix(
     if not task.date_start:
         raise HTTPException(400, "У задания не задана дата начала")
 
-    today = date.today()
+    today = today_local()
     end = min(task.date_end, today) if task.date_end else today
     if end < task.date_start:
         raise HTTPException(400, "Задание ещё не началось")

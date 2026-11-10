@@ -40,6 +40,20 @@ venv\Scripts\uvicorn app.main:app --reload
 | `BOT_WEBHOOK_SECRET` | секрет для проверки запросов от Telegram |
 | `DATABASE_URL` / `DB_PATH` | база данных; по умолчанию `sqlite:///./agrowork.db` |
 
+## Бэкапы
+Ежедневный бэкап базы (аудит, п. 8):
+- Windows: `venv\Scripts\python.exe tools\backup_db.py`
+- Linux-сервер: `python3 tools/backup_db.py`
+
+Что делает: online-бэкап SQLite через `src.backup` — без остановки приложения;
+ротация хранит последние 30 копий в `backups/` рядом с базой.
+
+Расписание:
+- Планировщик задач Windows — ежедневно 03:00, действие как выше; ИЛИ
+- crontab на сервере: `0 3 * * * cd /path/to/TimeControl && python3 tools/backup_db.py`
+
+Восстановление: остановить приложение и скопировать файл бэкапа на место `DB_PATH`.
+
 ## Проверка
 `check.bat` — запускает `pytest -q` (79 тестов на временной базе `_pytest_run.db`, сама
 создаётся и игнорируется git), печатает `CHECK: OK` или `CHECK: FAILED`.

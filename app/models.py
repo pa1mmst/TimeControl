@@ -11,6 +11,7 @@
 """
 import enum
 from datetime import date, datetime
+from decimal import Decimal
 
 from sqlalchemy import (
     Enum,
@@ -70,7 +71,7 @@ class User(Base):
     phone: Mapped[str | None] = mapped_column(String(32))
     lang: Mapped[Lang] = mapped_column(Enum(Lang), default=Lang.ru)
     # Numeric, не Float: деньги нельзя хранить во float (ошибки округления)
-    hourly_rate: Mapped[float] = mapped_column(Numeric(8, 2), default=0)
+    hourly_rate: Mapped[Decimal] = mapped_column(Numeric(8, 2), default=0)
     is_manager: Mapped[bool] = mapped_column(default=False)
     is_active: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
@@ -220,9 +221,9 @@ class WorkEntry(Base):
     task_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), index=True)
     location_id: Mapped[int | None] = mapped_column(ForeignKey("locations.id"))
     work_date: Mapped[date] = mapped_column(index=True)
-    hours: Mapped[float] = mapped_column(Numeric(4, 2))  # напр. 7.50
+    hours: Mapped[Decimal] = mapped_column(Numeric(4, 2))  # напр. 7.50
     # Снимок ставки на момент записи — смена ставки не меняет историю (SPEC п.16)
-    rate_snapshot: Mapped[float] = mapped_column(Numeric(8, 2))
+    rate_snapshot: Mapped[Decimal] = mapped_column(Numeric(8, 2))
     pay_type: Mapped[PayType] = mapped_column(
         Enum(PayType), default=PayType.hourly
     )
@@ -248,7 +249,7 @@ class Advance(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    amount: Mapped[float] = mapped_column(Numeric(10, 2))
+    amount: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     date: Mapped[date]
     comment: Mapped[str | None] = mapped_column(Text)
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
@@ -269,9 +270,9 @@ class Payout(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     period_start: Mapped[date]
     period_end: Mapped[date]
-    gross: Mapped[float] = mapped_column(Numeric(10, 2))          # начислено
-    advances_total: Mapped[float] = mapped_column(Numeric(10, 2)) # авансы
-    net: Mapped[float] = mapped_column(Numeric(10, 2))            # к выплате
+    gross: Mapped[Decimal] = mapped_column(Numeric(10, 2))          # начислено
+    advances_total: Mapped[Decimal] = mapped_column(Numeric(10, 2)) # авансы
+    net: Mapped[Decimal] = mapped_column(Numeric(10, 2))            # к выплате
     status: Mapped[PayoutStatus] = mapped_column(
         Enum(PayoutStatus), default=PayoutStatus.accrued
     )

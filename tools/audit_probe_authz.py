@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Проба авторизации для аудита (этап 1): анонимные запросы должны
 отклоняться (401), /docs в проде — 404, позитивный контроль — 200.
 
@@ -28,12 +27,12 @@ os.environ["BOT_TOKEN"] = "12345:probe-token"
 os.environ["BOT_WEBHOOK_SECRET"] = "probe-secret"
 os.environ["ENV"] = "prod"
 
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi.testclient import TestClient
 
-import app.models  # noqa: E402,F401
-from app.db import Base, SessionLocal, engine  # noqa: E402
-from app.main import app  # noqa: E402
-from app.models import User  # noqa: E402
+import app.models
+from app.db import Base, SessionLocal, engine
+from app.main import app
+from app.models import User
 
 Base.metadata.create_all(engine)
 

@@ -10,8 +10,9 @@ Webhook бота: привязка аккаунта по номеру телеф
 Вся бизнес-логика — сервисы модуля 5, здесь только разбор сообщений.
 """
 import hmac
+import html
 import re
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from fastapi import APIRouter, Body, Depends, Header, HTTPException
@@ -32,6 +33,7 @@ from app.models import (
 )
 from app.services import work_entries as svc
 from app.services.work_entries import WorkEntryError
+from app.tz import today_local
 
 router = APIRouter(prefix="/bot", tags=["bot"])
 
@@ -62,9 +64,9 @@ def _own_tasks(db: Session, user: User) -> list[Task]:
 def _save_group(db: Session, user: User, group: TaskGroup, hours: Decimal) -> str:
     task = db.get(Task, group.task_id)
     created, skipped = svc.create_group_entries(
-        db, actor=user, group_id=group.id, work_date=date.today(), hours=hours,
+        db, actor=user, group_id=group.id, work_date=today_local(), hours=hours,
     )
-    text = t(user.lang, "saved_group", hours=hours, date=date.today(),
+    text = t(user.lang, "saved_group", hours=hours, date=today_local(),
              task=task.title, created=len(created))
     already = [s["user_id"] for s in skipped if s["reason"] == "already_has_entry"]
     if already:
@@ -75,9 +77,9 @@ def _save_group(db: Session, user: User, group: TaskGroup, hours: Decimal) -> st
 
 def _save_self(db: Session, user: User, task: Task, hours: Decimal) -> str:
     svc.create_entry(
-        db, actor=user, task_id=task.id, work_date=date.today(), hours=hours,
+        db, actor=user, task_id=task.id, work_date=today_local(), hours=hours,
     )
-    return t(user.lang, "saved_self", hours=hours, date=date.today(),
+    return t(user.lang, "saved_self", hours=hours, date=today_local(),
              task=task.title)
 
 
@@ -175,6 +177,7 @@ def _handle_contact(db: Session, tg_id: int, contact: dict, from_user: dict) -> 
     # уведомить всех активных руководителей с кнопками решения
     username = from_user.get("username")
     username_part = f"\nUsername: @{username}" if username else ""
+    username_part = html.escape(username_part, quote=False)
     managers = db.execute(
         select(User).where(User.is_manager.is_(True), User.is_active.is_(True))
     ).scalars().all()
@@ -190,7 +193,8 @@ def _handle_contact(db: Session, tg_id: int, contact: dict, from_user: dict) -> 
             }
             send_message(
                 m.tg_id,
-                t(m.lang, "mgr_new_request", name=name, phone=phone,
+                t(m.lang, "mgr_new_request", name=html.escape(name, quote=False),
+                  phone=html.escape(phone, quote=False),
                   username=username_part),
                 reply_markup=kb,
             )
