@@ -198,6 +198,13 @@
             'todayNotEntered': 'Часы ещё не записаны',
             // --- v5: работник, один экран ---
             'menu': 'Меню',
+            'hint.dismiss': 'Понятно',
+            'hint.w1': 'Нажмите «Записать часы», когда закончили работу.',
+            'hint.w2': 'Ниже — сколько вы заработали, авансы и сколько вам выплатят.',
+            'hint.w3': 'В ☰ — история, инвентарь и язык.',
+            'hint.m1': 'Вверху — кто сегодня не отметился. Можно записать часы за человека.',
+            'hint.m2': 'Задания создаются на вкладке «Задания».',
+            'hint.m3': 'Расчёт и авансы — на вкладке «Деньги».',
             'payCardTitle': 'К выплате за {m}',
             'payCardEarnedAdv': 'заработано {e} · аванс {a}',
             'todayHistoryTitle': 'История',
@@ -429,6 +436,13 @@
             'todayNotEntered': 'Години ще не записані',
             // --- v5: працівник, один екран ---
             'menu': 'Меню',
+            'hint.dismiss': 'Зрозуміло',
+            'hint.w1': 'Натисніть «Записати години», коли закінчили роботу.',
+            'hint.w2': 'Нижче — скільки ви заробили, аванси і скільки вам виплатять.',
+            'hint.w3': 'У ☰ — історія, інвентар і мова.',
+            'hint.m1': 'Угорі — хто сьогодні не відзначився. Можна записати години за людину.',
+            'hint.m2': 'Завдання створюються на вкладці «Завдання».',
+            'hint.m3': 'Розрахунок і аванси — на вкладці «Гроші».',
             'payCardTitle': 'До виплати за {m}',
             'payCardEarnedAdv': 'зароблено {e} · аванс {a}',
             'todayHistoryTitle': 'Історія',
@@ -660,6 +674,13 @@
             'todayNotEntered': 'Horas aún no registradas',
             // --- v5: trabajador, una pantalla ---
             'menu': 'Menú',
+            'hint.dismiss': 'Entendido',
+            'hint.w1': 'Pulse «Registrar horas» cuando termine el trabajo.',
+            'hint.w2': 'Abajo: cuánto ha ganado, los anticipos y cuánto se le pagará.',
+            'hint.w3': 'En ☰: historial, inventario e idioma.',
+            'hint.m1': 'Arriba: quién no ha fichado hoy. Puede registrar las horas por esa persona.',
+            'hint.m2': 'Las tareas se crean en la pestaña «Tareas».',
+            'hint.m3': 'El cálculo y los anticipos están en la pestaña «Dinero».',
             'payCardTitle': 'A pagar por {m}',
             'payCardEarnedAdv': 'ganado {e} · adelanto {a}',
             'todayHistoryTitle': 'Historial',
@@ -874,6 +895,91 @@
     function avatarHtml(id, name) {
         return '<span class="avatar" style="background:' + avatarColor(id) + '">' +
             escapeHtml(initials(name)) + '</span>';
+    }
+
+    /* ========================================================
+     * Тёмная тема Telegram + подсказки первого запуска
+     * ======================================================== */
+    function hexToRgb(h) {
+        const m = /^#?([0-9a-f]{6})$/i.exec(String(h || '').trim());
+        if (!m) return null;
+        const n = parseInt(m[1], 16);
+        return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+    function rgbToHex(c) {
+        return '#' + c.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+    }
+    function relLum(c) {
+        const f = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+        return 0.2126 * f[0] + 0.7152 * f[1] + 0.0722 * f[2];
+    }
+    function contrastOf(a, b) {
+        const la = relLum(a), lb = relLum(b);
+        return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+    }
+    function mixRgb(a, b, k) { return a.map((v, i) => v + (b[i] - v) * k); }
+
+    const THEME_VARS = ['--bg', '--surface', '--surface-2', '--text', '--muted', '--accent', '--accent-ink'];
+
+    // Цвета из tg.themeParams поверх тёмной палитры; слабые по контрасту — отбрасываем.
+    function applyTheme() {
+        const root = document.documentElement;
+        THEME_VARS.forEach((v) => root.style.removeProperty(v));
+        const dark = !!(tg && tg.colorScheme === 'dark');
+        if (!dark) {
+            delete root.dataset.theme;
+        } else {
+            root.dataset.theme = 'dark';
+            const p = (tg && tg.themeParams) || {};
+            const base = { bg: [0x17, 0x21, 0x2B], surface: [0x1F, 0x2C, 0x3A], text: [0xF1, 0xF5, 0xF9] };
+            let bg = hexToRgb(p.bg_color);
+            if (!bg || relLum(bg) > 0.2) bg = null;
+            const eff = bg || base.bg;
+            const set = (name, c) => root.style.setProperty(name, rgbToHex(c));
+            if (bg) set('--bg', bg);
+            let text = hexToRgb(p.text_color);
+            if (text && contrastOf(text, eff) >= 7) set('--text', text); else text = base.text;
+            let surf = hexToRgb(p.secondary_bg_color);
+            if (surf && relLum(surf) <= 0.2 && contrastOf(surf, eff) < 1.6) {
+                set('--surface', surf);
+            } else if (bg) {
+                surf = mixRgb(bg, text, 0.06); set('--surface', surf);
+            } else surf = base.surface;
+            const surf2 = mixRgb(surf, text, 0.08);
+            if (bg) set('--surface-2', surf2);
+            const hint = hexToRgb(p.hint_color);
+            const s2 = bg ? surf2 : [0x2A, 0x3A, 0x4B];
+            if (hint && contrastOf(hint, eff) >= 4.5 && contrastOf(hint, surf) >= 4.5 &&
+                contrastOf(hint, s2) >= 4.5) set('--muted', hint);
+            const btn = hexToRgb(p.button_color);
+            const btnInk = hexToRgb(p.button_text_color);
+            if (btn && btnInk && contrastOf(btn, eff) >= 4.5 && contrastOf(btn, s2) >= 4.5 &&
+                contrastOf(btnInk, btn) >= 4.5) {
+                set('--accent', btn); set('--accent-ink', btnInk);
+            }
+        }
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', getComputedStyle(root).getPropertyValue('--bg').trim() || '#FFFFFF');
+    }
+
+    const hintsSeenMem = {};
+    function hintRole() { return isManager() ? 'manager' : 'worker'; }
+    function hintsSeen(role) {
+        if (hintsSeenMem[role]) return true;
+        try { return localStorage.getItem('hintsSeen:' + role) === '1'; } catch (e) { return false; }
+    }
+    function markHintsSeen(role) {
+        hintsSeenMem[role] = true;
+        try { localStorage.setItem('hintsSeen:' + role, '1'); } catch (e) { /* нет storage */ }
+    }
+    function hintsHtml() {
+        const role = hintRole();
+        if (hintsSeen(role)) return '';
+        const keys = role === 'manager' ? ['hint.m1', 'hint.m2', 'hint.m3'] : ['hint.w1', 'hint.w2', 'hint.w3'];
+        return '<div class="hints" data-testid="hints">' +
+            keys.map((k) => '<p class="hint" data-testid="hint">' + escapeHtml(t(k)) + '</p>').join('') +
+            '<button type="button" class="btn btn--ghost" data-action="hint-dismiss">' +
+            escapeHtml(t('hint.dismiss')) + '</button></div>';
     }
 
     // Всплывающее сообщение (тост). Автоскрытие через 3.5с.
@@ -2522,7 +2628,7 @@
                 '</div>';
         }).join('');
 
-        body.innerHTML = '<div class="list">' + cards + '</div>' +
+        body.innerHTML = hintsHtml() + '<div class="list">' + cards + '</div>' +
             '<div id="todayPayCard"></div>' +
             '<p class="card-sub" id="offlineBanner" hidden style="margin:8px 0"></p>' +
             '<h3 class="sheet__h3">' + escapeHtml(t('todayHistoryTitle')) + '</h3>' +
@@ -2966,7 +3072,7 @@
                 (chips ? '<div class="chip-row">' + chips + '</div>' : '') +
                 '</div>';
         }).join('');
-        body.innerHTML =
+        body.innerHTML = hintsHtml() +
             '<p class="dash-summary" data-testid="dash-summary">' + escapeHtml(summary) + '</p>' +
             list +
             '<h3 class="sheet__h3">' + escapeHtml(t('dashActiveTasks')) + '</h3>' +
@@ -3182,7 +3288,11 @@
             if (btn) {
                 const action = btn.getAttribute('data-action');
                 const id = btn.getAttribute('data-id');
-                if (action === 'new-task') openNewTask();
+                if (action === 'hint-dismiss') {
+                    markHintsSeen(hintRole());
+                    document.querySelectorAll('.hints').forEach((el) => el.remove());
+                }
+                else if (action === 'new-task') openNewTask();
                 else if (action === 'enter-for') {
                     openEnterForSheet(parseInt(btn.getAttribute('data-user'), 10));
                 }
@@ -3502,6 +3612,8 @@
             (tg && tg.initDataUnsafe && tg.initDataUnsafe.user &&
                 tg.initDataUnsafe.user.language_code) || CONFIG.defaultLang);
         applyI18n();
+        applyTheme();
+        if (tg && typeof tg.onEvent === 'function') tg.onEvent('themeChanged', applyTheme);
         bindEvents();
         showScreen('loading');
 
