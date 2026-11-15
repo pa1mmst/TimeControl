@@ -65,7 +65,19 @@ HTTP-запрос не ждёт Telegram. При остановке сервер
 ## Проверка
 `check.bat` — запускает `pytest -q` (79 тестов на временной базе `_pytest_run.db`, сама
 создаётся и игнорируется git), печатает `CHECK: OK` или `CHECK: FAILED`.
-CI (GitHub Actions, `.github/workflows/ci.yml`) на каждый push: ruff → pytest → pip-audit.
+CI (GitHub Actions, `.github/workflows/ci.yml`) на каждый push: ruff → pytest → pip-audit,
+отдельной задачей — браузерные сценарии.
+
+Браузерные сценарии Mini App (`tests/test_browser.py`, `tests/browser/`): настоящий сервер
+на свежей тестовой базе + Chromium через Playwright, Telegram подменён заглушкой.
+Обычный `pytest` их пропускает. Запуск (нужен Node.js):
+```
+npm install --no-save playwright@1.63.0
+npx playwright install chromium
+set BROWSER_TESTS=1          (Linux/macOS: export BROWSER_TESTS=1)
+pytest tests/test_browser.py -v
+```
+Сценарий с JS-ошибкой на странице считается упавшим. Боевую базу и `.env` тесты не читают.
 **Ничего не коммитит и не пушит** — это делается вручную после просмотра изменений.
 
 ## Правила работы
