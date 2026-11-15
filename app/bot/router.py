@@ -5,8 +5,8 @@ Webhook бота: привязка аккаунта по номеру телеф
   - человек пишет боту число: "8" или "7.5" — часы за СЕГОДНЯ;
   - если у него ровно один вариант (одна группа, где он учётчик, или одно
     активное задание) — запись создаётся сразу;
-  - если вариантов несколько — бот присылает список команд вида
-    "8 /g5" (за группу) и "8 /t12" (за себя), человек копирует нужную.
+  - если заданий несколько — бот присылает inline-кнопки (h:<task>:<hours>);
+    формы "8 /t12" и "8 /g5" по-прежнему работают, но больше не предлагаются.
 Вся бизнес-логика — сервисы модуля 5, здесь только разбор сообщений.
 """
 import hmac
@@ -83,7 +83,27 @@ def _save_self(db: Session, user: User, task: Task, hours: Decimal) -> str:
              task=task.title)
 
 
-def _handle_hours(db: Session, user: User, text: str) -> str:
+def _hours_str(hours: Decimal) -> str:
+    """Нормализованные часы для callback_data: 8 -> "8", 7.50 -> "7.5"."""
+    return format(hours.normalize(), "f")
+
+
+def _pick_task_reply(user: User, tasks: list[Task], hours: Decimal) -> dict:
+    """Ответ с inline-кнопками: по кнопке на задание (callback h:<task>:<hours>)."""
+    hs = _hours_str(hours)
+    rows = []
+    for tk in tasks:
+        label = tk.title
+        if len(tk.locations) == 1:
+            label += " · " + tk.locations[0].name
+        rows.append([{"text": label[:60], "callback_data": f"h:{tk.id}:{hs}"}])
+    return {
+        "text": t(user.lang, "pick_task", hours=hs),
+        "reply_markup": {"inline_keyboard": rows},
+    }
+
+
+def _handle_hours(db: Session, user: User, text: str) -> str | dict:
     m = HOURS_RE.match(text)
     if not m:
         return t(user.lang, "hours_help")
@@ -118,7 +138,13 @@ def _handle_hours(db: Session, user: User, text: str) -> str:
                 return _save_group(db, user, groups[0], hours)
             return _save_self(db, user, own[0], hours)
 
-        # неоднозначно — показываем список команд
+        # неоднозначно — личные задания показываем inline-кнопками
+        # (группы/учётчик в интерфейсе больше не предлагаются)
+        personal = _own_tasks(db, user)
+        if personal:
+            return _pick_task_reply(user, personal, hours)
+
+        # только устаревший случай: одни группы — список команд
         lines = [t(user.lang, "choose_target", hours=hours)]
         for g in groups:
             task = db.get(Task, g.task_id)
@@ -211,9 +237,45 @@ def _contact_keyboard(lang) -> dict:
 
 # ---------- заявки на доступ: решение руководителя ----------
 
+PICK_RE = re.compile(r"^h:(\d{1,12}):(\d{1,2}(?:\.\d{1,2})?)$")
+
+
+def _handle_pick_callback(db: Session, cbq: dict, data: str) -> None:
+    """Кнопка выбора задания (callback_data h:<task_id>:<hours>)."""
+    from_tg = cbq["from"]["id"]
+    user = db.execute(
+        select(User).where(User.tg_id == from_tg, User.is_active.is_(True))
+    ).scalar_one_or_none()
+    if user is None:
+        return
+    chat_id = (cbq.get("message") or {}).get("chat", {}).get("id", from_tg)
+
+    m = PICK_RE.match(data)
+    hours = Decimal(m.group(2)) if m else Decimal(0)
+    task = None
+    if m and 0 < hours <= 24:
+        task_id = int(m.group(1))
+        task = next((tk for tk in _own_tasks(db, user) if tk.id == task_id), None)
+    if task is None:
+        text = t(user.lang, "pick_stale")
+    else:
+        try:
+            svc.create_entry(db, actor=user, task_id=task.id,
+                             work_date=today_local(), hours=hours)
+            text = t(user.lang, "saved_pick", hours=_hours_str(hours),
+                     task=task.title)
+        except WorkEntryError as e:
+            text = t(user.lang, "entry_error", detail=e.detail)
+    _answer_callback(cbq, html.unescape(text)[:200])
+    send_message(chat_id, text)
+
+
 def _handle_callback(db: Session, cbq: dict) -> None:
     """Inline-кнопки «Одобрить/Отклонить» у заявки (callback_data acc:approve:<id>)."""
     data = cbq.get("data") or ""
+    if data.startswith("h:"):
+        _handle_pick_callback(db, cbq, data)
+        return
     parts = data.split(":")
     if len(parts) != 3 or parts[0] != "acc":
         return
@@ -325,5 +387,9 @@ def telegram_webhook(
     if text.startswith("/start"):
         send_message(chat_id, t(user.lang, "already_linked", name=user.name))
     else:
-        send_message(chat_id, _handle_hours(db, user, text))
+        reply = _handle_hours(db, user, text)
+        if isinstance(reply, dict):
+            send_message(chat_id, reply["text"], reply_markup=reply["reply_markup"])
+        else:
+            send_message(chat_id, reply)
     return {"ok": True}
