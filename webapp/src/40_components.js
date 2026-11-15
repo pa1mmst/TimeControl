@@ -1,5 +1,5 @@
     /* ========================================================
-     * 9. ГЛАВНАЯ РУКОВОДИТЕЛЯ
+     * 9. Общие куски экранов: периоды, карточка задания, плитка итога
      * ======================================================== */
     function weekRange() {
         const d = new Date();
@@ -24,7 +24,6 @@
 
     function taskCardHtml(task, opts) {
         opts = opts || {};
-        const today = todayIso();
         const hoursToday = num(task.hours_today);
         const parts = [];
         if (task.client_name) parts.push(escapeHtml(task.client_name));
@@ -68,9 +67,9 @@
         else loadToday();
     }
 
-    function statCell(label, tasks, hours, isHours) {
-        return '<div class="stat"><span class="stat__value">' +
-            (isHours ? escapeHtml(fmtHours(hours)) + ' ' + escapeHtml(t('hoursUnit')) : tasks) +
+    // Плитка-итог с числом (количество заданий в отчёте).
+    function statCell(label, count) {
+        return '<div class="stat"><span class="stat__value">' + count +
             '</span><span class="stat__label">' + escapeHtml(label) + '</span></div>';
     }
 

@@ -76,9 +76,11 @@
     function hintsHtml() {
         const role = hintRole();
         if (hintsSeen(role)) return '';
-        const keys = role === 'manager' ? ['hint.m1', 'hint.m2', 'hint.m3'] : ['hint.w1', 'hint.w2', 'hint.w3'];
+        const texts = role === 'manager'
+            ? [t('hint.m1'), t('hint.m2'), t('hint.m3')]
+            : [t('hint.w1'), t('hint.w2'), t('hint.w3')];
         return '<div class="hints" data-testid="hints">' +
-            keys.map((k) => '<p class="hint" data-testid="hint">' + escapeHtml(t(k)) + '</p>').join('') +
+            texts.map((s) => '<p class="hint" data-testid="hint">' + escapeHtml(s) + '</p>').join('') +
             '<button type="button" class="btn btn--ghost" data-action="hint-dismiss">' +
             escapeHtml(t('hint.dismiss')) + '</button></div>';
     }

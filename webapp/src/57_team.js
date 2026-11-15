@@ -1,9 +1,8 @@
     /* ========================================================
-     * 15. СОТРУДНИКИ: сегменты Люди · Инвентарь (руководитель)
+     * 15. ЛЮДИ: сегменты Люди · Инвентарь (только руководитель)
      * ======================================================== */
     async function loadTeam() {
         showScreen('team');
-        $('#btnAddWorker').hidden = !isManager();
         // По умолчанию — сегмент «Люди»
         setTeamTab('people');
         try {
@@ -24,16 +23,11 @@
         const invBlock = $('#teamInvBlock');
         if (peopleBlock) peopleBlock.hidden = tab !== 'people';
         if (invBlock) invBlock.hidden = tab !== 'inventory';
-        $('#btnAddWorker').hidden = tab !== 'people' || !isManager();
-        $('#btnAddItem').hidden = tab !== 'inventory' || !isManager();
+        $('#btnAddWorker').hidden = tab !== 'people';
+        $('#btnAddItem').hidden = tab !== 'inventory';
         // Подгружаем инвентарь при первом переходе на вкладку
         // (prev-гард не даёт loadInventory -> setTeamTab зациклиться)
         if (tab === 'inventory' && prev !== 'inventory' && !state.inventory) loadInventory();
-        // v5: у работника кнопки добавления скрыты всегда
-        if (!isManager()) {
-            $('#btnAddWorker').hidden = true;
-            $('#btnAddItem').hidden = true;
-        }
     }
 
     function renderTeam() {

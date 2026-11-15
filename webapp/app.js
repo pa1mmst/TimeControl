@@ -2,7 +2,9 @@
  * Пересобрать: python tools/build_webapp.py */
 /* ============================================================
  * Time Control — Telegram Mini App
- * File: webapp/app.js  (v=6)
+ * Исходники: webapp/src/*.js (этот файл открывает IIFE, 90_init.js
+ * закрывает) + webapp/i18n.json; webapp/app.js собирает
+ * tools/build_webapp.py.
  *
  * Экраны по ролям, bottom sheet'ы, ввод часов из задания.
  * Все тексты — только через словари I18N (ru/uk/es).
@@ -37,13 +39,11 @@
         user: null,
         view: 'loading',
         tasks: null,        // активные задания (TaskShortOut)
-        entries: null,      // мои записи часов
         clients: null,
         users: null,
         inventory: null,
         reportsTab: 'summary',
         detailTask: null,   // задание в открытом листе
-        sheetTaskId: null,
         heCtx: null,        // контекст экрана ввода часов
         histRange: null,    // [from, to] для экрана История
         matrixTaskId: null, // задание открытой матрицы
@@ -54,18 +54,14 @@
 
     /* ========================================================
      * 4. i18n — ru / uk / es
+     * Тексты — в webapp/i18n.json; сборка подставляет их вместо метки.
+     * Ключ запрашивается литералом t('ключ') или data-i18n="ключ" — так его
+     * видит tests/test_frontend_i18n.py; собранные на лету ключи — только
+     * с префиксами «status.» и «payout.».
      * ======================================================== */
     const I18N = {
         "ru": {
-            "app.name": "AgroManager",
-            "navDashboard": "Главная",
             "navTasks": "Задания",
-            "navReports": "Отчёты",
-            "navTeam": "Люди",
-            "navInventory": "Инвентарь",
-            "navMore": "Ещё",
-            "navMe": "Я",
-            "navClients": "Заказчики",
             "loading": "Загрузка...",
             "loginTitle": "Вход",
             "loginStep1": "Откройте @{bot}",
@@ -74,10 +70,8 @@
             "loginSubtitle": "Проверка данных пользователя...",
             "network.error": "Ошибка сети. Проверьте подключение.",
             "headerOrg": "AgroManager",
-            "headerMetaRole": "{role} · {date}",
             "role.manager": "Руководитель",
             "role.worker": "Работник",
-            "role.reporter": "Работник",
             "role.unknown": "Пользователь",
             "back": "← Назад",
             "save": "Сохранить",
@@ -86,28 +80,11 @@
             "saved": "Сохранено",
             "close": "Закрыть",
             "cancel": "Отмена",
-            "add": "Добавить",
             "empty": "Пока пусто",
             "error": "Ошибка",
             "dashActiveTasks": "Активные задания",
-            "dashWeek": "Неделя",
-            "dashMonth": "Месяц",
-            "dashTasks": "заданий",
-            "dashHours": "Часов",
-            "dashNewTask": "Новое задание",
-            "dashClients": "Заказчики",
-            "dashInventory": "Инвентарь",
-            "dashTeam": "Люди",
-            "dashMyHours": "Мои часы сегодня: {n} ч",
-            "dashEmpty": "Пока нет заданий. Нажмите «Новое задание», чтобы создать",
-            "dashEmptyWorker": "Пока нет заданий. Ждите, когда руководитель вас назначит",
-            "dashToday": "Сегодня",
-            "dashEarned": "Заработано",
-            "dashMyTasksToday": "Мои задания сегодня",
             "dashNoTasksToday": "На сегодня заданий нет",
-            "dashHoursToday": "Часы сегодня",
             "tasksTitle": "Задания",
-            "tasksNew": "Новое задание",
             "status.draft": "черновик",
             "status.active": "активно",
             "status.done": "завершено",
@@ -150,17 +127,14 @@
             "today": "Сегодня",
             "hoursUnit": "ч",
             "todayFixByManager": "Ошиблись? Исправить может руководитель.",
-            "fixNoReason": "Укажите причину исправления",
             "errorTitle": "Не удалось загрузить",
             "retry": "Повторить",
             "hoursBad": "Часы должны быть от 0.25 до 24",
             "reportsTitle": "Отчёты",
-            "tabSummary": "Сводка",
             "tabPayouts": "Выплаты",
             "tabReports": "Отчёты",
             "teamTabPeople": "Люди",
             "teamTabInventory": "Инвентарь",
-            "repPeriod": "Период",
             "repTasksTotal": "Заданий всего",
             "repTasksActive": "Активных",
             "repTasksDone": "Завершённых",
@@ -169,38 +143,20 @@
             "repByWorker": "По людям",
             "repByClient": "По заказчикам",
             "repMyHours": "Мои часы: {n} ч",
-            "repMyEarned": "Заработано",
-            "repMyHoursLabel": "Часы",
-            "repMyTasks": "Мои задания за период",
             "repEmpty": "За период нет данных",
             "payPreview": "Проверить расчёт",
-            "payClose": "Закрыть расчёт",
-            "payAdvance": "Аванс",
-            "payrollClosed": "Период закрыт, выплаты созданы",
             "payrollEmpty": "Нет данных за период",
-            "colEmployee": "Человек",
-            "colHours": "Часы",
-            "colGross": "Заработано",
-            "colAdvances": "Аванс",
-            "colNet": "К выплате",
             "payStart": "Начало",
             "payEnd": "Конец",
-            "payCloseConfirm": "Закрыть расчёт {start} — {end}? После закрытия часы этого периода править нельзя",
             "teamTitle": "Люди",
             "teamAdd": "Добавить человека",
             "workerName": "Имя",
             "workerPhone": "Телефон",
             "workerRate": "Ставка/час",
-            "profile.rate": "Ставка",
             "profile.role": "Роль",
             "profile.active": "Активен",
             "profile.inactive": "Не активен",
-            "profile.lang": "Язык",
-            "profileTitle": "Профиль",
-            "profileInventory": "Занятый инвентарь",
-            "profileNoInventory": "Закреплённого инвентаря нет",
             "rateSaved": "Ставка обновлена",
-            "userSaved": "Сохранено",
             "clientsTitle": "Заказчики",
             "clientsAdd": "Добавить заказчика",
             "clientName": "Название",
@@ -211,8 +167,6 @@
             "locationAdded": "Локация добавлена",
             "locationDeleted": "Локация удалена",
             "clientSaved": "Сохранено",
-            "inventoryTitle": "Инвентарь",
-            "inventoryAdd": "Добавить предмет",
             "itemName": "Предмет",
             "itemNotes": "Заметки",
             "assign": "Выдать",
@@ -222,15 +176,11 @@
             "returnStock": "Вернуть на склад",
             "itemSaved": "Сохранено",
             "inventoryEmpty": "Пока нет предметов. Нажмите «Добавить», чтобы создать",
-            "navToday": "Сегодня",
-            "navHistory": "История",
             "navMoney": "Деньги",
             "todayTitle": "Сегодня",
             "todayNoTasks": "На сегодня заданий нет",
-            "todayMyHours": "Мои часы сегодня: {n} ч",
             "todayEnterHours": "Записать часы",
             "todayEntered": "Записано: {n} ч",
-            "todayNotEntered": "Часы ещё не записаны",
             "menu": "Меню",
             "hint.dismiss": "Понятно",
             "hint.w1": "Нажмите «Записать часы», когда закончили работу.",
@@ -240,7 +190,6 @@
             "hint.m2": "Задания создаются на вкладке «Задания».",
             "hint.m3": "Расчёт и авансы — на вкладке «Деньги».",
             "payCardTitle": "К выплате за {m}",
-            "payCardEarnedAdv": "заработано {e} · аванс {a}",
             "todayHistoryTitle": "История",
             "todayCoworkers": "С вами: {names}",
             "payRowEarned": "Заработано",
@@ -252,13 +201,11 @@
             "myInventory": "Мой инвентарь",
             "language": "Язык",
             "hoursSheetTitle": "Сколько часов сегодня?",
-            "hoursSheetFixTitle": "Исправить часы",
             "hoursMore": "…",
             "hoursCustom": "Своя цифра",
             "recorded": "Записано",
             "offlineSaved": "Сохранено офлайн — отправим при появлении сети",
             "offlineQueued": "{n} записей ждут отправки",
-            "fixNotAllowed": "Изменять часы может только руководитель",
             "histTitle": "История",
             "histWeek": "Неделя",
             "histMonth": "Месяц",
@@ -309,29 +256,12 @@
             "tasksNewPlus": "+ Новое задание",
             "tasksNone": "Заданий нет.",
             "tasksCreate": "Создать задание",
-            "dashWorkers": "Людей на работе",
-            "dashNoHoursTasks": "Заданий без часов",
-            "dashNoHoursWarn": "Задания без часов сегодня: {n}",
-            "dashNoHours": "нет часов",
-            "dashOpenMatrix": "Таблица часов",
             "dashOpenWorker": "Карточка работника",
             "segActive": "Активные",
             "segDone": "Завершённые",
-            "attTitle": "Требует внимания",
-            "attOk": "Всё в порядке ✓",
-            "attNoHoursUser": "Не отметился: {name}",
-            "attNoHoursTask": "Задание без записей: {title}",
-            "dashOnWork": "На работе",
-            "dashWithoutHours": "Не отметился",
-            "fabNewTask": "+ Задание",
             "menuPeople": "Люди",
             "menuClients": "Заказчики и локации",
-            "moneyTotalToPay": "К выплате всего",
-            "moneyEarnedAdv": "заработано {e} · авансы {a}",
-            "moneyWorkers": "Люди",
             "moneyOpenReports": "Отчёты",
-            "moneyAddAdvance": "+ Аванс",
-            "moneyClosePeriod": "Закрыть расчёт",
             "webapp_not_registered": "Вы ещё не в системе. Откройте бота и отправьте свой номер — после одобрения руководителем появится доступ.",
             "webapp_deactivated": "Доступ отключён. Обратитесь к руководителю.",
             "open_bot_btn": "Открыть бота",
@@ -343,15 +273,7 @@
             "sumNoEntries": "Записей нет"
         },
         "uk": {
-            "app.name": "AgroManager",
-            "navDashboard": "Головна",
             "navTasks": "Завдання",
-            "navReports": "Звіти",
-            "navTeam": "Люди",
-            "navInventory": "Інвентар",
-            "navMore": "Більше",
-            "navMe": "Я",
-            "navClients": "Замовники",
             "loading": "Завантаження...",
             "loginTitle": "Вхід",
             "loginStep1": "Відкрийте @{bot}",
@@ -360,10 +282,8 @@
             "loginSubtitle": "Перевірка даних користувача...",
             "network.error": "Помилка мережі. Перевірте з'єднання.",
             "headerOrg": "AgroManager",
-            "headerMetaRole": "{role} · {date}",
             "role.manager": "Керівник",
             "role.worker": "Працівник",
-            "role.reporter": "Працівник",
             "role.unknown": "Користувач",
             "back": "← Назад",
             "save": "Зберегти",
@@ -372,28 +292,11 @@
             "saved": "Збережено",
             "close": "Закрити",
             "cancel": "Скасувати",
-            "add": "Додати",
             "empty": "Поки порожньо",
             "error": "Помилка",
             "dashActiveTasks": "Активні завдання",
-            "dashWeek": "Тиждень",
-            "dashMonth": "Місяць",
-            "dashTasks": "завдань",
-            "dashHours": "Годин",
-            "dashNewTask": "Нове завдання",
-            "dashClients": "Замовники",
-            "dashInventory": "Інвентар",
-            "dashTeam": "Люди",
-            "dashMyHours": "Мої години сьогодні: {n} год",
-            "dashEmpty": "Поки немає завдань. Натисніть «Нове завдання», щоб створити",
-            "dashEmptyWorker": "Поки немає завдань. Чекайте, коли керівник вас призначить",
-            "dashToday": "Сьогодні",
-            "dashEarned": "Зароблено",
-            "dashMyTasksToday": "Мої завдання сьогодні",
             "dashNoTasksToday": "На сьогодні завдань немає",
-            "dashHoursToday": "Години сьогодні",
             "tasksTitle": "Завдання",
-            "tasksNew": "Нове завдання",
             "status.draft": "чернетка",
             "status.active": "активне",
             "status.done": "завершено",
@@ -436,17 +339,14 @@
             "today": "Сьогодні",
             "hoursUnit": "год",
             "todayFixByManager": "Помилились? Виправити може керівник.",
-            "fixNoReason": "Вкажіть причину виправлення",
             "errorTitle": "Не вдалося завантажити",
             "retry": "Повторити",
             "hoursBad": "Години мають бути від 0.25 до 24",
             "reportsTitle": "Звіти",
-            "tabSummary": "Зведення",
             "tabPayouts": "Виплати",
             "tabReports": "Звіти",
             "teamTabPeople": "Люди",
             "teamTabInventory": "Інвентар",
-            "repPeriod": "Період",
             "repTasksTotal": "Завдань всього",
             "repTasksActive": "Активних",
             "repTasksDone": "Завершених",
@@ -455,38 +355,20 @@
             "repByWorker": "За людьми",
             "repByClient": "За замовниками",
             "repMyHours": "Мої години: {n} год",
-            "repMyEarned": "Зароблено",
-            "repMyHoursLabel": "Години",
-            "repMyTasks": "Мої завдання за період",
             "repEmpty": "За період немає даних",
             "payPreview": "Перевірити розрахунок",
-            "payClose": "Закрити розрахунок",
-            "payAdvance": "Аванс",
-            "payrollClosed": "Період закрито, виплати створено",
             "payrollEmpty": "Немає даних за період",
-            "colEmployee": "Людина",
-            "colHours": "Години",
-            "colGross": "Зароблено",
-            "colAdvances": "Аванс",
-            "colNet": "До виплати",
             "payStart": "Початок",
             "payEnd": "Кінець",
-            "payCloseConfirm": "Закрити розрахунок {start} — {end}? Після закриття години цього періоду виправляти не можна",
             "teamTitle": "Люди",
             "teamAdd": "Додати людину",
             "workerName": "Ім'я",
             "workerPhone": "Телефон",
             "workerRate": "Ставка/год",
-            "profile.rate": "Ставка",
             "profile.role": "Роль",
             "profile.active": "Активний",
             "profile.inactive": "Не активний",
-            "profile.lang": "Мова",
-            "profileTitle": "Профіль",
-            "profileInventory": "Зайнятий інвентар",
-            "profileNoInventory": "Закріпленого інвентарю немає",
             "rateSaved": "Ставку оновлено",
-            "userSaved": "Збережено",
             "clientsTitle": "Замовники",
             "clientsAdd": "Додати замовника",
             "clientName": "Назва",
@@ -497,8 +379,6 @@
             "locationAdded": "Локацію додано",
             "locationDeleted": "Локацію видалено",
             "clientSaved": "Збережено",
-            "inventoryTitle": "Інвентар",
-            "inventoryAdd": "Додати предмет",
             "itemName": "Предмет",
             "itemNotes": "Нотатки",
             "assign": "Видати",
@@ -508,15 +388,11 @@
             "returnStock": "Повернути на склад",
             "itemSaved": "Збережено",
             "inventoryEmpty": "Поки немає предметів. Натисніть «Додати», щоб створити",
-            "navToday": "Сьогодні",
-            "navHistory": "Історія",
             "navMoney": "Гроші",
             "todayTitle": "Сьогодні",
             "todayNoTasks": "На сьогодні завдань немає",
-            "todayMyHours": "Мої години сьогодні: {n} год",
             "todayEnterHours": "Записати години",
             "todayEntered": "Записано: {n} год",
-            "todayNotEntered": "Години ще не записані",
             "menu": "Меню",
             "hint.dismiss": "Зрозуміло",
             "hint.w1": "Натисніть «Записати години», коли закінчили роботу.",
@@ -526,7 +402,6 @@
             "hint.m2": "Завдання створюються на вкладці «Завдання».",
             "hint.m3": "Розрахунок і аванси — на вкладці «Гроші».",
             "payCardTitle": "До виплати за {m}",
-            "payCardEarnedAdv": "зароблено {e} · аванс {a}",
             "todayHistoryTitle": "Історія",
             "todayCoworkers": "З вами: {names}",
             "payRowEarned": "Зароблено",
@@ -538,13 +413,11 @@
             "myInventory": "Мій інвентар",
             "language": "Мова",
             "hoursSheetTitle": "Скільки годин сьогодні?",
-            "hoursSheetFixTitle": "Виправити години",
             "hoursMore": "…",
             "hoursCustom": "Своя цифра",
             "recorded": "Записано",
             "offlineSaved": "Збережено офлайн — надішлемо, коли з’явиться мережа",
             "offlineQueued": "{n} записів чекають відправки",
-            "fixNotAllowed": "Змінювати години може тільки керівник",
             "histTitle": "Історія",
             "histWeek": "Тиждень",
             "histMonth": "Місяць",
@@ -595,29 +468,12 @@
             "tasksNewPlus": "+ Нове завдання",
             "tasksNone": "Завдань немає.",
             "tasksCreate": "Створити завдання",
-            "dashWorkers": "Людей на роботі",
-            "dashNoHoursTasks": "Завдань без годин",
-            "dashNoHoursWarn": "Завдання без годин сьогодні: {n}",
-            "dashNoHours": "немає годин",
-            "dashOpenMatrix": "Таблиця годин",
             "dashOpenWorker": "Картка працівника",
             "segActive": "Активні",
             "segDone": "Завершені",
-            "attTitle": "Потребує уваги",
-            "attOk": "Все в порядку ✓",
-            "attNoHoursUser": "Не відмітився: {name}",
-            "attNoHoursTask": "Завдання без записів: {title}",
-            "dashOnWork": "На роботі",
-            "dashWithoutHours": "Не відмітився",
-            "fabNewTask": "+ Завдання",
             "menuPeople": "Люди",
             "menuClients": "Замовники та локації",
-            "moneyTotalToPay": "До виплати разом",
-            "moneyEarnedAdv": "зароблено {e} · аванси {a}",
-            "moneyWorkers": "Люди",
             "moneyOpenReports": "Звіти",
-            "moneyAddAdvance": "+ Аванс",
-            "moneyClosePeriod": "Закрити розрахунок",
             "webapp_not_registered": "Вас ще немає в системі. Відкрийте бота та надішліть свій номер — після схвалення керівником з'явиться доступ.",
             "webapp_deactivated": "Доступ вимкнено. Зверніться до керівника.",
             "open_bot_btn": "Відкрити бота",
@@ -629,15 +485,7 @@
             "sumNoEntries": "Записів немає"
         },
         "es": {
-            "app.name": "AgroManager",
-            "navDashboard": "Inicio",
             "navTasks": "Tareas",
-            "navReports": "Informes",
-            "navTeam": "Personas",
-            "navInventory": "Inventario",
-            "navMore": "Más",
-            "navMe": "Yo",
-            "navClients": "Clientes",
             "loading": "Cargando...",
             "loginTitle": "Entrar",
             "loginStep1": "Abra @{bot}",
@@ -646,10 +494,8 @@
             "loginSubtitle": "Comprobando datos del usuario...",
             "network.error": "Error de red. Compruebe la conexión.",
             "headerOrg": "AgroManager",
-            "headerMetaRole": "{role} · {date}",
             "role.manager": "Gerente",
             "role.worker": "Trabajador",
-            "role.reporter": "Trabajador",
             "role.unknown": "Usuario",
             "back": "← Atrás",
             "save": "Guardar",
@@ -658,28 +504,11 @@
             "saved": "Guardado",
             "close": "Cerrar",
             "cancel": "Cancelar",
-            "add": "Añadir",
             "empty": "Aún vacío",
             "error": "Error",
             "dashActiveTasks": "Tareas activas",
-            "dashWeek": "Semana",
-            "dashMonth": "Mes",
-            "dashTasks": "tareas",
-            "dashHours": "Horas",
-            "dashNewTask": "Nueva tarea",
-            "dashClients": "Clientes",
-            "dashInventory": "Inventario",
-            "dashTeam": "Personas",
-            "dashMyHours": "Mis horas hoy: {n} h",
-            "dashEmpty": "Aún no hay tareas. Pulse «Nueva tarea» para crear una",
-            "dashEmptyWorker": "Aún no hay tareas. Espere a que el gerente le asigne",
-            "dashToday": "Hoy",
-            "dashEarned": "Ganado",
-            "dashMyTasksToday": "Mis tareas de hoy",
             "dashNoTasksToday": "No hay tareas para hoy",
-            "dashHoursToday": "Horas hoy",
             "tasksTitle": "Tareas",
-            "tasksNew": "Nueva tarea",
             "status.draft": "borrador",
             "status.active": "activa",
             "status.done": "terminada",
@@ -722,17 +551,14 @@
             "today": "Hoy",
             "hoursUnit": "h",
             "todayFixByManager": "¿Error? Lo puede corregir el responsable.",
-            "fixNoReason": "Indique el motivo de la corrección",
             "errorTitle": "No se pudo cargar",
             "retry": "Reintentar",
             "hoursBad": "Las horas deben ser de 0.25 a 24",
             "reportsTitle": "Informes",
-            "tabSummary": "Resumen",
             "tabPayouts": "Pagos",
             "tabReports": "Informes",
             "teamTabPeople": "Personas",
             "teamTabInventory": "Inventario",
-            "repPeriod": "Período",
             "repTasksTotal": "Tareas totales",
             "repTasksActive": "Activas",
             "repTasksDone": "Terminadas",
@@ -741,38 +567,20 @@
             "repByWorker": "Por personas",
             "repByClient": "Por clientes",
             "repMyHours": "Mis horas: {n} h",
-            "repMyEarned": "Ganado",
-            "repMyHoursLabel": "Horas",
-            "repMyTasks": "Mis tareas del período",
             "repEmpty": "Sin datos para el período",
             "payPreview": "Revisar cálculo",
-            "payClose": "Cerrar liquidación",
-            "payAdvance": "Adelanto",
-            "payrollClosed": "Período cerrado, pagos creados",
             "payrollEmpty": "Sin datos para el período",
-            "colEmployee": "Persona",
-            "colHours": "Horas",
-            "colGross": "Ganado",
-            "colAdvances": "Adelantos",
-            "colNet": "A pagar",
             "payStart": "Inicio",
             "payEnd": "Fin",
-            "payCloseConfirm": "¿Cerrar la liquidación {start} — {end}? Después no se podrán corregir las horas de este período",
             "teamTitle": "Personas",
             "teamAdd": "Añadir persona",
             "workerName": "Nombre",
             "workerPhone": "Teléfono",
             "workerRate": "Tarifa/hora",
-            "profile.rate": "Tarifa",
             "profile.role": "Rol",
             "profile.active": "Activo",
             "profile.inactive": "Inactivo",
-            "profile.lang": "Idioma",
-            "profileTitle": "Perfil",
-            "profileInventory": "Inventario asignado",
-            "profileNoInventory": "Sin inventario asignado",
             "rateSaved": "Tarifa actualizada",
-            "userSaved": "Guardado",
             "clientsTitle": "Clientes",
             "clientsAdd": "Añadir cliente",
             "clientName": "Nombre",
@@ -783,8 +591,6 @@
             "locationAdded": "Ubicación añadida",
             "locationDeleted": "Ubicación eliminada",
             "clientSaved": "Guardado",
-            "inventoryTitle": "Inventario",
-            "inventoryAdd": "Añadir artículo",
             "itemName": "Artículo",
             "itemNotes": "Notas",
             "assign": "Entregar",
@@ -794,15 +600,11 @@
             "returnStock": "Devolver al almacén",
             "itemSaved": "Guardado",
             "inventoryEmpty": "Aún no hay artículos. Pulse «Añadir» para crear uno",
-            "navToday": "Hoy",
-            "navHistory": "Historial",
             "navMoney": "Dinero",
             "todayTitle": "Hoy",
             "todayNoTasks": "No hay tareas para hoy",
-            "todayMyHours": "Mis horas hoy: {n} h",
             "todayEnterHours": "Registrar horas",
             "todayEntered": "Registrado: {n} h",
-            "todayNotEntered": "Horas aún no registradas",
             "menu": "Menú",
             "hint.dismiss": "Entendido",
             "hint.w1": "Pulse «Registrar horas» cuando termine el trabajo.",
@@ -812,7 +614,6 @@
             "hint.m2": "Las tareas se crean en la pestaña «Tareas».",
             "hint.m3": "El cálculo y los anticipos están en la pestaña «Dinero».",
             "payCardTitle": "A pagar por {m}",
-            "payCardEarnedAdv": "ganado {e} · adelanto {a}",
             "todayHistoryTitle": "Historial",
             "todayCoworkers": "Con usted: {names}",
             "payRowEarned": "Ganado",
@@ -824,13 +625,11 @@
             "myInventory": "Mi inventario",
             "language": "Idioma",
             "hoursSheetTitle": "¿Cuántas horas hoy?",
-            "hoursSheetFixTitle": "Corregir horas",
             "hoursMore": "…",
             "hoursCustom": "Cifra propia",
             "recorded": "Registrado",
             "offlineSaved": "Guardado sin conexión — se enviará cuando haya red",
             "offlineQueued": "{n} registros esperando envío",
-            "fixNotAllowed": "Solo el jefe puede cambiar las horas",
             "histTitle": "Historial",
             "histWeek": "Semana",
             "histMonth": "Mes",
@@ -881,29 +680,12 @@
             "tasksNewPlus": "+ Nueva tarea",
             "tasksNone": "No hay tareas.",
             "tasksCreate": "Crear tarea",
-            "dashWorkers": "Personas en trabajo",
-            "dashNoHoursTasks": "Tareas sin horas",
-            "dashNoHoursWarn": "Tareas sin horas hoy: {n}",
-            "dashNoHours": "sin horas",
-            "dashOpenMatrix": "Tabla de horas",
             "dashOpenWorker": "Ficha del trabajador",
             "segActive": "Activas",
             "segDone": "Terminadas",
-            "attTitle": "Requiere atención",
-            "attOk": "Todo en orden ✓",
-            "attNoHoursUser": "No ha fichado: {name}",
-            "attNoHoursTask": "Tarea sin registros: {title}",
-            "dashOnWork": "En trabajo",
-            "dashWithoutHours": "No ha fichado",
-            "fabNewTask": "+ Tarea",
             "menuPeople": "Personas",
             "menuClients": "Clientes y ubicaciones",
-            "moneyTotalToPay": "A pagar en total",
-            "moneyEarnedAdv": "ganado {e} · adelantos {a}",
-            "moneyWorkers": "Personas",
             "moneyOpenReports": "Informes",
-            "moneyAddAdvance": "+ Adelanto",
-            "moneyClosePeriod": "Cerrar liquidación",
             "webapp_not_registered": "Aún no está en el sistema. Abra el bot y envíe su número — cuando el responsable lo apruebe, tendrá acceso.",
             "webapp_deactivated": "Acceso desactivado. Contacte al responsable.",
             "open_bot_btn": "Abrir el bot",
@@ -1111,9 +893,11 @@
     function hintsHtml() {
         const role = hintRole();
         if (hintsSeen(role)) return '';
-        const keys = role === 'manager' ? ['hint.m1', 'hint.m2', 'hint.m3'] : ['hint.w1', 'hint.w2', 'hint.w3'];
+        const texts = role === 'manager'
+            ? [t('hint.m1'), t('hint.m2'), t('hint.m3')]
+            : [t('hint.w1'), t('hint.w2'), t('hint.w3')];
         return '<div class="hints" data-testid="hints">' +
-            keys.map((k) => '<p class="hint" data-testid="hint">' + escapeHtml(t(k)) + '</p>').join('') +
+            texts.map((s) => '<p class="hint" data-testid="hint">' + escapeHtml(s) + '</p>').join('') +
             '<button type="button" class="btn btn--ghost" data-action="hint-dismiss">' +
             escapeHtml(t('hint.dismiss')) + '</button></div>';
     }
@@ -1281,7 +1065,6 @@
         },
         getTasks() { return this.request('/tasks?status=active'); },
         getAllTasks() { return this.request('/tasks'); },
-        getMyEntries() { return this.request('/work-entries'); },
         getEntries(params) {
             return this.request('/work-entries' + (params ? '?' + params : ''));
         },
@@ -1332,10 +1115,6 @@
         },
         payClose(body) { return this.request('/payroll/close', { method: 'POST', body: body }); },
         createAdvance(body) { return this.request('/payroll/advances', { method: 'POST', body: body }); },
-        reportUser(userId, start, end) {
-            return this.request('/reports/user/' + entry_id(userId) +
-                '?start=' + start + '&end=' + end);
-        },
         // --- v4: агрегатные эндпоинты ---
         meToday() { return this.request('/me/today'); },
         meHistory(from, to) {
@@ -1440,7 +1219,7 @@
         // v5: ☰ руководителя виден на его трёх вкладках
         const mgrMenu = isManager() &&
             ['manager-dash', 'tasks', 'money'].indexOf(name) !== -1;
-        ['#btnManagerMenu', '#btnManagerMenu2', '#btnManagerMenu3', '#btnManagerMenu4'].forEach((sel) => {
+        ['#btnManagerMenu', '#btnManagerMenu3', '#btnManagerMenu4'].forEach((sel) => {
             const btn = $(sel);
             if (btn) btn.hidden = !mgrMenu;
         });
@@ -1484,7 +1263,7 @@
     }
 
     /* ========================================================
-     * 9. ГЛАВНАЯ РУКОВОДИТЕЛЯ
+     * 9. Общие куски экранов: периоды, карточка задания, плитка итога
      * ======================================================== */
     function weekRange() {
         const d = new Date();
@@ -1509,7 +1288,6 @@
 
     function taskCardHtml(task, opts) {
         opts = opts || {};
-        const today = todayIso();
         const hoursToday = num(task.hours_today);
         const parts = [];
         if (task.client_name) parts.push(escapeHtml(task.client_name));
@@ -1553,19 +1331,17 @@
         else loadToday();
     }
 
-    function statCell(label, tasks, hours, isHours) {
-        return '<div class="stat"><span class="stat__value">' +
-            (isHours ? escapeHtml(fmtHours(hours)) + ' ' + escapeHtml(t('hoursUnit')) : tasks) +
+    // Плитка-итог с числом (количество заданий в отчёте).
+    function statCell(label, count) {
+        return '<div class="stat"><span class="stat__value">' + count +
             '</span><span class="stat__label">' + escapeHtml(label) + '</span></div>';
     }
 
     /* ========================================================
-     * 10. Список заданий
+     * 10. Список заданий (вкладка руководителя)
      * ======================================================== */
     async function loadTasks() {
         showScreen('tasks');
-        const btnNewTask = $('#btnNewTask');
-        if (btnNewTask) btnNewTask.hidden = !isManager();
         // v5 §3.2: сегменты Активные | Завершённые
         if (!state.tasksSeg) state.tasksSeg = 'active';
         document.querySelectorAll('#tasksSegment .segment__btn').forEach((b) => {
@@ -1590,17 +1366,13 @@
             tasks = tasks.filter((tk) => tk.status === 'done');
         }
         tasks = sortTasksByTitle(tasks);
-        const newBtn = isManager()
-            ? '<button type="button" class="btn btn--primary btn--block tasks-new" data-action="new-task">' +
-              escapeHtml(t('tasksNewPlus')) + '</button>'
-            : '';
+        const newBtn = '<button type="button" class="btn btn--primary btn--block tasks-new" data-action="new-task">' +
+            escapeHtml(t('tasksNewPlus')) + '</button>';
         if (!tasks.length) {
             setList('tasksList', '<div class="empty"><div class="empty__text">' +
                 escapeHtml(t('tasksNone')) + '</div>' +
-                (isManager()
-                    ? '<button type="button" class="btn btn--primary" data-action="new-task">' +
-                      escapeHtml(t('tasksCreate')) + '</button>'
-                    : '') + '</div>');
+                '<button type="button" class="btn btn--primary" data-action="new-task">' +
+                escapeHtml(t('tasksCreate')) + '</button></div>');
             return;
         }
         setList('tasksList', newBtn + tasks.map((tk) =>
@@ -1608,7 +1380,8 @@
     }
 
     /* ========================================================
-     * 11. Лист задания (bottom sheet)
+     * 11. Лист задания (bottom sheet, руководитель: открывается после
+     *     ввода часов из списка заданий, см. navBack)
      * ======================================================== */
     async function openTaskSheet(taskId) {
         const sheet = openSheet('<p class="screen-message">' + escapeHtml(t('loading')) + '</p>');
@@ -1618,11 +1391,7 @@
                 api.taskSummary(taskId).catch(() => null)
             ]);
             state.detailTask = task;
-            state.sheetTaskId = taskId;
-
-            const manager = isManager();
-            // v5: роли «бригадир/учётчик» в UI нет — ввод за других только у руководителя
-            const canEnter = manager && task.status === 'active';
+            const canEnter = task.status === 'active';
 
             const workers = (task.assignments || []).map((a) => {
                 const su = summary && summary.by_user.find(
@@ -1665,15 +1434,11 @@
                 (canEnter
                     ? '<button class="btn btn--primary btn--block he-save" data-action="enter-hours" data-id="' + task.id + '">' +
                       escapeHtml(t('enterHours')) + '</button>' +
-                      (manager
-                          ? '<button class="btn btn--ghost btn--block" data-action="finish-task" data-id="' + task.id + '">' +
-                            escapeHtml(t('finishTask')) + '</button>'
-                          : '')
+                      '<button class="btn btn--ghost btn--block" data-action="finish-task" data-id="' + task.id + '">' +
+                      escapeHtml(t('finishTask')) + '</button>'
                     : '') +
-                (manager
-                    ? '<button class="btn btn--ghost btn--block" data-action="edit-task" data-id="' + task.id + '">' +
-                      escapeHtml(t('editTask')) + '</button>'
-                    : '') +
+                '<button class="btn btn--ghost btn--block" data-action="edit-task" data-id="' + task.id + '">' +
+                escapeHtml(t('editTask')) + '</button>' +
                 '<button class="btn btn--ghost btn--block" data-action="close-sheet">' + escapeHtml(t('close')) + '</button>' +
                 '</div>';
             sheet.innerHTML = html;
@@ -1683,8 +1448,8 @@
         }
     }
 
-    async function finishTask(taskId) {
-        const sheet = openSheet(
+    function finishTask(taskId) {
+        openSheet(
             '<div class="card-title sheet__title">' + escapeHtml(t('finishTask')) + '</div>' +
             '<p class="screen-message">' + escapeHtml(t('finishConfirm')) + '</p>' +
             '<div class="sheet__actions">' +
@@ -1692,15 +1457,66 @@
             escapeHtml(t('finish')) + '</button>' +
             '<button class="btn btn--ghost btn--block" data-action="close-sheet">' + escapeHtml(t('cancel')) + '</button>' +
             '</div>');
-        sheet.setAttribute('data-finish', taskId);
+    }
+
+    async function doFinishTask(taskId) {
+        try {
+            await api.updateTask(taskId, { status: 'done' });
+            toast(t('taskFinished'), 'success');
+            closeSheet();
+            state.tasks = null;
+            if (state.view === 'manager-dash') loadManagerDash();
+            else if (state.view === 'tasks') loadTasks();
+            else goBackHome();
+        } catch (err) {
+            closeSheet();
+            toast(err.message, 'error');
+        }
+    }
+
+    function editTaskSheet(taskId) {
+        const task = state.detailTask;
+        if (!task || task.id !== taskId) return;
+        const sheet = openSheet(
+            '<form id="taskEditForm" class="form">' +
+            '<label class="form-field"><span class="form-label">' + escapeHtml(t('taskTitle')) + '</span>' +
+            '<input type="text" id="teTitle" value="' + escapeHtml(task.title) + '" required></label>' +
+            '<label class="form-field"><span class="form-label">' + escapeHtml(t('taskDescr')) + '</span>' +
+            '<textarea id="teDescr" rows="2">' + escapeHtml(task.description || '') + '</textarea></label>' +
+            '<label class="form-field"><span class="form-label">' + escapeHtml(t('taskDateStart')) + '</span>' +
+            '<input type="date" id="teStart" value="' + escapeHtml(task.date_start || '') + '"></label>' +
+            '<label class="form-field"><span class="form-label">' + escapeHtml(t('taskDateEnd')) + '</span>' +
+            '<input type="date" id="teEnd" value="' + escapeHtml(task.date_end || '') + '"></label>' +
+            '<p class="form-error" id="teError" hidden></p>' +
+            '<button type="submit" class="btn btn--primary btn--block">' + escapeHtml(t('save')) + '</button>' +
+            '</form>');
+        sheet.querySelector('#taskEditForm').addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            const errEl = sheet.querySelector('#teError');
+            errEl.hidden = true;
+            try {
+                await api.updateTask(task.id, {
+                    title: sheet.querySelector('#teTitle').value.trim(),
+                    description: sheet.querySelector('#teDescr').value.trim() || null,
+                    date_start: sheet.querySelector('#teStart').value || null,
+                    date_end: sheet.querySelector('#teEnd').value || null
+                });
+                toast(t('saved'), 'success');
+                closeSheet();
+                state.tasks = null;
+                await openTaskSheet(task.id);
+            } catch (err) {
+                errEl.textContent = err.message;
+                errEl.hidden = false;
+            }
+        });
     }
 
     /* ========================================================
-     * 12. ЭКРАН «ВВЕСТИ ЧАСЫ» (полноэкранный; v5 — только руководитель,
+     * 12. ЭКРАН «ЧАСЫ ЗА РАБОТУ» (полноэкранный; только руководитель,
      *     у работника ввод в bottom sheet, см. 13b)
      * ======================================================== */
     async function openHoursEntry(taskId, opts) {
-        if (!isManager()) { openWorkerHoursSheet(taskId, false); return; }
         closeSheet();
         showScreen('hours-entry');
         $('#heError').hidden = true;
@@ -1866,7 +1682,6 @@
                 }
             }
             toast(t('hoursSaved'), 'success');
-            state.entries = null;
             state.tasks = null;
             // Возврат туда, откуда пришли (экран задания или список); экран
             // перерисовывается и только потом, если нужно, открывается лист
@@ -1884,36 +1699,27 @@
     }
 
     /* ========================================================
-     * 13b. v5: ввод часов работника — bottom sheet (§3.4)
+     * 13b. v5: ввод часов работника — bottom sheet (§3.4). Исправить
+     *      записанные часы может только руководитель (todayFixByManager).
      * ======================================================== */
-    function openWorkerHoursSheet(taskId, fixMode) {
+    function openWorkerHoursSheet(taskId) {
         const data = state.meToday;
         const task = data && (data.tasks || []).find((tk) => tk.id === taskId);
         if (!task) return;
-        const existing = num(task.my_hours_today);
-        const fix = !!fixMode && existing > 0;
-        let picked = fix ? String(fmtHours(existing)) : '';
+        let picked = '';
 
         const sheet = openSheet(
-            '<h3 class="sheet__title">' +
-            escapeHtml(fix ? t('hoursSheetFixTitle') : t('hoursSheetTitle')) + '</h3>' +
+            '<h3 class="sheet__title">' + escapeHtml(t('hoursSheetTitle')) + '</h3>' +
             '<div class="he-quick" id="whQuick">' +
             ['4', '6', '8', '10', '12'].map((v) =>
-                '<button type="button" class="chip' + (picked === v ? ' chip--on' : '') +
-                '" data-wh="' + v + '">' + v + '</button>').join('') +
+                '<button type="button" class="chip" data-wh="' + v + '">' + v + '</button>').join('') +
             '<button type="button" class="chip" data-wh="more">' +
             escapeHtml(t('hoursMore')) + '</button>' +
             '</div>' +
             '<div class="form-field" id="whCustomField" hidden>' +
             '<span class="form-label">' + escapeHtml(t('hoursCustom')) + '</span>' +
-            '<input type="text" id="whCustom" inputmode="decimal" value="' +
-            escapeHtml(picked) + '" placeholder="—">' +
+            '<input type="text" id="whCustom" inputmode="decimal" value="" placeholder="—">' +
             '</div>' +
-            (fix
-                ? '<div class="form-field"><span class="form-label">' +
-                  escapeHtml(t('hoursReason')) + '</span>' +
-                  '<input type="text" id="whReason" data-i18n-placeholder="hoursReasonHint"></div>'
-                : '') +
             '<p class="form-error" id="whError" hidden></p>' +
             '<button type="button" class="btn btn--primary btn--block" id="whSave">' +
             escapeHtml(t('save')) + '</button>');
@@ -1926,14 +1732,6 @@
         function value() {
             const raw = (customField.hidden ? picked : custom.value.trim().replace(',', '.'));
             return raw === '' ? 0 : parseFloat(raw);
-        }
-        function refresh() {
-            sheet.querySelectorAll('#whQuick .chip').forEach((c) => {
-                const v = c.getAttribute('data-wh');
-                c.classList.toggle('chip--on',
-                    v !== 'more' && !customField.hidden === false && v === String(value()));
-            });
-            save.disabled = !(value() > 0);
         }
 
         sheet.querySelector('#whQuick').addEventListener('click', (ev) => {
@@ -1968,47 +1766,30 @@
             }
             save.disabled = true;
             try {
-                if (fix) {
-                    // API: правка часов — только руководитель
-                    // (app/services/work_entries.py:212). Работник получает 403 —
-                    // показываем его текст как есть, ничего не выдумываем.
-                    const entries = await api.taskEntries(taskId);
-                    const mine = (entries || []).find(
-                        (e) => e.work_date === todayIso() &&
-                            Number(e.user_id) === Number(state.user.id));
-                    if (!mine) throw new Error(t('error'));
-                    const reason = sheet.querySelector('#whReason');
-                    const r = reason ? reason.value.trim() : '';
-                    if (!r) throw new Error(t('fixNoReason'));
-                    await api.updateEntry(mine.id, {
-                        hours: hours.toFixed(2), reason: r
-                    });
-                } else {
-                    const payload = {
-                        task_id: taskId, work_date: todayIso(),
-                        hours: hours.toFixed(2)
-                    };
-                    try {
-                        await api.createEntry(payload);
-                    } catch (netErr) {
-                        if (isNetError(netErr)) {
-                            // SPEC §22: офлайн-запись — в очередь, уйдёт при появлении сети
-                            queueAdd(payload);
-                            closeSheet();
-                            toast(t('offlineSaved'), 'success');
-                            // Сети нет — с сервера перечитать нельзя (упадёт на
-                            // логин). Отмечаем часы локально, экран остаётся.
-                            const data = state.meToday;
-                            if (data && data.tasks) {
-                                const tk = data.tasks.find((x) => x.id === taskId);
-                                if (tk) tk.my_hours_today = num(tk.my_hours_today) + hours;
-                            }
-                            renderToday();
-                            renderOfflineBanner();
-                            return;
+                const payload = {
+                    task_id: taskId, work_date: todayIso(),
+                    hours: hours.toFixed(2)
+                };
+                try {
+                    await api.createEntry(payload);
+                } catch (netErr) {
+                    if (isNetError(netErr)) {
+                        // SPEC §22: офлайн-запись — в очередь, уйдёт при появлении сети
+                        queueAdd(payload);
+                        closeSheet();
+                        toast(t('offlineSaved'), 'success');
+                        // Сети нет — с сервера перечитать нельзя (упадёт на
+                        // логин). Отмечаем часы локально, экран остаётся.
+                        const data = state.meToday;
+                        if (data && data.tasks) {
+                            const tk = data.tasks.find((x) => x.id === taskId);
+                            if (tk) tk.my_hours_today = num(tk.my_hours_today) + hours;
                         }
-                        throw netErr;
+                        renderToday();
+                        renderOfflineBanner();
+                        return;
                     }
+                    throw netErr;
                 }
                 closeSheet();
                 toast(t('recorded'), 'success');
@@ -2269,9 +2050,9 @@
 
             box.innerHTML =
                 '<div class="stat-row stat-row--2">' +
-                statCell(t('repTasksTotal'), total, 0) +
-                statCell(t('repTasksActive'), active, 0) +
-                statCell(t('repTasksDone'), done, 0) +
+                statCell(t('repTasksTotal'), total) +
+                statCell(t('repTasksActive'), active) +
+                statCell(t('repTasksDone'), done) +
                 '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHoursUnit(hours)) + '</span>' +
                 '<span class="stat__label">' + escapeHtml(t('repHoursTotal')) + '</span></div>' +
                 '</div>' +
@@ -2343,11 +2124,10 @@
     }
 
     /* ========================================================
-     * 15. СОТРУДНИКИ: сегменты Люди · Инвентарь (руководитель)
+     * 15. ЛЮДИ: сегменты Люди · Инвентарь (только руководитель)
      * ======================================================== */
     async function loadTeam() {
         showScreen('team');
-        $('#btnAddWorker').hidden = !isManager();
         // По умолчанию — сегмент «Люди»
         setTeamTab('people');
         try {
@@ -2368,16 +2148,11 @@
         const invBlock = $('#teamInvBlock');
         if (peopleBlock) peopleBlock.hidden = tab !== 'people';
         if (invBlock) invBlock.hidden = tab !== 'inventory';
-        $('#btnAddWorker').hidden = tab !== 'people' || !isManager();
-        $('#btnAddItem').hidden = tab !== 'inventory' || !isManager();
+        $('#btnAddWorker').hidden = tab !== 'people';
+        $('#btnAddItem').hidden = tab !== 'inventory';
         // Подгружаем инвентарь при первом переходе на вкладку
         // (prev-гард не даёт loadInventory -> setTeamTab зациклиться)
         if (tab === 'inventory' && prev !== 'inventory' && !state.inventory) loadInventory();
-        // v5: у работника кнопки добавления скрыты всегда
-        if (!isManager()) {
-            $('#btnAddWorker').hidden = true;
-            $('#btnAddItem').hidden = true;
-        }
     }
 
     function renderTeam() {
@@ -2463,11 +2238,11 @@
     }
 
     /* ========================================================
-     * 16. ЗАКАЗЧИКИ: строка тапается -> лист с локациями
+     * 16. ЗАКАЗЧИКИ (руководитель): строка тапается -> лист с локациями
      * ======================================================== */
     async function loadClients() {
         showScreen('clients');
-        $('#btnAddClient').hidden = !isManager();
+        $('#btnAddClient').hidden = false;
         try {
             state.clients = await api.getClients();
             renderClients();
@@ -2570,46 +2345,57 @@
         });
     }
 
-    /* ========================================================
-     * 17. ИНВЕНТАРЬ: сегмент внутри экрана «Сотрудники»
-     * ======================================================== */
-    // v5: «Мой инвентарь» из меню ☰ работника — фильтр по держателю=я
-    // (API: /inventory?holder_id=..., app/routers/inventory.py:47).
-    async function loadInventoryMine() {
-        if (!isManager()) {
-            const sheet = openSheet('<div data-testid="my-inventory"><p class="screen-message">' +
-                escapeHtml(t('loading')) + '</p></div>');
-            try {
-                // /inventory доступен только руководителю; свой список — в /me/money
-                const mine = await api.meMoney();
-                const items = (mine && mine.inventory) || [];
-                const list = (items || []).length
-                    ? items.map((i) =>
-                        '<div class="row-line"><span>' + escapeHtml(i.name) + '</span></div>').join('')
-                    : '<p class="screen-message">' + escapeHtml(t('moneyNoInventory')) + '</p>';
-                sheet.innerHTML = '<div class="sheet__handle"></div><div data-testid="my-inventory">' +
-                    '<div class="card-title sheet__title">' + escapeHtml(t('myInventory')) + '</div>' +
-                    list +
-                    '<button class="btn btn--ghost btn--block" data-action="close-sheet">' +
-                    escapeHtml(t('close')) + '</button></div>';
-            } catch (err) {
-                sheet.innerHTML = '<div class="sheet__handle"></div><div data-testid="my-inventory">' +
-                    '<p class="screen-message">' + escapeHtml(err.message) + '</p>' +
-                    '<button class="btn btn--ghost btn--block" data-action="close-sheet">' +
-                    escapeHtml(t('close')) + '</button></div>';
-            }
-            return;
-        }
-        showScreen('team');
-        setTeamTab('inventory');
-        const list = $('#inventoryList');
-        if (list) list.innerHTML = '<div class="skeleton skeleton--card"></div>';
+    async function submitClientAdd(event) {
+        event.preventDefault();
+        const errEl = $('#clError');
+        errEl.hidden = true;
+        const name = $('#clName').value.trim();
+        if (!name) return;
+        const btn = $('#clSubmit');
+        btn.disabled = true;
         try {
-            state.inventory = await api.request(
-                '/inventory?holder_id=' + entry_id(state.user.id));
-            renderInventory();
+            await api.createClient({
+                name: name,
+                notes: $('#clNotes').value.trim() || null
+            });
+            $('#clientAddForm').hidden = true;
+            $('#clName').value = ''; $('#clNotes').value = '';
+            btn.disabled = false;
+            toast(t('saved'), 'success');
+            loadClients();
+        } catch (e) {
+            btn.disabled = false;
+            errEl.textContent = e.message;
+            errEl.hidden = false;
+        }
+    }
+
+    /* ========================================================
+     * 17. ИНВЕНТАРЬ: сегмент экрана «Люди» (руководитель)
+     *     и лист «Мой инвентарь» (работник)
+     * ======================================================== */
+    // v5: «Мой инвентарь» из меню ☰ работника — лист снизу. /inventory доступен
+    // только руководителю, поэтому свой список берётся из /me/money.
+    async function loadInventoryMine() {
+        const sheet = openSheet('<div data-testid="my-inventory"><p class="screen-message">' +
+            escapeHtml(t('loading')) + '</p></div>');
+        try {
+            const mine = await api.meMoney();
+            const items = (mine && mine.inventory) || [];
+            const list = (items || []).length
+                ? items.map((i) =>
+                    '<div class="row-line"><span>' + escapeHtml(i.name) + '</span></div>').join('')
+                : '<p class="screen-message">' + escapeHtml(t('moneyNoInventory')) + '</p>';
+            sheet.innerHTML = '<div class="sheet__handle"></div><div data-testid="my-inventory">' +
+                '<div class="card-title sheet__title">' + escapeHtml(t('myInventory')) + '</div>' +
+                list +
+                '<button class="btn btn--ghost btn--block" data-action="close-sheet">' +
+                escapeHtml(t('close')) + '</button></div>';
         } catch (err) {
-            setList('inventoryList', '<p class="screen-message">' + escapeHtml(err.message) + '</p>');
+            sheet.innerHTML = '<div class="sheet__handle"></div><div data-testid="my-inventory">' +
+                '<p class="screen-message">' + escapeHtml(err.message) + '</p>' +
+                '<button class="btn btn--ghost btn--block" data-action="close-sheet">' +
+                escapeHtml(t('close')) + '</button></div>';
         }
     }
 
@@ -2637,16 +2423,14 @@
             '<div class="card-title">' + escapeHtml(i.name) + '</div>' +
             '<div class="card-sub"><span>' + escapeHtml(t('holder')) + ': ' +
             (i.holder ? escapeHtml(i.holder.name) : escapeHtml(t('onStock'))) + '</span></div>' +
-            (isManager()
-                ? '<div class="card-sub">' +
-                  '<button class="btn btn-small" data-action="assign-item" data-id="' + i.id + '">' +
-                  escapeHtml(t('assign')) + '</button>' +
-                  (i.holder
-                      ? '<button class="btn btn-small" data-action="return-item" data-id="' + i.id + '">' +
-                        escapeHtml(t('returnStock')) + '</button>'
-                      : '') +
-                  '</div>'
+            '<div class="card-sub">' +
+            '<button class="btn btn-small" data-action="assign-item" data-id="' + i.id + '">' +
+            escapeHtml(t('assign')) + '</button>' +
+            (i.holder
+                ? '<button class="btn btn-small" data-action="return-item" data-id="' + i.id + '">' +
+                  escapeHtml(t('returnStock')) + '</button>'
                 : '') +
+            '</div>' +
             '</div>'
         ).join(''));
     }
@@ -2717,7 +2501,7 @@
     }
 
     /* ========================================================
-     * 19a. v4: СЕГОДНЯ (работник)
+     * 19a. СЕГОДНЯ (только работник; у руководителя — дашборд, 64_dash.js)
      * ======================================================== */
     async function loadToday() {
         showScreen('loading');
@@ -2745,26 +2529,17 @@
         // --- карточки заданий на сегодня ---
         const cards = data.tasks.map((tk) => {
             const entered = num(tk.my_hours_today) > 0;
-            const workers = isManager() ? (tk.workers || []).map((w) =>
-                '<span class="chip chip--static">' + escapeHtml(w.name) +
-                (w.hours_today !== null && w.hours_today !== undefined
-                    ? ' ' + escapeHtml(fmtHours(w.hours_today)) + escapeHtml(t('hoursUnit'))
-                    : '') + '</span>'
-            ).join('') : '';
-            const others = isManager() ? [] : (tk.workers || []).filter((w) =>
+            const others = (tk.workers || []).filter((w) =>
                 !(state.user && w.user_id === state.user.id)).map((w) => w.name);
             const coworkers = others.length
                 ? '<div class="today-coworkers" data-testid="coworkers">' +
                   escapeHtml(t('todayCoworkers', { names: others.join(', ') })) + '</div>'
                 : '';
+            // Исправить записанные часы может только руководитель — у работника плашка.
             const action = entered
-                ? (isManager()
-                    ? '<button class="btn btn--ghost btn--block card__enter today-done" data-action="fix-hours" data-id="' + tk.id + '">' +
-                      '✓ ' + escapeHtml(t('todayEntered', { n: fmtHours(tk.my_hours_today) })) +
-                      ' · ' + escapeHtml(t('editTask')) + '</button>'
-                    : '<div class="today-done today-done--plaque" data-testid="today-done">✓ ' +
-                      escapeHtml(t('todayEntered', { n: fmtHours(tk.my_hours_today) })) + '</div>' +
-                      '<p class="today-done__hint">' + escapeHtml(t('todayFixByManager')) + '</p>')
+                ? '<div class="today-done today-done--plaque" data-testid="today-done">✓ ' +
+                  escapeHtml(t('todayEntered', { n: fmtHours(tk.my_hours_today) })) + '</div>' +
+                  '<p class="today-done__hint">' + escapeHtml(t('todayFixByManager')) + '</p>'
                 : '<button class="btn btn--primary btn--block card__enter" data-action="enter-hours" data-id="' + tk.id + '">' +
                   escapeHtml(t('todayEnterHours')) + '</button>';
             return '<div class="card">' +
@@ -2772,7 +2547,6 @@
                 '<div class="card-sub"><span>' +
                 [tk.client_name, (tk.location_names || []).join(', ')]
                     .filter(Boolean).map(escapeHtml).join(' · ') + '</span></div>' +
-                (workers ? '<div class="chip-row">' + workers + '</div>' : '') +
                 coworkers +
                 action +
                 '</div>';
@@ -3000,13 +2774,13 @@
             showScreen('money');
             return;
         }
-        const kinds = [['month', 'moneyPeriodMonth'], ['prev', 'moneyPeriodPrev']];
-        if (state.payLastEnd) kinds.push(['since-close', 'moneyPeriodSince']);
+        const kinds = [['month', t('moneyPeriodMonth')], ['prev', t('moneyPeriodPrev')]];
+        if (state.payLastEnd) kinds.push(['since-close', t('moneyPeriodSince')]);
         body.innerHTML =
             '<div class="segment money-period">' +
             kinds.map((k) =>
                 '<button class="segment__btn' + (state.payPeriod === k[0] ? ' is-active' : '') +
-                '" data-period="' + k[0] + '">' + escapeHtml(t(k[1])) + '</button>').join('') +
+                '" data-period="' + k[0] + '">' + escapeHtml(k[1]) + '</button>').join('') +
             '</div>' +
             '<div class="money-period__dates muted" data-testid="pay-period"></div>' +
             '<div id="payTable"></div>' +
@@ -3319,11 +3093,10 @@
     }
 
     /* ========================================================
-     * 19e. v4: МАТРИЦА ЗАДАНИЯ (руководитель)
+     * 19e. ЭКРАН ЗАДАНИЯ «Часы по дням» (руководитель)
      * ======================================================== */
-    async function openMatrix(taskId, from) {
+    async function openMatrix(taskId) {
         state.matrixTaskId = taskId;
-        state.matrixFrom = from || state.matrixFrom || 'manager-dash';
         const body = $('#matrixBody');
         body.innerHTML = '<div class="skeleton skeleton--card"></div>';
         showScreen('matrix');
@@ -3363,6 +3136,24 @@
         } catch (err) {
             body.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
         }
+    }
+
+    // Завершение задания с экрана задания: подтверждение Telegram -> «Задания»
+    function finishTaskFromScreen(taskId) {
+        const msg = t('finishConfirm');
+        const run = async (ok) => {
+            if (!ok) return;
+            try {
+                await api.updateTask(taskId, { status: 'done' });
+                toast(t('taskFinished'), 'success');
+                state.tasks = null;
+                await loadTasks();
+            } catch (err) {
+                toast(err.message, 'error');
+            }
+        };
+        if (tg && typeof tg.showConfirm === 'function') tg.showConfirm(msg, run);
+        else run(window.confirm(msg));
     }
 
     /* ========================================================
@@ -3416,16 +3207,11 @@
      * ======================================================== */
     function bindEvents() {
         if (tg && tg.BackButton) tg.BackButton.onClick(navBack);
+        // Нижние вкладки руководителя: Сегодня · Задания · Деньги
         document.querySelectorAll('.bottom-nav__item[data-nav-target]').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const target = btn.getAttribute('data-nav-target');
                 if (target === 'tasks') loadTasks();
-                else if (target === 'reports') loadReports();
-                else if (target === 'team') loadTeam();
-                else if (target === 'clients') loadClients();
-                // v4
-                else if (target === 'today') loadToday();
-                else if (target === 'history') loadHistory('week');
                 else if (target === 'money') loadMoney();
                 else if (target === 'manager-dash') loadManagerDash();
             });
@@ -3460,9 +3246,8 @@
                 }
                 else if (action === 'enter-hours') {
                     if (isManager()) openHoursEntry(parseInt(id, 10));
-                    else openWorkerHoursSheet(parseInt(id, 10), false);
+                    else openWorkerHoursSheet(parseInt(id, 10));
                 }
-                else if (action === 'fix-hours') openWorkerHoursSheet(parseInt(id, 10), true);
                 else if (action === 'open-history') { closeSheet(); loadHistory('week'); }
                 else if (action === 'open-money') { closeSheet(); loadMoney(); }
                 else if (action === 'open-inventory') { closeSheet(); loadInventoryMine(); }
@@ -3485,8 +3270,6 @@
                         parseInt(btn.getAttribute('data-user'), 10));
                 }
                 else if (action === 'return-item') returnItem(parseInt(id, 10));
-                // v4
-                else if (action === 'open-matrix') openMatrix(parseInt(id, 10));
                 else if (action === 'open-user-summary') {
                     openUserSummary(parseInt(btn.getAttribute('data-user'), 10));
                 }
@@ -3502,12 +3285,10 @@
                 });
                 return;
             }
-            // Тап по карточке задания (кроме кнопки внутри)
+            // Тап по карточке задания (кроме кнопки внутри; карточки — только у руководителя)
             const taskCard = ev.target.closest('[data-task-id]');
             if (taskCard && !ev.target.closest('[data-action]')) {
-                const cardTid = parseInt(taskCard.getAttribute('data-task-id'), 10);
-                if (isManager()) openMatrix(cardTid, state.view);
-                else openTaskSheet(cardTid);
+                openMatrix(parseInt(taskCard.getAttribute('data-task-id'), 10));
                 return;
             }
             const userCard = ev.target.closest('[data-user-id]');
@@ -3548,7 +3329,6 @@
         document.addEventListener('click', (ev) => {
             const chip = ev.target.closest('[data-chip]');
             if (!chip) return;
-            const kind = chip.getAttribute('data-chip');
             chip.classList.toggle('chip--on');
         });
 
@@ -3556,7 +3336,7 @@
         const workerMenuBtn = $('#btnWorkerMenu');
         if (workerMenuBtn) workerMenuBtn.addEventListener('click', openWorkerMenu);
         // v5: меню ☰ руководителя (на трёх его экранах)
-        ['#btnManagerMenu', '#btnManagerMenu2', '#btnManagerMenu3', '#btnManagerMenu4'].forEach((sel) => {
+        ['#btnManagerMenu', '#btnManagerMenu3', '#btnManagerMenu4'].forEach((sel) => {
             const btn = $(sel);
             if (btn) btn.addEventListener('click', openManagerMenu);
         });
@@ -3641,14 +3421,12 @@
             }
         });
 
-        // v4: сегменты «Люди · Инвентарь» на экране «Сотрудники»
+        // v4: сегменты «Люди · Инвентарь» на экране «Люди»
         document.querySelectorAll('#teamSegment .segment__btn').forEach((b) => {
             b.addEventListener('click', () => setTeamTab(b.getAttribute('data-team-tab')));
         });
 
         // Кнопки шапок экранов
-        const newTaskBtn = $('#btnNewTask');
-        if (newTaskBtn) newTaskBtn.addEventListener('click', openNewTask);
         const backNew = $('#btnBackNewTask');
         if (backNew) backNew.addEventListener('click', navBack);
         const addWorkerBtn = $('#btnAddWorker');
@@ -3673,103 +3451,6 @@
         const invForm = $('#invAddForm');
         if (invForm) invForm.addEventListener('submit', submitItemAdd);
 
-    }
-
-    async function doFinishTask(taskId) {
-        try {
-            await api.updateTask(taskId, { status: 'done' });
-            toast(t('taskFinished'), 'success');
-            closeSheet();
-            state.tasks = null;
-            if (state.view === 'manager-dash') loadManagerDash();
-            else if (state.view === 'tasks') loadTasks();
-            else if (state.view === 'today') loadToday();
-            else goBackHome();
-        } catch (err) {
-            closeSheet();
-            toast(err.message, 'error');
-        }
-    }
-
-    // Завершение задания с экрана задания: подтверждение Telegram -> «Задания»
-    function finishTaskFromScreen(taskId) {
-        const msg = t('finishConfirm');
-        const run = async (ok) => {
-            if (!ok) return;
-            try {
-                await api.updateTask(taskId, { status: 'done' });
-                toast(t('taskFinished'), 'success');
-                state.tasks = null;
-                await loadTasks();
-            } catch (err) {
-                toast(err.message, 'error');
-            }
-        };
-        if (tg && typeof tg.showConfirm === 'function') tg.showConfirm(msg, run);
-        else run(window.confirm(msg));
-    }
-
-    function editTaskSheet(taskId) {
-        const task = state.detailTask;
-        if (!task || task.id !== taskId) return;
-        const sheet = openSheet(
-            '<form id="taskEditForm" class="form">' +
-            '<label class="form-field"><span class="form-label">' + escapeHtml(t('taskTitle')) + '</span>' +
-            '<input type="text" id="teTitle" value="' + escapeHtml(task.title) + '" required></label>' +
-            '<label class="form-field"><span class="form-label">' + escapeHtml(t('taskDescr')) + '</span>' +
-            '<textarea id="teDescr" rows="2">' + escapeHtml(task.description || '') + '</textarea></label>' +
-            '<label class="form-field"><span class="form-label">' + escapeHtml(t('taskDateStart')) + '</span>' +
-            '<input type="date" id="teStart" value="' + escapeHtml(task.date_start || '') + '"></label>' +
-            '<label class="form-field"><span class="form-label">' + escapeHtml(t('taskDateEnd')) + '</span>' +
-            '<input type="date" id="teEnd" value="' + escapeHtml(task.date_end || '') + '"></label>' +
-            '<p class="form-error" id="teError" hidden></p>' +
-            '<button type="submit" class="btn btn--primary btn--block">' + escapeHtml(t('save')) + '</button>' +
-            '</form>');
-        sheet.querySelector('#taskEditForm').addEventListener('submit', async (ev) => {
-            ev.preventDefault();
-            const errEl = sheet.querySelector('#teError');
-            errEl.hidden = true;
-            try {
-                await api.updateTask(task.id, {
-                    title: sheet.querySelector('#teTitle').value.trim(),
-                    description: sheet.querySelector('#teDescr').value.trim() || null,
-                    date_start: sheet.querySelector('#teStart').value || null,
-                    date_end: sheet.querySelector('#teEnd').value || null
-                });
-                toast(t('saved'), 'success');
-                closeSheet();
-                state.tasks = null;
-                await openTaskSheet(task.id);
-            } catch (err) {
-                errEl.textContent = err.message;
-                errEl.hidden = false;
-            }
-        });
-    }
-
-    async function submitClientAdd(event) {
-        event.preventDefault();
-        const errEl = $('#clError');
-        errEl.hidden = true;
-        const name = $('#clName').value.trim();
-        if (!name) return;
-        const btn = $('#clSubmit');
-        btn.disabled = true;
-        try {
-            await api.createClient({
-                name: name,
-                notes: $('#clNotes').value.trim() || null
-            });
-            $('#clientAddForm').hidden = true;
-            $('#clName').value = ''; $('#clNotes').value = '';
-            btn.disabled = false;
-            toast(t('saved'), 'success');
-            loadClients();
-        } catch (e) {
-            btn.disabled = false;
-            errEl.textContent = e.message;
-            errEl.hidden = false;
-        }
     }
 
     function renderError(message, code, forceLogin) {

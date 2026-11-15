@@ -216,29 +216,10 @@ h3 { font-size: 16px; }
     background: rgba(180, 83, 9, .10);
     color: var(--warn);
 }
-.badge--reporter {
-    background: rgba(37, 99, 235, .10);
-    color: var(--info);
-    text-transform: none;
-    letter-spacing: 0;
-}
-.badge--warn {
-    background: rgba(180, 83, 9, .10);
-    color: var(--warn);
-    text-transform: none;
-    letter-spacing: 0;
-}
 
 /* ============================================================
    v4: сегодня / история / деньги / дашборд / матрица / карточка
    ============================================================ */
-.dash-warn { color: var(--danger); }
-.dash-warn-text {
-    color: var(--danger);
-    font-size: 14px;
-    margin: 0 0 12px;
-}
-.dash-no-hours { color: var(--danger); }
 .matrix-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .matrix {
     border-collapse: collapse;
@@ -584,28 +565,6 @@ h3 { font-size: 16px; }
     background: rgba(22, 163, 74, .14);
     color: var(--accent);
 }
-.chip--miss {
-    background: rgba(220, 38, 38, .10);
-    color: var(--danger);
-}
-.fab {
-    position: fixed;
-    right: 16px;
-    bottom: calc(72px + env(safe-area-inset-bottom, 0px) + 12px);
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    border: none;
-    background: var(--accent);
-    color: var(--accent-ink);
-    font-size: 28px;
-    line-height: 1;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, .12);
-    cursor: pointer;
-    z-index: 40;
-}
-.fab:active { transform: scale(.94); }
-body.no-nav .fab { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 
 .today-done {
     color: var(--accent);
@@ -655,19 +614,6 @@ body.no-nav .app-content {
     background: var(--accent);
     color: var(--accent-ink);
 }
-
-/* ============================================================
-   СЕТКА 2x2 НА ГЛАВНОЙ
-   ============================================================ */
-.grid2x2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-top: 16px;
-}
-
-.grid2x2__wide { grid-column: 1 / -1; height: 52px; }
-.grid2x2__cell { height: 52px; }
 
 /* ============================================================
    ЭКРАН ВВОДА ЧАСОВ
@@ -988,11 +934,8 @@ body.no-nav .app-content {
 :root[data-theme="dark"] .badge--active,
 :root[data-theme="dark"] .chip--ok { background: rgba(74, 222, 128, .16); }
 :root[data-theme="dark"] .badge--done { background: rgba(74, 222, 128, .22); }
-:root[data-theme="dark"] .badge--cancelled,
-:root[data-theme="dark"] .chip--miss { background: rgba(248, 113, 113, .16); }
-:root[data-theme="dark"] .badge--wait,
-:root[data-theme="dark"] .badge--warn { background: rgba(251, 191, 36, .16); }
-:root[data-theme="dark"] .badge--reporter { background: rgba(125, 179, 255, .16); }
+:root[data-theme="dark"] .badge--cancelled { background: rgba(248, 113, 113, .16); }
+:root[data-theme="dark"] .badge--wait { background: rgba(251, 191, 36, .16); }
 
 /* ============================================================
    Подсказки первого запуска (inline, не перекрывают контент)

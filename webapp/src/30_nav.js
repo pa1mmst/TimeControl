@@ -84,7 +84,7 @@
         // v5: ☰ руководителя виден на его трёх вкладках
         const mgrMenu = isManager() &&
             ['manager-dash', 'tasks', 'money'].indexOf(name) !== -1;
-        ['#btnManagerMenu', '#btnManagerMenu2', '#btnManagerMenu3', '#btnManagerMenu4'].forEach((sel) => {
+        ['#btnManagerMenu', '#btnManagerMenu3', '#btnManagerMenu4'].forEach((sel) => {
             const btn = $(sel);
             if (btn) btn.hidden = !mgrMenu;
         });

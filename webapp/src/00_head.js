@@ -1,6 +1,8 @@
 /* ============================================================
  * Time Control — Telegram Mini App
- * File: webapp/app.js  (v=6)
+ * Исходники: webapp/src/*.js (этот файл открывает IIFE, 90_init.js
+ * закрывает) + webapp/i18n.json; webapp/app.js собирает
+ * tools/build_webapp.py.
  *
  * Экраны по ролям, bottom sheet'ы, ввод часов из задания.
  * Все тексты — только через словари I18N (ru/uk/es).
@@ -35,13 +37,11 @@
         user: null,
         view: 'loading',
         tasks: null,        // активные задания (TaskShortOut)
-        entries: null,      // мои записи часов
         clients: null,
         users: null,
         inventory: null,
         reportsTab: 'summary',
         detailTask: null,   // задание в открытом листе
-        sheetTaskId: null,
         heCtx: null,        // контекст экрана ввода часов
         histRange: null,    // [from, to] для экрана История
         matrixTaskId: null, // задание открытой матрицы

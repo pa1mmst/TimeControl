@@ -1,5 +1,6 @@
     /* ========================================================
-     * 11. Лист задания (bottom sheet)
+     * 11. Лист задания (bottom sheet, руководитель: открывается после
+     *     ввода часов из списка заданий, см. navBack)
      * ======================================================== */
     async function openTaskSheet(taskId) {
         const sheet = openSheet('<p class="screen-message">' + escapeHtml(t('loading')) + '</p>');
@@ -9,11 +10,7 @@
                 api.taskSummary(taskId).catch(() => null)
             ]);
             state.detailTask = task;
-            state.sheetTaskId = taskId;
-
-            const manager = isManager();
-            // v5: роли «бригадир/учётчик» в UI нет — ввод за других только у руководителя
-            const canEnter = manager && task.status === 'active';
+            const canEnter = task.status === 'active';
 
             const workers = (task.assignments || []).map((a) => {
                 const su = summary && summary.by_user.find(
@@ -56,15 +53,11 @@
                 (canEnter
                     ? '<button class="btn btn--primary btn--block he-save" data-action="enter-hours" data-id="' + task.id + '">' +
                       escapeHtml(t('enterHours')) + '</button>' +
-                      (manager
-                          ? '<button class="btn btn--ghost btn--block" data-action="finish-task" data-id="' + task.id + '">' +
-                            escapeHtml(t('finishTask')) + '</button>'
-                          : '')
+                      '<button class="btn btn--ghost btn--block" data-action="finish-task" data-id="' + task.id + '">' +
+                      escapeHtml(t('finishTask')) + '</button>'
                     : '') +
-                (manager
-                    ? '<button class="btn btn--ghost btn--block" data-action="edit-task" data-id="' + task.id + '">' +
-                      escapeHtml(t('editTask')) + '</button>'
-                    : '') +
+                '<button class="btn btn--ghost btn--block" data-action="edit-task" data-id="' + task.id + '">' +
+                escapeHtml(t('editTask')) + '</button>' +
                 '<button class="btn btn--ghost btn--block" data-action="close-sheet">' + escapeHtml(t('close')) + '</button>' +
                 '</div>';
             sheet.innerHTML = html;
@@ -74,8 +67,8 @@
         }
     }
 
-    async function finishTask(taskId) {
-        const sheet = openSheet(
+    function finishTask(taskId) {
+        openSheet(
             '<div class="card-title sheet__title">' + escapeHtml(t('finishTask')) + '</div>' +
             '<p class="screen-message">' + escapeHtml(t('finishConfirm')) + '</p>' +
             '<div class="sheet__actions">' +
@@ -83,6 +76,58 @@
             escapeHtml(t('finish')) + '</button>' +
             '<button class="btn btn--ghost btn--block" data-action="close-sheet">' + escapeHtml(t('cancel')) + '</button>' +
             '</div>');
-        sheet.setAttribute('data-finish', taskId);
+    }
+
+    async function doFinishTask(taskId) {
+        try {
+            await api.updateTask(taskId, { status: 'done' });
+            toast(t('taskFinished'), 'success');
+            closeSheet();
+            state.tasks = null;
+            if (state.view === 'manager-dash') loadManagerDash();
+            else if (state.view === 'tasks') loadTasks();
+            else goBackHome();
+        } catch (err) {
+            closeSheet();
+            toast(err.message, 'error');
+        }
+    }
+
+    function editTaskSheet(taskId) {
+        const task = state.detailTask;
+        if (!task || task.id !== taskId) return;
+        const sheet = openSheet(
+            '<form id="taskEditForm" class="form">' +
+            '<label class="form-field"><span class="form-label">' + escapeHtml(t('taskTitle')) + '</span>' +
+            '<input type="text" id="teTitle" value="' + escapeHtml(task.title) + '" required></label>' +
+            '<label class="form-field"><span class="form-label">' + escapeHtml(t('taskDescr')) + '</span>' +
+            '<textarea id="teDescr" rows="2">' + escapeHtml(task.description || '') + '</textarea></label>' +
+            '<label class="form-field"><span class="form-label">' + escapeHtml(t('taskDateStart')) + '</span>' +
+            '<input type="date" id="teStart" value="' + escapeHtml(task.date_start || '') + '"></label>' +
+            '<label class="form-field"><span class="form-label">' + escapeHtml(t('taskDateEnd')) + '</span>' +
+            '<input type="date" id="teEnd" value="' + escapeHtml(task.date_end || '') + '"></label>' +
+            '<p class="form-error" id="teError" hidden></p>' +
+            '<button type="submit" class="btn btn--primary btn--block">' + escapeHtml(t('save')) + '</button>' +
+            '</form>');
+        sheet.querySelector('#taskEditForm').addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            const errEl = sheet.querySelector('#teError');
+            errEl.hidden = true;
+            try {
+                await api.updateTask(task.id, {
+                    title: sheet.querySelector('#teTitle').value.trim(),
+                    description: sheet.querySelector('#teDescr').value.trim() || null,
+                    date_start: sheet.querySelector('#teStart').value || null,
+                    date_end: sheet.querySelector('#teEnd').value || null
+                });
+                toast(t('saved'), 'success');
+                closeSheet();
+                state.tasks = null;
+                await openTaskSheet(task.id);
+            } catch (err) {
+                errEl.textContent = err.message;
+                errEl.hidden = false;
+            }
+        });
     }
 

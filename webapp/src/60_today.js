@@ -1,5 +1,5 @@
     /* ========================================================
-     * 19a. v4: СЕГОДНЯ (работник)
+     * 19a. СЕГОДНЯ (только работник; у руководителя — дашборд, 64_dash.js)
      * ======================================================== */
     async function loadToday() {
         showScreen('loading');
@@ -27,26 +27,17 @@
         // --- карточки заданий на сегодня ---
         const cards = data.tasks.map((tk) => {
             const entered = num(tk.my_hours_today) > 0;
-            const workers = isManager() ? (tk.workers || []).map((w) =>
-                '<span class="chip chip--static">' + escapeHtml(w.name) +
-                (w.hours_today !== null && w.hours_today !== undefined
-                    ? ' ' + escapeHtml(fmtHours(w.hours_today)) + escapeHtml(t('hoursUnit'))
-                    : '') + '</span>'
-            ).join('') : '';
-            const others = isManager() ? [] : (tk.workers || []).filter((w) =>
+            const others = (tk.workers || []).filter((w) =>
                 !(state.user && w.user_id === state.user.id)).map((w) => w.name);
             const coworkers = others.length
                 ? '<div class="today-coworkers" data-testid="coworkers">' +
                   escapeHtml(t('todayCoworkers', { names: others.join(', ') })) + '</div>'
                 : '';
+            // Исправить записанные часы может только руководитель — у работника плашка.
             const action = entered
-                ? (isManager()
-                    ? '<button class="btn btn--ghost btn--block card__enter today-done" data-action="fix-hours" data-id="' + tk.id + '">' +
-                      '✓ ' + escapeHtml(t('todayEntered', { n: fmtHours(tk.my_hours_today) })) +
-                      ' · ' + escapeHtml(t('editTask')) + '</button>'
-                    : '<div class="today-done today-done--plaque" data-testid="today-done">✓ ' +
-                      escapeHtml(t('todayEntered', { n: fmtHours(tk.my_hours_today) })) + '</div>' +
-                      '<p class="today-done__hint">' + escapeHtml(t('todayFixByManager')) + '</p>')
+                ? '<div class="today-done today-done--plaque" data-testid="today-done">✓ ' +
+                  escapeHtml(t('todayEntered', { n: fmtHours(tk.my_hours_today) })) + '</div>' +
+                  '<p class="today-done__hint">' + escapeHtml(t('todayFixByManager')) + '</p>'
                 : '<button class="btn btn--primary btn--block card__enter" data-action="enter-hours" data-id="' + tk.id + '">' +
                   escapeHtml(t('todayEnterHours')) + '</button>';
             return '<div class="card">' +
@@ -54,7 +45,6 @@
                 '<div class="card-sub"><span>' +
                 [tk.client_name, (tk.location_names || []).join(', ')]
                     .filter(Boolean).map(escapeHtml).join(' · ') + '</span></div>' +
-                (workers ? '<div class="chip-row">' + workers + '</div>' : '') +
                 coworkers +
                 action +
                 '</div>';

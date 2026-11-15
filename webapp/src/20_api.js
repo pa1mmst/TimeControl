@@ -51,7 +51,6 @@
         },
         getTasks() { return this.request('/tasks?status=active'); },
         getAllTasks() { return this.request('/tasks'); },
-        getMyEntries() { return this.request('/work-entries'); },
         getEntries(params) {
             return this.request('/work-entries' + (params ? '?' + params : ''));
         },
@@ -102,10 +101,6 @@
         },
         payClose(body) { return this.request('/payroll/close', { method: 'POST', body: body }); },
         createAdvance(body) { return this.request('/payroll/advances', { method: 'POST', body: body }); },
-        reportUser(userId, start, end) {
-            return this.request('/reports/user/' + entry_id(userId) +
-                '?start=' + start + '&end=' + end);
-        },
         // --- v4: агрегатные эндпоинты ---
         meToday() { return this.request('/me/today'); },
         meHistory(from, to) {

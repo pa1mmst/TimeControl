@@ -46,13 +46,13 @@
             showScreen('money');
             return;
         }
-        const kinds = [['month', 'moneyPeriodMonth'], ['prev', 'moneyPeriodPrev']];
-        if (state.payLastEnd) kinds.push(['since-close', 'moneyPeriodSince']);
+        const kinds = [['month', t('moneyPeriodMonth')], ['prev', t('moneyPeriodPrev')]];
+        if (state.payLastEnd) kinds.push(['since-close', t('moneyPeriodSince')]);
         body.innerHTML =
             '<div class="segment money-period">' +
             kinds.map((k) =>
                 '<button class="segment__btn' + (state.payPeriod === k[0] ? ' is-active' : '') +
-                '" data-period="' + k[0] + '">' + escapeHtml(t(k[1])) + '</button>').join('') +
+                '" data-period="' + k[0] + '">' + escapeHtml(k[1]) + '</button>').join('') +
             '</div>' +
             '<div class="money-period__dates muted" data-testid="pay-period"></div>' +
             '<div id="payTable"></div>' +

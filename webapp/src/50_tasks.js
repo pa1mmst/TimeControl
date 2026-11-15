@@ -1,10 +1,8 @@
     /* ========================================================
-     * 10. Список заданий
+     * 10. Список заданий (вкладка руководителя)
      * ======================================================== */
     async function loadTasks() {
         showScreen('tasks');
-        const btnNewTask = $('#btnNewTask');
-        if (btnNewTask) btnNewTask.hidden = !isManager();
         // v5 §3.2: сегменты Активные | Завершённые
         if (!state.tasksSeg) state.tasksSeg = 'active';
         document.querySelectorAll('#tasksSegment .segment__btn').forEach((b) => {
@@ -29,17 +27,13 @@
             tasks = tasks.filter((tk) => tk.status === 'done');
         }
         tasks = sortTasksByTitle(tasks);
-        const newBtn = isManager()
-            ? '<button type="button" class="btn btn--primary btn--block tasks-new" data-action="new-task">' +
-              escapeHtml(t('tasksNewPlus')) + '</button>'
-            : '';
+        const newBtn = '<button type="button" class="btn btn--primary btn--block tasks-new" data-action="new-task">' +
+            escapeHtml(t('tasksNewPlus')) + '</button>';
         if (!tasks.length) {
             setList('tasksList', '<div class="empty"><div class="empty__text">' +
                 escapeHtml(t('tasksNone')) + '</div>' +
-                (isManager()
-                    ? '<button type="button" class="btn btn--primary" data-action="new-task">' +
-                      escapeHtml(t('tasksCreate')) + '</button>'
-                    : '') + '</div>');
+                '<button type="button" class="btn btn--primary" data-action="new-task">' +
+                escapeHtml(t('tasksCreate')) + '</button></div>');
             return;
         }
         setList('tasksList', newBtn + tasks.map((tk) =>

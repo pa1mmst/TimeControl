@@ -1,43 +1,29 @@
     /* ========================================================
-     * 17. ИНВЕНТАРЬ: сегмент внутри экрана «Сотрудники»
+     * 17. ИНВЕНТАРЬ: сегмент экрана «Люди» (руководитель)
+     *     и лист «Мой инвентарь» (работник)
      * ======================================================== */
-    // v5: «Мой инвентарь» из меню ☰ работника — фильтр по держателю=я
-    // (API: /inventory?holder_id=..., app/routers/inventory.py:47).
+    // v5: «Мой инвентарь» из меню ☰ работника — лист снизу. /inventory доступен
+    // только руководителю, поэтому свой список берётся из /me/money.
     async function loadInventoryMine() {
-        if (!isManager()) {
-            const sheet = openSheet('<div data-testid="my-inventory"><p class="screen-message">' +
-                escapeHtml(t('loading')) + '</p></div>');
-            try {
-                // /inventory доступен только руководителю; свой список — в /me/money
-                const mine = await api.meMoney();
-                const items = (mine && mine.inventory) || [];
-                const list = (items || []).length
-                    ? items.map((i) =>
-                        '<div class="row-line"><span>' + escapeHtml(i.name) + '</span></div>').join('')
-                    : '<p class="screen-message">' + escapeHtml(t('moneyNoInventory')) + '</p>';
-                sheet.innerHTML = '<div class="sheet__handle"></div><div data-testid="my-inventory">' +
-                    '<div class="card-title sheet__title">' + escapeHtml(t('myInventory')) + '</div>' +
-                    list +
-                    '<button class="btn btn--ghost btn--block" data-action="close-sheet">' +
-                    escapeHtml(t('close')) + '</button></div>';
-            } catch (err) {
-                sheet.innerHTML = '<div class="sheet__handle"></div><div data-testid="my-inventory">' +
-                    '<p class="screen-message">' + escapeHtml(err.message) + '</p>' +
-                    '<button class="btn btn--ghost btn--block" data-action="close-sheet">' +
-                    escapeHtml(t('close')) + '</button></div>';
-            }
-            return;
-        }
-        showScreen('team');
-        setTeamTab('inventory');
-        const list = $('#inventoryList');
-        if (list) list.innerHTML = '<div class="skeleton skeleton--card"></div>';
+        const sheet = openSheet('<div data-testid="my-inventory"><p class="screen-message">' +
+            escapeHtml(t('loading')) + '</p></div>');
         try {
-            state.inventory = await api.request(
-                '/inventory?holder_id=' + entry_id(state.user.id));
-            renderInventory();
+            const mine = await api.meMoney();
+            const items = (mine && mine.inventory) || [];
+            const list = (items || []).length
+                ? items.map((i) =>
+                    '<div class="row-line"><span>' + escapeHtml(i.name) + '</span></div>').join('')
+                : '<p class="screen-message">' + escapeHtml(t('moneyNoInventory')) + '</p>';
+            sheet.innerHTML = '<div class="sheet__handle"></div><div data-testid="my-inventory">' +
+                '<div class="card-title sheet__title">' + escapeHtml(t('myInventory')) + '</div>' +
+                list +
+                '<button class="btn btn--ghost btn--block" data-action="close-sheet">' +
+                escapeHtml(t('close')) + '</button></div>';
         } catch (err) {
-            setList('inventoryList', '<p class="screen-message">' + escapeHtml(err.message) + '</p>');
+            sheet.innerHTML = '<div class="sheet__handle"></div><div data-testid="my-inventory">' +
+                '<p class="screen-message">' + escapeHtml(err.message) + '</p>' +
+                '<button class="btn btn--ghost btn--block" data-action="close-sheet">' +
+                escapeHtml(t('close')) + '</button></div>';
         }
     }
 
@@ -65,16 +51,14 @@
             '<div class="card-title">' + escapeHtml(i.name) + '</div>' +
             '<div class="card-sub"><span>' + escapeHtml(t('holder')) + ': ' +
             (i.holder ? escapeHtml(i.holder.name) : escapeHtml(t('onStock'))) + '</span></div>' +
-            (isManager()
-                ? '<div class="card-sub">' +
-                  '<button class="btn btn-small" data-action="assign-item" data-id="' + i.id + '">' +
-                  escapeHtml(t('assign')) + '</button>' +
-                  (i.holder
-                      ? '<button class="btn btn-small" data-action="return-item" data-id="' + i.id + '">' +
-                        escapeHtml(t('returnStock')) + '</button>'
-                      : '') +
-                  '</div>'
+            '<div class="card-sub">' +
+            '<button class="btn btn-small" data-action="assign-item" data-id="' + i.id + '">' +
+            escapeHtml(t('assign')) + '</button>' +
+            (i.holder
+                ? '<button class="btn btn-small" data-action="return-item" data-id="' + i.id + '">' +
+                  escapeHtml(t('returnStock')) + '</button>'
                 : '') +
+            '</div>' +
             '</div>'
         ).join(''));
     }

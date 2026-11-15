@@ -1,9 +1,8 @@
     /* ========================================================
-     * 12. ЭКРАН «ВВЕСТИ ЧАСЫ» (полноэкранный; v5 — только руководитель,
+     * 12. ЭКРАН «ЧАСЫ ЗА РАБОТУ» (полноэкранный; только руководитель,
      *     у работника ввод в bottom sheet, см. 13b)
      * ======================================================== */
     async function openHoursEntry(taskId, opts) {
-        if (!isManager()) { openWorkerHoursSheet(taskId, false); return; }
         closeSheet();
         showScreen('hours-entry');
         $('#heError').hidden = true;
@@ -169,7 +168,6 @@
                 }
             }
             toast(t('hoursSaved'), 'success');
-            state.entries = null;
             state.tasks = null;
             // Возврат туда, откуда пришли (экран задания или список); экран
             // перерисовывается и только потом, если нужно, открывается лист

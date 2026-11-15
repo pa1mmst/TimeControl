@@ -1,9 +1,8 @@
     /* ========================================================
-     * 19e. v4: МАТРИЦА ЗАДАНИЯ (руководитель)
+     * 19e. ЭКРАН ЗАДАНИЯ «Часы по дням» (руководитель)
      * ======================================================== */
-    async function openMatrix(taskId, from) {
+    async function openMatrix(taskId) {
         state.matrixTaskId = taskId;
-        state.matrixFrom = from || state.matrixFrom || 'manager-dash';
         const body = $('#matrixBody');
         body.innerHTML = '<div class="skeleton skeleton--card"></div>';
         showScreen('matrix');
@@ -43,5 +42,23 @@
         } catch (err) {
             body.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
         }
+    }
+
+    // Завершение задания с экрана задания: подтверждение Telegram -> «Задания»
+    function finishTaskFromScreen(taskId) {
+        const msg = t('finishConfirm');
+        const run = async (ok) => {
+            if (!ok) return;
+            try {
+                await api.updateTask(taskId, { status: 'done' });
+                toast(t('taskFinished'), 'success');
+                state.tasks = null;
+                await loadTasks();
+            } catch (err) {
+                toast(err.message, 'error');
+            }
+        };
+        if (tg && typeof tg.showConfirm === 'function') tg.showConfirm(msg, run);
+        else run(window.confirm(msg));
     }
 

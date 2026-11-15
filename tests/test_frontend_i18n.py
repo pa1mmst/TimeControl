@@ -1,7 +1,7 @@
 """Словарь Mini App (webapp/i18n.json): каждый ключ, который фронт запрашивает литералом,
-есть в ru, uk и es.
+есть в ru, uk и es, а лишних (никем не запрашиваемых) ключей нет.
 
-Без этого пользователь видит служебное имя ключа (например, «fixNoReason»):
+Без перевода пользователь видит служебное имя ключа (например, «todayFixByManager»):
 t() возвращает сам ключ, если перевода нет.
 Код ищется в исходниках webapp/src/*.js и в webapp/index.html (app.js из них собирается).
 """
@@ -44,6 +44,19 @@ def test_dynamic_prefixes_have_keys():
     for prefix in _dynamic_prefixes():
         for lang in LANGS:
             assert any(k.startswith(prefix) for k in I18N[lang]), (lang, prefix)
+
+
+def test_no_unused_keys():
+    """Лишних ключей нет: каждый ключ словаря код запрашивает — литералом t('ключ'),
+    через data-i18n / data-i18n-placeholder или динамическим префиксом t('status.' + x).
+    Ключ, переданный в t() через переменную, тест не видит — пишите t('ключ') литералом.
+    """
+    used = _literal_keys()
+    prefixes = _dynamic_prefixes()
+    unused = {lang: sorted(k for k in I18N[lang]
+                           if k not in used and not any(k.startswith(p) for p in prefixes))
+              for lang in LANGS}
+    assert unused == {lang: [] for lang in LANGS}, unused
 
 
 def test_languages_have_same_keys():

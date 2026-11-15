@@ -71,9 +71,9 @@
 
             box.innerHTML =
                 '<div class="stat-row stat-row--2">' +
-                statCell(t('repTasksTotal'), total, 0) +
-                statCell(t('repTasksActive'), active, 0) +
-                statCell(t('repTasksDone'), done, 0) +
+                statCell(t('repTasksTotal'), total) +
+                statCell(t('repTasksActive'), active) +
+                statCell(t('repTasksDone'), done) +
                 '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHoursUnit(hours)) + '</span>' +
                 '<span class="stat__label">' + escapeHtml(t('repHoursTotal')) + '</span></div>' +
                 '</div>' +

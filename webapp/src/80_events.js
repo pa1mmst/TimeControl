@@ -3,16 +3,11 @@
      * ======================================================== */
     function bindEvents() {
         if (tg && tg.BackButton) tg.BackButton.onClick(navBack);
+        // Нижние вкладки руководителя: Сегодня · Задания · Деньги
         document.querySelectorAll('.bottom-nav__item[data-nav-target]').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const target = btn.getAttribute('data-nav-target');
                 if (target === 'tasks') loadTasks();
-                else if (target === 'reports') loadReports();
-                else if (target === 'team') loadTeam();
-                else if (target === 'clients') loadClients();
-                // v4
-                else if (target === 'today') loadToday();
-                else if (target === 'history') loadHistory('week');
                 else if (target === 'money') loadMoney();
                 else if (target === 'manager-dash') loadManagerDash();
             });
@@ -47,9 +42,8 @@
                 }
                 else if (action === 'enter-hours') {
                     if (isManager()) openHoursEntry(parseInt(id, 10));
-                    else openWorkerHoursSheet(parseInt(id, 10), false);
+                    else openWorkerHoursSheet(parseInt(id, 10));
                 }
-                else if (action === 'fix-hours') openWorkerHoursSheet(parseInt(id, 10), true);
                 else if (action === 'open-history') { closeSheet(); loadHistory('week'); }
                 else if (action === 'open-money') { closeSheet(); loadMoney(); }
                 else if (action === 'open-inventory') { closeSheet(); loadInventoryMine(); }
@@ -72,8 +66,6 @@
                         parseInt(btn.getAttribute('data-user'), 10));
                 }
                 else if (action === 'return-item') returnItem(parseInt(id, 10));
-                // v4
-                else if (action === 'open-matrix') openMatrix(parseInt(id, 10));
                 else if (action === 'open-user-summary') {
                     openUserSummary(parseInt(btn.getAttribute('data-user'), 10));
                 }
@@ -89,12 +81,10 @@
                 });
                 return;
             }
-            // Тап по карточке задания (кроме кнопки внутри)
+            // Тап по карточке задания (кроме кнопки внутри; карточки — только у руководителя)
             const taskCard = ev.target.closest('[data-task-id]');
             if (taskCard && !ev.target.closest('[data-action]')) {
-                const cardTid = parseInt(taskCard.getAttribute('data-task-id'), 10);
-                if (isManager()) openMatrix(cardTid, state.view);
-                else openTaskSheet(cardTid);
+                openMatrix(parseInt(taskCard.getAttribute('data-task-id'), 10));
                 return;
             }
             const userCard = ev.target.closest('[data-user-id]');
@@ -135,7 +125,6 @@
         document.addEventListener('click', (ev) => {
             const chip = ev.target.closest('[data-chip]');
             if (!chip) return;
-            const kind = chip.getAttribute('data-chip');
             chip.classList.toggle('chip--on');
         });
 
@@ -143,7 +132,7 @@
         const workerMenuBtn = $('#btnWorkerMenu');
         if (workerMenuBtn) workerMenuBtn.addEventListener('click', openWorkerMenu);
         // v5: меню ☰ руководителя (на трёх его экранах)
-        ['#btnManagerMenu', '#btnManagerMenu2', '#btnManagerMenu3', '#btnManagerMenu4'].forEach((sel) => {
+        ['#btnManagerMenu', '#btnManagerMenu3', '#btnManagerMenu4'].forEach((sel) => {
             const btn = $(sel);
             if (btn) btn.addEventListener('click', openManagerMenu);
         });
@@ -228,14 +217,12 @@
             }
         });
 
-        // v4: сегменты «Люди · Инвентарь» на экране «Сотрудники»
+        // v4: сегменты «Люди · Инвентарь» на экране «Люди»
         document.querySelectorAll('#teamSegment .segment__btn').forEach((b) => {
             b.addEventListener('click', () => setTeamTab(b.getAttribute('data-team-tab')));
         });
 
         // Кнопки шапок экранов
-        const newTaskBtn = $('#btnNewTask');
-        if (newTaskBtn) newTaskBtn.addEventListener('click', openNewTask);
         const backNew = $('#btnBackNewTask');
         if (backNew) backNew.addEventListener('click', navBack);
         const addWorkerBtn = $('#btnAddWorker');
