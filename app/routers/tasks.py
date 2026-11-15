@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.bot.notifications import notify_task_assigned, notify_task_changed
 from app.db import get_db
 from app.deps import require_actor, require_manager_dep
+from app.errors import AppError
 from app.models import (
     Client,
     Location,
@@ -52,7 +53,7 @@ router = APIRouter(prefix="/api/tasks", tags=["tasks"])
 def _get_task(task_id: int, db: Session) -> Task:
     task = db.get(Task, task_id)
     if not task:
-        raise HTTPException(404, "Задание не найдено")
+        raise AppError(404, "err_task_not_found")
     return task
 
 
@@ -81,9 +82,9 @@ def create_task(
     # created_by из подписанного initData; поле из тела игнорируем.
     created_by = actor.id
     if not db.get(Client, data.client_id):
-        raise HTTPException(404, "Заказчик не найден")
+        raise AppError(404, "err_client_not_found")
     if not db.get(User, created_by):
-        raise HTTPException(404, "Автор (created_by) не найден")
+        raise AppError(404, "err_author_not_found")
 
     task = Task(
         title=data.title,
@@ -207,14 +208,14 @@ def assign_user(
     task = _get_task(task_id, db)
     user = db.get(User, data.user_id)
     if not user or not user.is_active:
-        raise HTTPException(404, "Сотрудник не найден или деактивирован")
+        raise AppError(404, "err_worker_not_found_or_inactive")
     exists = (
         db.query(TaskAssignment)
         .filter_by(task_id=task.id, user_id=user.id)
         .first()
     )
     if exists:
-        raise HTTPException(400, "Сотрудник уже назначен на это задание")
+        raise AppError(400, "err_worker_already_assigned")
     a = TaskAssignment(task_id=task.id, user_id=user.id)  # group_id=NULL = одиночка
     db.add(a)
     db.commit()
@@ -235,11 +236,11 @@ def move_assignment(
         .first()
     )
     if not a:
-        raise HTTPException(404, "Назначение не найдено")
+        raise AppError(404, "err_assignment_not_found")
     if data.group_id is not None:
         group = db.get(TaskGroup, data.group_id)
         if not group or group.task_id != task_id:
-            raise HTTPException(400, "Группа не найдена на этом задании")
+            raise AppError(400, "err_group_not_in_task")
     a.group_id = data.group_id
     db.commit()
     db.refresh(a)
@@ -258,7 +259,7 @@ def unassign_user(
         .first()
     )
     if not a:
-        raise HTTPException(404, "Назначение не найдено")
+        raise AppError(404, "err_assignment_not_found")
     # Нельзя снять человека, если у него уже есть часы по заданию:
     # иначе отчёты покажут часы "ничьего" участника
     has_hours = (
@@ -267,7 +268,7 @@ def unassign_user(
         .first()
     )
     if has_hours:
-        raise HTTPException(400, "У сотрудника уже есть часы по заданию — снять нельзя")
+        raise AppError(400, "err_unassign_has_hours")
     # Учётчика сначала нужно заменить или распустить его группу
     is_reporter = (
         db.query(TaskGroup)
@@ -275,7 +276,7 @@ def unassign_user(
         .first()
     )
     if is_reporter:
-        raise HTTPException(400, "Сотрудник — учётчик группы. Сначала распустите группу")
+        raise AppError(400, "err_unassign_is_reporter")
     db.delete(a)
     db.commit()
     return {"ok": True}
@@ -327,7 +328,7 @@ def delete_group(
     """Распустить группу: участники остаются на задании как одиночки."""
     group = db.get(TaskGroup, group_id)
     if not group or group.task_id != task_id:
-        raise HTTPException(404, "Группа не найдена")
+        raise AppError(404, "err_group_not_found")
     for a in group.members:
         a.group_id = None
     db.delete(group)

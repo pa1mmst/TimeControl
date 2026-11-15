@@ -10,15 +10,17 @@
 проверяется вручную — иначе при отсутствии заголовка FastAPI вернул бы
 422 вместо 401.
 """
-from fastapi import Depends, Header, HTTPException
+from fastapi import Depends, Header, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.auth import tg_id_from_init_data
 from app.db import get_db  # реэкспорт, чтобы импорт из app.deps работал везде
+from app.errors import AppError
 from app.models import User
 
 
 def require_actor(
+    request: Request,
     x_telegram_init_data: str | None = Header(None, alias="X-Telegram-Init-Data"),
     db: Session = Depends(get_db),
 ) -> User:
@@ -29,11 +31,12 @@ def require_actor(
     user = db.query(User).filter(User.tg_id == tg_id).first()
     if not user or not user.is_active:
         raise HTTPException(401, "Пользователь не зарегистрирован или деактивирован")
+    request.state.lang = user.lang  # язык для текстов ошибок (app/errors.py)
     return user
 
 
 def require_manager_dep(actor: User = Depends(require_actor)) -> User:
     """Эндпоинты руководителя: actor обязан быть is_manager, иначе 403."""
     if not actor.is_manager:
-        raise HTTPException(403, "Доступно только руководителю")
+        raise AppError(403, "err_manager_only")
     return actor

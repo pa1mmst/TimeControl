@@ -11,13 +11,14 @@
 from datetime import date, timedelta
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from app.db import get_db
 from app.deps import require_actor, require_manager_dep
+from app.errors import AppError
 from app.models import (
     Advance,
     AuditLog,
@@ -356,14 +357,14 @@ def task_matrix(
 ):
     task = db.get(Task, task_id)
     if not task:
-        raise HTTPException(404, "Задание не найдено")
+        raise AppError(404, "err_task_not_found")
     if not task.date_start:
-        raise HTTPException(400, "У задания не задана дата начала")
+        raise AppError(400, "err_task_no_start")
 
     today = today_local()
     end = min(task.date_end, today) if task.date_end else today
     if end < task.date_start:
-        raise HTTPException(400, "Задание ещё не началось")
+        raise AppError(400, "err_task_not_started")
     dates = [
         task.date_start + timedelta(days=i)
         for i in range((end - task.date_start).days + 1)
@@ -428,7 +429,7 @@ def user_summary(
 ):
     user = db.get(User, user_id)
     if not user:
-        raise HTTPException(404, "Сотрудник не найден")
+        raise AppError(404, "err_worker_not_found")
 
     start = _open_period_start(db, user.id)
     money = _money_for(db, user, start)

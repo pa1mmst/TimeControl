@@ -30,3 +30,10 @@ def t(lang, key: str, **kwargs) -> str:
         return text
     safe = {k: html.escape(str(v), quote=False) for k, v in kwargs.items()}
     return text.format(**safe)
+
+
+def t_plain(lang, key: str, **kwargs) -> str:
+    """Как t(), но без HTML-экранирования: для detail в JSON-ответах API."""
+    code = getattr(lang, "value", lang) or _DEFAULT
+    text = _load(code).get(key) or _load(_DEFAULT).get(key) or key
+    return text.format(**kwargs) if kwargs else text

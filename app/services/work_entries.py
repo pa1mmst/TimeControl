@@ -17,6 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.bot.notifications import notify_hours_corrected
+from app.errors import AppError
 from app.models import (
     Task,
     TaskAssignment,
@@ -31,13 +32,8 @@ from app.services.audit import history_for, log_change
 ENTITY = "work_entries"
 
 
-class WorkEntryError(Exception):
-    """Бизнес-ошибка. Роутер превращает её в HTTP-ответ."""
-
-    def __init__(self, status_code: int, detail: str):
-        self.status_code = status_code
-        self.detail = detail
-        super().__init__(detail)
+class WorkEntryError(AppError):
+    """Бизнес-ошибка с ключом перевода (текст — на языке пользователя)."""
 
 
 # ---------- внутренние проверки ----------
@@ -45,9 +41,9 @@ class WorkEntryError(Exception):
 def _get_task_for_work(db: Session, task_id: int) -> Task:
     task = db.get(Task, task_id)
     if task is None:
-        raise WorkEntryError(404, "Задание не найдено")
+        raise WorkEntryError(404, "err_task_not_found")
     if task.status != TaskStatus.active:
-        raise WorkEntryError(409, "Часы можно вносить только по активному заданию")
+        raise WorkEntryError(409, "err_hours_active_task_only")
     return task
 
 
@@ -59,7 +55,7 @@ def _check_assignment(db: Session, task_id: int, user_id: int) -> None:
         )
     ).first()
     if not ok:
-        raise WorkEntryError(409, "Сотрудник не назначен на это задание")
+        raise WorkEntryError(409, "err_not_assigned")
 
 
 def _check_location(db: Session, task_id: int, location_id: int | None) -> None:
@@ -72,7 +68,7 @@ def _check_location(db: Session, task_id: int, location_id: int | None) -> None:
         )
     ).first()
     if not ok:
-        raise WorkEntryError(409, "Локация не привязана к этому заданию")
+        raise WorkEntryError(409, "err_location_not_in_task")
 
 
 def _entry_exists(db: Session, user_id: int, task_id: int, work_date: date) -> bool:
@@ -127,23 +123,17 @@ def create_entry(
             )
         ).first()
         if not allowed:
-            raise WorkEntryError(
-                403, "Создавать записи за другого может только руководитель "
-                     "или учётчик группы этого сотрудника"
-            )
+            raise WorkEntryError(403, "err_create_for_other")
 
     target = db.get(User, target_id)
     if target is None or not target.is_active:
-        raise WorkEntryError(404, "Сотрудник не найден или деактивирован")
+        raise WorkEntryError(404, "err_worker_not_found_or_inactive")
 
     _get_task_for_work(db, task_id)
     _check_assignment(db, task_id, target_id)
     _check_location(db, task_id, location_id)
     if _entry_exists(db, target_id, task_id, work_date):
-        raise WorkEntryError(
-            409, "Запись за этот день по этому заданию уже существует. "
-                 "Изменить часы может руководитель."
-        )
+        raise WorkEntryError(409, "err_entry_exists")
 
     entry = _new_entry(
         db, user=target, task_id=task_id, work_date=work_date,
@@ -155,10 +145,7 @@ def create_entry(
         # Гонка при двойном нажатии/офлайн-синке: уникальность БД
         # (uq_we_user_task_date) сработала раньше проверки в коде (аудит, п.27).
         db.rollback()
-        raise WorkEntryError(
-            409, "Запись за этот день по этому заданию уже существует. "
-                 "Изменить часы может руководитель."
-        ) from None
+        raise WorkEntryError(409, "err_entry_exists") from None
     db.refresh(entry)
     return entry
 
@@ -180,9 +167,9 @@ def create_group_entries(
 
     group = db.get(TaskGroup, group_id)
     if group is None:
-        raise WorkEntryError(404, "Группа не найдена")
+        raise WorkEntryError(404, "err_group_not_found")
     if actor.id != group.reporter_id and not actor.is_manager:
-        raise WorkEntryError(403, "Вводить часы за группу может её учётчик или руководитель")
+        raise WorkEntryError(403, "err_group_hours_forbidden")
 
     _get_task_for_work(db, group.task_id)
     _check_location(db, group.task_id, location_id)
@@ -193,7 +180,7 @@ def create_group_entries(
         .where(TaskAssignment.group_id == group_id)
     ).scalars().all()
     if not members:
-        raise WorkEntryError(409, "В группе нет участников")
+        raise WorkEntryError(409, "err_group_empty")
 
     created: list[WorkEntry] = []
     skipped: list[dict] = []
@@ -215,11 +202,7 @@ def create_group_entries(
         # Гонка при офлайн-синке: часть записей уже создана параллельным
         # запросом — уникальность БД (uq_we_user_task_date) отклонила вставку.
         db.rollback()
-        raise WorkEntryError(
-            409,
-            "Часть записей уже существует (конфликт при синхронизации). "
-            "Повторите отправку — существующие записи будут пропущены.",
-        ) from None
+        raise WorkEntryError(409, "err_sync_conflict") from None
     for e in created:
         db.refresh(e)
     return created, skipped
@@ -235,15 +218,15 @@ def update_hours(
     в одной транзакции. Прямые UPDATE в обход этой функции запрещены.
     """
     if not actor.is_manager:
-        raise WorkEntryError(403, "Изменять часы может только руководитель")
+        raise WorkEntryError(403, "err_edit_manager_only")
 
     entry = db.get(WorkEntry, entry_id)
     if entry is None:
-        raise WorkEntryError(404, "Запись не найдена")
+        raise WorkEntryError(404, "err_entry_not_found")
 
     old = entry.hours
     if Decimal(old) == new_hours:
-        raise WorkEntryError(409, "Новое значение совпадает с текущим")
+        raise WorkEntryError(409, "err_same_value")
 
     entry.hours = new_hours
     log_change(
@@ -267,9 +250,9 @@ def update_hours(
 def get_entry(db: Session, *, actor: User, entry_id: int) -> WorkEntry:
     entry = db.get(WorkEntry, entry_id)
     if entry is None:
-        raise WorkEntryError(404, "Запись не найдена")
+        raise WorkEntryError(404, "err_entry_not_found")
     if entry.user_id != actor.id and not actor.is_manager:
-        raise WorkEntryError(403, "Нет доступа к чужой записи")
+        raise WorkEntryError(403, "err_entry_foreign")
     return entry
 
 
@@ -289,7 +272,7 @@ def list_entries(
         effective_user_id = user_id
     else:
         if user_id is not None and user_id != actor.id:
-            raise WorkEntryError(403, "Доступны только собственные записи")
+            raise WorkEntryError(403, "err_own_entries_only")
         effective_user_id = actor.id
 
     q = select(WorkEntry)
@@ -311,9 +294,9 @@ def task_summary(db: Session, *, actor: User, task_id: int) -> dict:
     по людям, по группам ввода и итог. Только руководитель.
     """
     if not actor.is_manager:
-        raise WorkEntryError(403, "Сводка по заданию доступна только руководителю")
+        raise WorkEntryError(403, "err_task_summary_manager_only")
     if db.get(Task, task_id) is None:
-        raise WorkEntryError(404, "Задание не найдено")
+        raise WorkEntryError(404, "err_task_not_found")
 
     # по людям (+ начислено по снимку ставки)
     by_user_rows = db.execute(

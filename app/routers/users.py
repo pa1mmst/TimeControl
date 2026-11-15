@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.deps import require_manager_dep
+from app.errors import AppError
 from app.models import User
 from app.schemas import UserCreate, UserOut, UserUpdate
 from app.services.audit import log_change
@@ -51,7 +52,7 @@ def list_users(include_inactive: bool = False, db: Session = Depends(get_db)):
 def get_user(user_id: int, db: Session = Depends(get_db)):
     user = db.get(User, user_id)
     if not user:
-        raise HTTPException(404, "Сотрудник не найден")
+        raise AppError(404, "err_worker_not_found")
     return user
 
 
@@ -70,7 +71,7 @@ def update_user(
     """
     user = db.get(User, user_id)
     if not user:
-        raise HTTPException(404, "Сотрудник не найден")
+        raise AppError(404, "err_worker_not_found")
     # exclude_unset: трогаем только присланные поля
     for field, value in data.model_dump(exclude_unset=True).items():
         old = getattr(user, field)
@@ -99,9 +100,9 @@ def deactivate_user(
     """
     user = db.get(User, user_id)
     if not user:
-        raise HTTPException(404, "Сотрудник не найден")
+        raise AppError(404, "err_worker_not_found")
     if actor.id == user_id:
-        raise HTTPException(400, "Нельзя деактивировать самого себя")
+        raise AppError(400, "err_deactivate_self")
     if user.is_manager and user.is_active:
         active_managers = (
             db.query(User)

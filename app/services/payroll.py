@@ -14,6 +14,7 @@ from decimal import Decimal
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.errors import AppError
 from app.models import (
     Advance,
     AuditLog,
@@ -81,9 +82,9 @@ def close_period(db: Session, start: date, end: date) -> list[Payout]:
     )
     if overlapping:
         busy = sorted({p.user_id for p in overlapping})
-        raise ValueError(
-            f"Период пересекается с уже закрытыми выплатами сотрудников: {busy}"
-        )
+        names = [u.name for u in
+                 db.query(User).filter(User.id.in_(busy)).order_by(User.name)]
+        raise AppError(400, "err_period_overlap", names=", ".join(names))
 
     payouts = []
     for row in preview_period(db, start, end):

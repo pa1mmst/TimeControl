@@ -4,11 +4,12 @@
 router-level dependency require_manager_dep; actor из подписанного initData.
 Изменения фиксируются в журнале (log_change).
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.deps import require_manager_dep
+from app.errors import AppError
 from app.models import InventoryItem, User
 from app.schemas import InventoryCreate, InventoryOut, InventoryUpdate
 from app.services.audit import log_change
@@ -24,7 +25,7 @@ def _check_holder(holder_id: int | None, db: Session):
     if holder_id is not None:
         u = db.get(User, holder_id)
         if not u or not u.is_active:
-            raise HTTPException(404, "Сотрудник не найден или деактивирован")
+            raise AppError(404, "err_worker_not_found_or_inactive")
 
 
 @router.post("", response_model=InventoryOut)
@@ -71,7 +72,7 @@ def update_item(
     (прислать "holder_id": null)."""
     item = db.get(InventoryItem, item_id)
     if not item:
-        raise HTTPException(404, "Предмет не найден")
+        raise AppError(404, "err_item_not_found")
     payload = data.model_dump(exclude_unset=True)
     if "holder_id" in payload:
         _check_holder(payload["holder_id"], db)
@@ -97,7 +98,7 @@ def delete_item(
     """Списать предмет (сломался/потерян). История по SPEC п.20 не нужна."""
     item = db.get(InventoryItem, item_id)
     if not item:
-        raise HTTPException(404, "Предмет не найден")
+        raise AppError(404, "err_item_not_found")
     name = item.name
     db.delete(item)
     log_change(

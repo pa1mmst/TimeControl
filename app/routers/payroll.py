@@ -7,11 +7,12 @@ initData, actor_id из тела запроса игнорируется (схе
 """
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.deps import require_manager_dep
+from app.errors import AppError
 from app.models import Advance, AuditLog, Payout, User
 from app.schemas import (
     AdvanceCreate,
@@ -40,7 +41,7 @@ def create_advance(
     actor: User = Depends(require_manager_dep),
 ):
     if not db.get(User, data.user_id):
-        raise HTTPException(404, "Сотрудник не найден")
+        raise AppError(404, "err_worker_not_found")
     payload = data.model_dump()
     # Actor из подписанного initData; поле created_by из тела игнорируем.
     payload["created_by"] = actor.id
@@ -77,7 +78,7 @@ def update_advance(
 ):
     a = db.get(Advance, advance_id)
     if not a:
-        raise HTTPException(404, "Аванс не найден")
+        raise AppError(404, "err_advance_not_found")
     # Аванс, уже учтённый в закрытом периоде, менять нельзя —
     # иначе payout и реальность разойдутся
     locked = (
@@ -90,7 +91,7 @@ def update_advance(
         .first()
     )
     if locked:
-        raise HTTPException(400, "Аванс уже учтён в закрытом периоде выплат")
+        raise AppError(400, "err_advance_in_closed")
 
     payload = data.model_dump(exclude_unset=True)
     payload.pop("actor_id", None)  # actor_id из тела игнорируем
@@ -125,13 +126,8 @@ def close_period(
 ):
     """Зафиксировать период: создаёт payout каждому сотруднику."""
     if data.period_end < data.period_start:
-        raise HTTPException(400, "Конец периода раньше начала")
-    try:
-        return payroll_service.close_period(
-            db, data.period_start, data.period_end
-        )
-    except ValueError as e:
-        raise HTTPException(400, str(e))
+        raise AppError(400, "err_date_end_before_start")
+    return payroll_service.close_period(db, data.period_start, data.period_end)
 
 
 # ---------- Выплаты ----------
@@ -159,7 +155,7 @@ def update_payout_status(
 ):
     p = db.get(Payout, payout_id)
     if not p:
-        raise HTTPException(404, "Выплата не найдена")
+        raise AppError(404, "err_payout_not_found")
     # Actor из подписанного initData; actor_id из тела игнорируем.
     effective_actor_id = actor.id
     return payroll_service.set_payout_status(db, p, data.status, effective_actor_id)

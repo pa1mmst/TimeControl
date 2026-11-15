@@ -6,7 +6,7 @@ Depends(require_actor). Разграничение работник/руково
 """
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.deps import get_db, require_actor
@@ -21,16 +21,13 @@ from app.schemas.work_entries import (
     WorkEntryUpdate,
 )
 from app.services import work_entries as svc
-from app.services.work_entries import WorkEntryError
 
 router = APIRouter(prefix="/work-entries", tags=["work-entries"])
 
 
 def _handle(fn, *args, **kwargs):
-    try:
-        return fn(*args, **kwargs)
-    except WorkEntryError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    # WorkEntryError — это AppError: обработчик сам соберёт detail на языке пользователя.
+    return fn(*args, **kwargs)
 
 
 @router.post("", response_model=WorkEntryOut, status_code=201)

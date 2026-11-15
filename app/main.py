@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.bot.router import router as bot_router
 from app.bot.telegram import setup_webhook
+from app.errors import AppError, app_error_handler
 from app.routers import (
     aggregates,
     clients,
@@ -43,6 +44,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_exception_handler(AppError, app_error_handler)
 app.include_router(miniapp.router)
 app.include_router(users.router)
 app.include_router(clients.router)

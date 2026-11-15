@@ -5,11 +5,12 @@
 """
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.deps import require_manager_dep
+from app.errors import AppError
 from app.services.reports import (
     client_report,
     location_report,
@@ -35,7 +36,7 @@ def report_user(
     """Сколько часов, за какие дни, где, сколько заработал, статус выплат."""
     data = user_report(db, user_id, start, end)
     if data is None:
-        raise HTTPException(404, "Сотрудник не найден")
+        raise AppError(404, "err_worker_not_found")
     return data
 
 
@@ -44,7 +45,7 @@ def report_task(task_id: int, db: Session = Depends(get_db)):
     """Кто назначен, группы/учётчики, часы по людям и всего (SPEC п.11)."""
     data = task_report(db, task_id)
     if data is None:
-        raise HTTPException(404, "Задание не найдено")
+        raise AppError(404, "err_task_not_found")
     return data
 
 
@@ -58,7 +59,7 @@ def report_location(
     """Какие задания, какие люди, сколько часов на этом месте."""
     data = location_report(db, location_id, start, end)
     if data is None:
-        raise HTTPException(404, "Локация не найдена")
+        raise AppError(404, "err_location_not_found")
     return data
 
 
@@ -72,5 +73,5 @@ def report_client(
     """Все локации, задания, люди и общее число часов заказчика (SPEC п.18)."""
     data = client_report(db, client_id, start, end)
     if data is None:
-        raise HTTPException(404, "Заказчик не найден")
+        raise AppError(404, "err_client_not_found")
     return data

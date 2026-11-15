@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.deps import require_manager_dep
+from app.errors import AppError
 from app.models import Client, Location, TaskLocation, User, WorkEntry
 from app.schemas import (
     ClientCreate,
@@ -60,7 +61,7 @@ def list_clients(include_inactive: bool = False, db: Session = Depends(get_db)):
 def get_client(client_id: int, db: Session = Depends(get_db)):
     client = db.get(Client, client_id)
     if not client:
-        raise HTTPException(404, "Заказчик не найден")
+        raise AppError(404, "err_client_not_found")
     return client
 
 
@@ -73,7 +74,7 @@ def update_client(
 ):
     client = db.get(Client, client_id)
     if not client:
-        raise HTTPException(404, "Заказчик не найден")
+        raise AppError(404, "err_client_not_found")
     for field, value in data.model_dump(exclude_unset=True).items():
         old = getattr(client, field)
         if str(old) != str(value):
@@ -97,7 +98,7 @@ def create_location(
     actor: User = Depends(require_manager_dep),
 ):
     if not db.get(Client, client_id):
-        raise HTTPException(404, "Заказчик не найден")
+        raise AppError(404, "err_client_not_found")
     loc = Location(client_id=client_id, **data.model_dump())
     db.add(loc)
     db.flush()
@@ -113,7 +114,7 @@ def create_location(
 @router.get("/{client_id}/locations", response_model=list[LocationOut])
 def list_locations(client_id: int, db: Session = Depends(get_db)):
     if not db.get(Client, client_id):
-        raise HTTPException(404, "Заказчик не найден")
+        raise AppError(404, "err_client_not_found")
     return (
         db.query(Location)
         .filter(Location.client_id == client_id)
@@ -130,7 +131,7 @@ def update_location(
 ):
     loc = db.get(Location, location_id)
     if not loc or loc.client_id != client_id:
-        raise HTTPException(404, "Локация не найдена")
+        raise AppError(404, "err_location_not_found")
     for field, value in data.model_dump(exclude_unset=True).items():
         old = getattr(loc, field)
         if str(old) != str(value):
@@ -155,7 +156,7 @@ def delete_location(
     иначе история часов потеряет место работы."""
     loc = db.get(Location, location_id)
     if not loc or loc.client_id != client_id:
-        raise HTTPException(404, "Локация не найдена")
+        raise AppError(404, "err_location_not_found")
     used = db.execute(
         select(WorkEntry.id).where(WorkEntry.location_id == location_id)
     ).first()

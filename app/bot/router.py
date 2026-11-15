@@ -155,7 +155,7 @@ def _handle_hours(db: Session, user: User, text: str) -> str | dict:
                            id=tk.id, task=tk.title))
         return "\n".join(lines)
     except WorkEntryError as e:
-        return t(user.lang, "entry_error", detail=e.detail)
+        return t(user.lang, "entry_error", detail=e.render(user.lang))
 
 
 # ---------- привязка аккаунта по телефону ----------
@@ -185,7 +185,7 @@ def _handle_contact(db: Session, tg_id: int, contact: dict, from_user: dict) -> 
     lang = (from_user.get("language_code") or "ru")[:2]
     lang = lang if lang in ("ru", "uk", "es") else "ru"
     name = (contact.get("first_name") or from_user.get("first_name")
-            or from_user.get("username") or "Без имени")
+            or from_user.get("username") or t(lang, "no_name"))
     phone = contact.get("phone_number") or ""
 
     existing = db.execute(
@@ -265,9 +265,19 @@ def _handle_pick_callback(db: Session, cbq: dict, data: str) -> None:
             text = t(user.lang, "saved_pick", hours=_hours_str(hours),
                      task=task.title)
         except WorkEntryError as e:
-            text = t(user.lang, "entry_error", detail=e.detail)
+            text = t(user.lang, "entry_error", detail=e.render(user.lang))
     _answer_callback(cbq, html.unescape(text)[:200])
     send_message(chat_id, text)
+
+
+def _callback_lang(db: Session, cbq: dict) -> str:
+    """Язык ответа на кнопку: язык известного пользователя, иначе язык клиента Telegram."""
+    frm = cbq.get("from") or {}
+    user = db.execute(select(User).where(User.tg_id == frm.get("id"))).scalar_one_or_none()
+    if user is not None:
+        return user.lang.value
+    code = (frm.get("language_code") or "ru")[:2]
+    return code if code in ("ru", "uk", "es") else "ru"
 
 
 def _handle_callback(db: Session, cbq: dict) -> None:
@@ -289,12 +299,12 @@ def _handle_callback(db: Session, cbq: dict) -> None:
                            User.is_active.is_(True))
     ).scalar_one_or_none()
     if manager is None:
-        _answer_callback(cbq, "❌ Решать заявки может только руководитель")
+        _answer_callback(cbq, t(_callback_lang(db, cbq), "cb_manager_only"))
         return
 
     req = db.get(AccessRequest, int(req_id))
     if req is None or req.status != AccessRequestStatus.pending:
-        _answer_callback(cbq, "Заявка уже обработана")
+        _answer_callback(cbq, t(manager.lang, "cb_already_processed"))
         return
 
     if action == "approve":
@@ -307,7 +317,7 @@ def _handle_callback(db: Session, cbq: dict) -> None:
         req.decided_at = datetime.now(UTC).replace(tzinfo=None)
         req.decided_by = manager.id
         db.commit()
-        _answer_callback(cbq, "✅ Одобрено")
+        _answer_callback(cbq, t(manager.lang, "cb_approved"))
         send_message(req.tg_id, t(req.lang, "approved_ok"))
         send_message(
             from_tg,
@@ -318,7 +328,7 @@ def _handle_callback(db: Session, cbq: dict) -> None:
         req.decided_at = datetime.now(UTC).replace(tzinfo=None)
         req.decided_by = manager.id
         db.commit()
-        _answer_callback(cbq, "❌ Отклонено")
+        _answer_callback(cbq, t(manager.lang, "cb_rejected"))
         send_message(req.tg_id, t(req.lang, "rejected_info"))
         send_message(
             from_tg,
