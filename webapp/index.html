@@ -123,7 +123,7 @@
             <!-- Экран: деньги руководителя (вкладки: Выплаты | Отчёты) -->
             <section class="screen" id="screenReports" data-screen-name="reports" hidden>
                 <div class="screen-header">
-                    <h2 data-i18n="moneyTitle">Деньги</h2>
+                    <h2 data-i18n="reportsTitle">Отчёты</h2>
                     <button class="icon-btn" id="btnManagerMenu2" aria-label="Меню" hidden>☰</button>
                 </div>
                 <div class="segment" id="reportsSegment">
@@ -239,7 +239,10 @@
 
             <!-- Экран: деньги (v4) -->
             <section class="screen" id="screenMoney" data-screen-name="money" hidden>
-                <h2 data-i18n="moneyTitle">Деньги</h2>
+                <div class="screen-header">
+                    <h2 data-i18n="moneyTitle">Деньги</h2>
+                    <button class="icon-btn" id="btnManagerMenu4" aria-label="Меню" hidden>☰</button>
+                </div>
                 <div id="moneyBody"></div>
             </section>
 

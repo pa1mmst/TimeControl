@@ -213,6 +213,27 @@
             'histEmpty': 'Записей за период нет',
             'histCorrected': 'Исправлено',
             'moneyTitle': 'Деньги',
+            'moneyPeriodMonth': 'Этот месяц',
+            'moneyPeriodPrev': 'Прошлый месяц',
+            'moneyPeriodSince': 'С последнего закрытия',
+            'moneyColPerson': 'Человек',
+            'moneyColHours': 'Часы',
+            'moneyColEarned': 'Заработано',
+            'moneyColAdv': 'Авансы',
+            'moneyColNet': 'К выплате',
+            'moneyTotalRow': 'Итого',
+            'moneyEmptyPeriod': 'За этот период нет часов и авансов',
+            'moneyGiveAdvance': 'Выдать аванс',
+            'moneyCloseBtn': 'Закрыть расчёт',
+            'advWho': 'Кому',
+            'advAmountLabel': 'Сумма, €',
+            'advDateLabel': 'Дата',
+            'advAmountError': 'Введите сумму больше нуля',
+            'advSaved': 'Аванс выдан',
+            'moneyCloseEmpty': 'Нечего закрывать: за период нет часов и авансов',
+            'moneyCloseConfirm': 'Закрыть расчёт за {period}: {n} чел., {sum}? После закрытия суммы за этот период изменить нельзя.',
+            'moneyClosed': 'Расчёт закрыт',
+            'reportsTitle': 'Отчёты',
             'moneyPeriod': 'Период с {d}',
             'moneyHours': 'Часы', 'moneyEarned': 'Начислено',
             'moneyAdvances': 'Аванс', 'moneyToPay': 'К выплате',
@@ -407,6 +428,27 @@
             'histEmpty': 'Записів за період немає',
             'histCorrected': 'Виправлено',
             'moneyTitle': 'Гроші',
+            'moneyPeriodMonth': 'Цей місяць',
+            'moneyPeriodPrev': 'Минулий місяць',
+            'moneyPeriodSince': 'Від останнього закриття',
+            'moneyColPerson': 'Людина',
+            'moneyColHours': 'Години',
+            'moneyColEarned': 'Зароблено',
+            'moneyColAdv': 'Аванси',
+            'moneyColNet': 'До виплати',
+            'moneyTotalRow': 'Разом',
+            'moneyEmptyPeriod': 'За цей період немає годин і авансів',
+            'moneyGiveAdvance': 'Видати аванс',
+            'moneyCloseBtn': 'Закрити розрахунок',
+            'advWho': 'Кому',
+            'advAmountLabel': 'Сума, €',
+            'advDateLabel': 'Дата',
+            'advAmountError': 'Введіть суму більше нуля',
+            'advSaved': 'Аванс видано',
+            'moneyCloseEmpty': 'Нічого закривати: за період немає годин і авансів',
+            'moneyCloseConfirm': 'Закрити розрахунок за {period}: {n} осіб, {sum}? Після закриття суми за цей період змінити не можна.',
+            'moneyClosed': 'Розрахунок закрито',
+            'reportsTitle': 'Звіти',
             'moneyPeriod': 'Період з {d}',
             'moneyHours': 'Години', 'moneyEarned': 'Нараховано',
             'moneyAdvances': 'Аванс', 'moneyToPay': 'До виплати',
@@ -601,6 +643,27 @@
             'histEmpty': 'Sin registros en el período',
             'histCorrected': 'Corregido',
             'moneyTitle': 'Dinero',
+            'moneyPeriodMonth': 'Este mes',
+            'moneyPeriodPrev': 'Mes anterior',
+            'moneyPeriodSince': 'Desde el último cierre',
+            'moneyColPerson': 'Persona',
+            'moneyColHours': 'Horas',
+            'moneyColEarned': 'Ganado',
+            'moneyColAdv': 'Adelantos',
+            'moneyColNet': 'A pagar',
+            'moneyTotalRow': 'Total',
+            'moneyEmptyPeriod': 'No hay horas ni adelantos en este período',
+            'moneyGiveAdvance': 'Dar adelanto',
+            'moneyCloseBtn': 'Cerrar liquidación',
+            'advWho': 'Para quién',
+            'advAmountLabel': 'Importe, €',
+            'advDateLabel': 'Fecha',
+            'advAmountError': 'Introduce un importe mayor que cero',
+            'advSaved': 'Adelanto entregado',
+            'moneyCloseConfirm': '¿Cerrar la liquidación de {period}: {n} pers., {sum}? Tras el cierre no se podrán cambiar los importes de este período.',
+            'moneyCloseEmpty': 'Nada que cerrar: no hay horas ni adelantos en el período',
+            'moneyClosed': 'Liquidación cerrada',
+            'reportsTitle': 'Informes',
             'moneyPeriod': 'Período desde {d}',
             'moneyHours': 'Horas', 'moneyEarned': 'Acumulado',
             'moneyAdvances': 'Adelanto', 'moneyToPay': 'A pagar',
@@ -1026,7 +1089,7 @@
         // v5: ☰ руководителя виден на его трёх вкладках
         const mgrMenu = isManager() &&
             ['manager-dash', 'tasks', 'money'].indexOf(name) !== -1;
-        ['#btnManagerMenu', '#btnManagerMenu2', '#btnManagerMenu3'].forEach((sel) => {
+        ['#btnManagerMenu', '#btnManagerMenu2', '#btnManagerMenu3', '#btnManagerMenu4'].forEach((sel) => {
             const btn = $(sel);
             if (btn) btn.hidden = !mgrMenu;
         });
@@ -1639,6 +1702,8 @@
             escapeHtml(t('menuPeople')) + ' ›</button>' +
             '<button class="btn btn--ghost btn--block" data-action="open-clients">' +
             escapeHtml(t('menuClients')) + ' ›</button>' +
+            '<button class="btn btn--ghost btn--block" data-action="open-reports">' +
+            escapeHtml(t('moneyOpenReports')) + ' ›</button>' +
             '<div class="form-field"><span class="form-label">' +
             escapeHtml(t('language')) + '</span>' +
             '<select id="menuLang" class="lang-select">' +
@@ -1902,13 +1967,9 @@
             periodPickerHtml(start, end) +
             '<div class="form-row">' +
             '<button class="btn btn--primary" data-action="pay-preview">' + escapeHtml(t('payPreview')) + '</button>' +
-            '<button class="btn btn--danger" data-action="pay-close">' + escapeHtml(t('payClose')) + '</button>' +
             '</div>' +
-            '<div id="payData"></div>' +
-            '<h3 class="sheet__h3">' + escapeHtml(t('payAdvance')) + '</h3>' +
-            '<div id="advData"></div>';
+            '<div id="payData"></div>';
         await refreshPayPreview();
-        renderAdvanceForm();
     }
 
     async function refreshPayPreview() {
@@ -1931,65 +1992,6 @@
             ).join('');
         } catch (err) {
             box.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
-        }
-    }
-
-    async function closePayroll() {
-        const start = $('#repStart').value;
-        const end = $('#repEnd').value;
-        if (!start || !end) return;
-        const sheet = openSheet(
-            '<p class="screen-message">' + escapeHtml(
-                t('payCloseConfirm', { start: start, end: end })) + '</p>' +
-            '<div class="sheet__actions">' +
-            '<button class="btn btn--primary btn--block" data-action="pay-close-yes">' + escapeHtml(t('payClose')) + '</button>' +
-            '<button class="btn btn--ghost btn--block" data-action="close-sheet">' + escapeHtml(t('cancel')) + '</button>' +
-            '</div>');
-    }
-
-    async function closePayrollYes() {
-        const start = $('#repStart').value;
-        const end = $('#repEnd').value;
-        try {
-            const payouts = await api.payClose({
-                period_start: start, period_end: end, created_by: state.user.id
-            });
-            toast(t('payrollClosed') + ' (' + (payouts ? payouts.length : 0) + ')', 'success');
-            closeSheet();
-            await refreshPayPreview();
-        } catch (err) {
-            closeSheet();
-            toast(err.message, 'error');
-        }
-    }
-
-    function renderAdvanceForm() {
-        const box = $('#advData');
-        const users = state.users || [];
-        box.innerHTML =
-            '<div class="form-row">' +
-            '<select id="advUser">' +
-            users.map((u) => '<option value="' + u.id + '">' + escapeHtml(u.name) + '</option>').join('') +
-            '</select>' +
-            '<input type="number" id="advAmount" min="0" step="0.01" placeholder="0.00">' +
-            '</div>' +
-            '<button class="btn btn--ghost btn--block" data-action="pay-advance">' + escapeHtml(t('payAdvance')) + '</button>';
-    }
-
-    async function createAdvance() {
-        const userId = parseInt($('#advUser').value, 10);
-        const amount = parseFloat($('#advAmount').value);
-        if (!userId || !(amount > 0)) return;
-        try {
-            await api.createAdvance({
-                user_id: userId, amount: amount.toFixed(2),
-                date: todayIso(), created_by: state.user.id
-            });
-            toast(t('saved'), 'success');
-            $('#advAmount').value = '';
-            await refreshPayPreview();
-        } catch (err) {
-            toast(err.message, 'error');
         }
     }
 
@@ -2580,53 +2582,197 @@
         showScreen('money');
     }
 
-    /* --- v5 §3.2: «Деньги» руководителя: сводка + список сотрудников --- */
+    /* --- ТЗ 11.11 этап 0: «Деньги» руководителя: период, таблица, аванс, закрытие --- */
+    function payPeriodBounds(kind) {
+        const d = new Date();
+        if (kind === 'prev') {
+            return [isoOf(new Date(d.getFullYear(), d.getMonth() - 1, 1)),
+                isoOf(new Date(d.getFullYear(), d.getMonth(), 0))];
+        }
+        if (kind === 'since-close' && state.payLastEnd) {
+            const e = new Date(state.payLastEnd + 'T00:00:00');
+            const start = isoOf(new Date(e.getFullYear(), e.getMonth(), e.getDate() + 1));
+            const today = todayIso();
+            return [start, start > today ? start : today];
+        }
+        return monthRange();
+    }
+
+    function fmtPayPeriod(a, b) {
+        const opt = { day: 'numeric', month: 'short' };
+        const optY = { day: 'numeric', month: 'short', year: 'numeric' };
+        try {
+            const da = new Date(a + 'T00:00:00');
+            const db = new Date(b + 'T00:00:00');
+            const sameYear = da.getFullYear() === db.getFullYear();
+            return da.toLocaleDateString(localeTag(), sameYear ? opt : optY) + ' – ' +
+                db.toLocaleDateString(localeTag(), optY);
+        } catch (e) { return a + ' – ' + b; }
+    }
+
     async function renderMoneyManager(body) {
+        if (!state.payPeriod) state.payPeriod = 'month';
         body.innerHTML = '<div class="skeleton skeleton--card"></div>';
         try {
-            const [users, entries] = await Promise.all([
+            const [users, payouts] = await Promise.all([
                 state.users || api.getUsers(),
-                api.getEntries('date_from=' + monthRange()[0] + '&date_to=' + monthRange()[1])
+                api.getPayouts()
             ]);
             state.users = users;
-            const byUser = {};
-            entries.forEach((e) => {
-                byUser[e.user_id] = (byUser[e.user_id] || 0) + num(e.hours);
+            let lastEnd = '';
+            (payouts || []).forEach((p) => {
+                if (p.period_end && p.period_end > lastEnd) lastEnd = p.period_end;
             });
-            const rows = users.filter((u) => u.is_active).map((u) => {
-                const h = byUser[u.id] || 0;
-                return '<button class="row-line row-line--btn" data-action="open-user-summary" data-user="' + u.id + '">' +
-                    '<span>' + escapeHtml(u.name) + '</span>' +
-                    '<span class="row-line__meta">' + escapeHtml(fmtHours(h)) + ' ' +
-                    escapeHtml(t('hoursUnit')) + '</span></button>';
-            }).join('');
-            // Итог по данным /api/me/money руководителя (его собственная сводка
-            // не показательна для команды) — считаем начисленное из записей.
-            const totalHours = entries.reduce((s, e) => s + num(e.hours), 0);
-            const totalGross = entries.reduce(
-                (s, e) => s + num(e.hours) * num(e.rate_snapshot), 0);
-            body.innerHTML =
-                '<div class="card">' +
-                '<div class="card-sub"><span>' + escapeHtml(t('moneyTotalToPay')) + '</span></div>' +
-                '<div class="stat__value">' + totalGross.toFixed(2) + '</div>' +
-                '<div class="card-sub"><span class="muted">' +
-                escapeHtml(t('moneyEarnedAdv', {
-                    e: totalGross.toFixed(2),
-                    a: escapeHtml(fmtHours(totalHours)) + ' ' + escapeHtml(t('hoursUnit'))
-                })) + '</span></div>' +
-                '</div>' +
-                '<h3 class="sheet__h3">' + escapeHtml(t('moneyWorkers')) + '</h3>' +
-                (rows || '<p class="screen-message">' + escapeHtml(t('empty')) + '</p>') +
-                '<button class="row-line row-line--btn" data-action="pay-advance-open">' +
-                '<span>' + escapeHtml(t('moneyAddAdvance')) + '</span></button>' +
-                '<button class="row-line row-line--btn" data-action="open-reports">' +
-                '<span>' + escapeHtml(t('moneyOpenReports')) + ' ›</span></button>' +
-                '<button class="btn btn--danger btn--block" data-action="pay-close" style="margin-top:12px">' +
-                escapeHtml(t('moneyClosePeriod')) + '</button>';
+            state.payLastEnd = lastEnd;
+            if (state.payPeriod === 'since-close' && !lastEnd) state.payPeriod = 'month';
         } catch (err) {
             body.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
+            showScreen('money');
+            return;
         }
+        const kinds = [['month', 'moneyPeriodMonth'], ['prev', 'moneyPeriodPrev']];
+        if (state.payLastEnd) kinds.push(['since-close', 'moneyPeriodSince']);
+        body.innerHTML =
+            '<div class="segment money-period">' +
+            kinds.map((k) =>
+                '<button class="segment__btn' + (state.payPeriod === k[0] ? ' is-active' : '') +
+                '" data-period="' + k[0] + '">' + escapeHtml(t(k[1])) + '</button>').join('') +
+            '</div>' +
+            '<div class="money-period__dates muted" data-testid="pay-period"></div>' +
+            '<div id="payTable"></div>' +
+            '<div class="money-actions">' +
+            '<button class="btn btn--primary btn--block" data-action="pay-advance-open">' +
+            escapeHtml(t('moneyGiveAdvance')) + '</button>' +
+            '<button class="btn btn--danger btn--block" data-action="pay-close">' +
+            escapeHtml(t('moneyCloseBtn')) + '</button>' +
+            '</div>';
+        body.querySelectorAll('[data-period]').forEach((b) => {
+            b.addEventListener('click', () => {
+                state.payPeriod = b.getAttribute('data-period');
+                body.querySelectorAll('[data-period]').forEach((x) => {
+                    x.classList.toggle('is-active', x === b);
+                });
+                refreshMoneyTable();
+            });
+        });
         showScreen('money');
+        await refreshMoneyTable();
+    }
+
+    async function refreshMoneyTable() {
+        const box = $('#payTable');
+        if (!box) return;
+        const [start, end] = payPeriodBounds(state.payPeriod);
+        const label = $('#screenMoney [data-testid="pay-period"]');
+        if (label) label.textContent = fmtPayPeriod(start, end);
+        state.payRows = null;
+        state.payRange = [start, end];
+        box.innerHTML = '<div class="skeleton skeleton--card"></div>';
+        try {
+            const rows = await api.payPreview(start, end);
+            // за время запроса могли переключить период
+            if (!state.payRange || state.payRange[0] !== start || state.payRange[1] !== end) return;
+            state.payRows = rows || [];
+            if (!state.payRows.length) {
+                box.innerHTML = '<p class="screen-message">' + escapeHtml(t('moneyEmptyPeriod')) + '</p>';
+                return;
+            }
+            let h = 0, g = 0, a = 0, n = 0;
+            state.payRows.forEach((r) => {
+                h += num(r.hours); g += num(r.gross); a += num(r.advances_total); n += num(r.net);
+            });
+            box.innerHTML =
+                '<div class="pay-table-wrap"><table class="pay-table" data-testid="pay-table">' +
+                '<thead><tr><th>' + escapeHtml(t('moneyColPerson')) + '</th>' +
+                '<th class="num">' + escapeHtml(t('moneyColHours')) + '</th>' +
+                '<th class="num">' + escapeHtml(t('moneyColEarned')) + '</th>' +
+                '<th class="num">' + escapeHtml(t('moneyColAdv')) + '</th>' +
+                '<th class="num">' + escapeHtml(t('moneyColNet')) + '</th></tr></thead><tbody>' +
+                state.payRows.map((r) =>
+                    '<tr data-testid="pay-row" data-user="' + escapeHtml(r.user_id) +
+                    '" data-action="open-user-summary">' +
+                    '<td>' + escapeHtml(r.name) + '</td>' +
+                    '<td class="num">' + escapeHtml(fmtHoursUnit(r.hours)) + '</td>' +
+                    '<td class="num">' + escapeHtml(fmtMoney(r.gross)) + '</td>' +
+                    '<td class="num">' + escapeHtml(fmtMoney(r.advances_total)) + '</td>' +
+                    '<td class="num"><strong>' + escapeHtml(fmtMoney(r.net)) + '</strong></td></tr>'
+                ).join('') +
+                '</tbody><tfoot><tr data-testid="pay-total">' +
+                '<td>' + escapeHtml(t('moneyTotalRow')) + '</td>' +
+                '<td class="num">' + escapeHtml(fmtHoursUnit(h)) + '</td>' +
+                '<td class="num">' + escapeHtml(fmtMoney(g)) + '</td>' +
+                '<td class="num">' + escapeHtml(fmtMoney(a)) + '</td>' +
+                '<td class="num"><strong>' + escapeHtml(fmtMoney(n)) + '</strong></td></tr></tfoot>' +
+                '</table></div>';
+        } catch (err) {
+            box.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
+        }
+    }
+
+    function openAdvanceSheet() {
+        const users = (state.users || []).filter((u) => u.is_active);
+        const sheet = openSheet(
+            '<h3 class="sheet__title">' + escapeHtml(t('moneyGiveAdvance')) + '</h3>' +
+            '<label class="form-field"><span class="form-label">' + escapeHtml(t('advWho')) + '</span>' +
+            '<select id="advUser">' +
+            users.map((u) => '<option value="' + escapeHtml(u.id) + '">' + escapeHtml(u.name) + '</option>').join('') +
+            '</select></label>' +
+            '<label class="form-field"><span class="form-label">' + escapeHtml(t('advAmountLabel')) + '</span>' +
+            '<input type="number" id="advAmount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00"></label>' +
+            '<label class="form-field"><span class="form-label">' + escapeHtml(t('advDateLabel')) + '</span>' +
+            '<input type="date" id="advDate" value="' + todayIso() + '"></label>' +
+            '<p class="form-error" id="advError" hidden></p>' +
+            '<button class="btn btn--primary btn--block" data-action="pay-advance">' + escapeHtml(t('save')) + '</button>');
+        return sheet;
+    }
+
+    async function createAdvance() {
+        const sheet = document.querySelector('#sheetRoot .sheet');
+        if (!sheet) return;
+        const errBox = sheet.querySelector('#advError');
+        const showErr = (msg) => { errBox.textContent = msg; errBox.hidden = false; };
+        const userId = parseInt(sheet.querySelector('#advUser').value, 10);
+        const amount = parseFloat(sheet.querySelector('#advAmount').value);
+        const date = sheet.querySelector('#advDate').value || todayIso();
+        if (!userId || !(amount > 0)) { showErr(t('advAmountError')); return; }
+        const btn = sheet.querySelector('[data-action="pay-advance"]');
+        btn.disabled = true;
+        try {
+            await api.createAdvance({
+                user_id: userId, amount: amount.toFixed(2),
+                date: date, created_by: state.user.id
+            });
+            closeSheet();
+            toast(t('advSaved'), 'success');
+            await refreshMoneyTable();
+        } catch (err) {
+            btn.disabled = false;
+            showErr(err.message);
+        }
+    }
+
+    function closePayroll() {
+        const rows = state.payRows || [];
+        const range = state.payRange;
+        if (!rows.length || !range) { toast(t('moneyCloseEmpty'), 'error'); return; }
+        const total = rows.reduce((s, r) => s + num(r.net), 0);
+        const msg = t('moneyCloseConfirm', {
+            period: fmtPayPeriod(range[0], range[1]), n: rows.length, sum: fmtMoney(total)
+        });
+        const run = async (ok) => {
+            if (!ok) return;
+            try {
+                await api.payClose({
+                    period_start: range[0], period_end: range[1], created_by: state.user.id
+                });
+                toast(t('moneyClosed'), 'success');
+                await renderMoneyManager($('#moneyBody'));
+            } catch (err) {
+                toast(err.message, 'error');
+            }
+        };
+        if (tg && typeof tg.showConfirm === 'function') tg.showConfirm(msg, run);
+        else run(window.confirm(msg));
     }
 
     /* ========================================================
@@ -2832,14 +2978,13 @@
                 else if (action === 'open-team') { closeSheet(); loadTeam(); }
                 else if (action === 'open-clients') { closeSheet(); loadClients(); }
                 else if (action === 'open-reports') { closeSheet(); loadReports(); }
-                else if (action === 'pay-advance-open') { closeSheet(); loadReports(); }
+                else if (action === 'pay-advance-open') openAdvanceSheet();
                 else if (action === 'finish-task') finishTask(parseInt(id, 10));
                 else if (action === 'finish-task-yes') doFinishTask(parseInt(id, 10));
                 else if (action === 'edit-task') editTaskSheet(parseInt(id, 10));
                 else if (action === 'close-sheet') closeSheet();
                 else if (action === 'pay-preview') refreshPayPreview();
                 else if (action === 'pay-close') closePayroll();
-                else if (action === 'pay-close-yes') closePayrollYes();
                 else if (action === 'pay-advance') createAdvance();
                 else if (action === 'assign-item') openAssignSheet(parseInt(id, 10));
                 else if (action === 'assign-to') {
@@ -2919,7 +3064,7 @@
         const workerMenuBtn = $('#btnWorkerMenu');
         if (workerMenuBtn) workerMenuBtn.addEventListener('click', openWorkerMenu);
         // v5: меню ☰ руководителя (на трёх его экранах)
-        ['#btnManagerMenu', '#btnManagerMenu2', '#btnManagerMenu3'].forEach((sel) => {
+        ['#btnManagerMenu', '#btnManagerMenu2', '#btnManagerMenu3', '#btnManagerMenu4'].forEach((sel) => {
             const btn = $(sel);
             if (btn) btn.addEventListener('click', openManagerMenu);
         });

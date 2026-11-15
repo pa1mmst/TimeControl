@@ -891,3 +891,24 @@ body.no-nav .app-content {
     .form-row { grid-template-columns: 1fr; }
     .card-sub { gap: 6px; }
 }
+
+/* ТЗ 11.11 этап 0: Деньги руководителя */
+.money-period { margin-top: 4px; }
+.money-period__dates { font-size: 14px; margin: 0 0 10px; text-align: center; }
+.pay-table-wrap { overflow-x: auto; margin-bottom: 14px; }
+.pay-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+.pay-table th, .pay-table td {
+    padding: 8px 4px;
+    text-align: left;
+    border-bottom: 1px solid rgba(128, 128, 128, .25);
+    vertical-align: top;
+}
+.pay-table th { color: var(--muted); font-weight: 600; font-size: 12px; }
+.pay-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pay-table tbody tr[data-action] { cursor: pointer; }
+.pay-table tfoot td { font-weight: 700; border-bottom: none; }
+.money-actions { display: flex; flex-direction: column; gap: 10px; }
