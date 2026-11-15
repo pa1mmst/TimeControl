@@ -90,8 +90,12 @@ async function openApp(tgId, opts) {
   opened.push({ browser, errors });
   page.on('pageerror', (e) => errors.push('PAGEERROR: ' + String(e.message).slice(0, 300)));
   page.on('console', (m) => {
-    if (m.type() === 'error') errors.push('CONSOLE: ' + m.text().slice(0, 300));
+    // «Failed to load resource» — это сетевой отказ (в т.ч. подстроенный сценарием), не JS-ошибка.
+    if (m.type() === 'error' && !/^Failed to load resource/.test(m.text())) {
+      errors.push('CONSOLE: ' + m.text().slice(0, 300));
+    }
   });
+  if (opts.beforeGoto) await opts.beforeGoto(page, ctx);
   await page.goto(BASE + '/', { waitUntil: 'load' });
   // Приложение готово, когда скрыт экран загрузки.
   await page.waitForFunction(() => {
@@ -108,10 +112,24 @@ async function visibleScreens(page) {
     .filter((e) => !e.hidden && getComputedStyle(e).display !== 'none').map((e) => e.id));
 }
 
-// Видимый текст элемента (или '' если нет).
+// Видимый текст элемента (или '' если нет). Неразрывные и узкие пробелы -> обычный пробел,
+// чтобы «1 234,50 €» сравнивалось как набрано в сценарии.
 async function text(page, selector) {
   const el = await page.$(selector);
-  return el ? (await el.innerText()).trim() : '';
+  return el ? norm(await el.innerText()) : '';
+}
+
+function norm(s) {
+  return String(s || '').replace(/[\u00a0\u202f\u2009]/g, ' ').replace(/[ \t]+/g, ' ').trim();
+}
+
+// Первый и последний день текущего месяца (локальное время), YYYY-MM-DD.
+function monthBounds() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  const ym = d.getFullYear() + '-' + p(d.getMonth() + 1);
+  return [ym + '-01', ym + '-' + p(last)];
 }
 
 class Fail extends Error {}
@@ -140,4 +158,4 @@ async function run(fn) {
   process.exit(out.ok ? 0 : 1);
 }
 
-module.exports = { BASE, openApp, visibleScreens, text, expect, run, Fail };
+module.exports = { BASE, openApp, visibleScreens, text, norm, monthBounds, expect, run, Fail };

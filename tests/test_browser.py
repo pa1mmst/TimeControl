@@ -123,3 +123,46 @@ def test_worker_record_hours(app):
         app.seed["worker"]["id"], app.seed["task_harvest"], app.seed["today"],
     )
     assert [float(r[0]) for r in rows] == [8.0], rows
+
+
+# ---------- Этап 0: мелкие поломки (ТЗ п. 1, 7, 8, 9) ----------
+
+def test_worker_recorded_card(app):
+    app.run("worker_recorded_card")
+
+
+def test_worker_money_format(app):
+    app.run("worker_money_format")
+
+
+def test_worker_inventory(app):
+    app.run("worker_inventory")
+
+
+def test_network_error_retry(app):
+    app.run("network_error_retry")
+
+
+# ---------- Этап 0: «Деньги» руководителя (ТЗ п. 3, 4, 5, 6) ----------
+
+def test_manager_money_table(app):
+    app.run("manager_money_table")
+
+
+def test_manager_advance(app):
+    app.run("manager_advance")
+    rows = app.query("SELECT amount FROM advances WHERE user_id=?", app.seed["worker"]["id"])
+    assert sorted(float(r[0]) for r in rows) == [15.0, 20.0], rows
+
+
+def test_manager_close(app):
+    result = app.run("manager_close")
+    start, end = result["data"]["month"]
+    rows = app.query("SELECT user_id, period_start, period_end, net FROM payouts ORDER BY user_id")
+    assert len(rows) == 2, rows
+    assert {(r[1], r[2]) for r in rows} == {(start, end)}, rows
+    assert sum(float(r[3]) for r in rows) == 90.0, rows
+
+
+def test_manager_reports_menu(app):
+    app.run("manager_reports_menu")
