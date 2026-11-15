@@ -110,12 +110,10 @@
             'taskDateStart': 'Дата',
             'taskDateEnd': 'По дату',
             'taskMultiDay': 'Несколько дней',
-            'taskReporter': 'Учётчик',
             'noLocations': 'У этого заказчика нет локаций',
             'noWorkers': 'Нет активных сотрудников',
             'taskNeedsTitle': 'Введите название',
             'taskNeedsClient': 'Выберите заказчика',
-            'taskNeedsReporter': 'Выберите учётчика из выбранных сотрудников',
             'taskCreated': 'Задание создано',
             // --- ввод часов ---
             'hoursEntryTitle': 'Часы за работу',
@@ -251,6 +249,14 @@
             'moneyNoInventory': 'Инвентаря на руках нет',
             'payout.accrued': 'начислено', 'payout.pending': 'ожидает', 'payout.paid': 'выплачено',
             'dashTitle': 'Сегодня',
+            'dashSummary': 'Назначено {a} · Отметились {b} · Часов {h}',
+            'notCheckedIn': 'Не отметились',
+            'enterFor': 'Записать за него',
+            'enterForTitle': 'Часы за сегодня: {name}',
+            'allCheckedIn': 'Все отметились',
+            'tasksNewPlus': '+ Новое задание',
+            'tasksNone': 'Заданий нет.',
+            'tasksCreate': 'Создать задание',
             'dashWorkers': 'Людей на работе', 'dashNoHoursTasks': 'Заданий без часов',
             'dashNoHoursWarn': 'Задания без часов сегодня: {n}',
             'dashNoHours': 'нет часов',
@@ -278,7 +284,7 @@
             'webapp_not_registered': 'Вы ещё не в системе. Откройте бота и отправьте свой номер — после одобрения руководителем появится доступ.',
             'webapp_deactivated': 'Доступ отключён. Обратитесь к руководителю.',
             'open_bot_btn': 'Открыть бота',
-            'matrixTitle': 'Таблица часов',
+            'matrixTitle': 'Часы по дням',
             'matrixEmpty': 'Нет данных',
             'sumTitle': 'Карточка сотрудника',
             'sumPeriod': 'За период с {d}',
@@ -339,12 +345,10 @@
             'taskDateStart': 'Дата',
             'taskDateEnd': 'По дату',
             'taskMultiDay': 'Кілька днів',
-            'taskReporter': 'Обліковець',
             'noLocations': 'У цього замовника немає локацій',
             'noWorkers': 'Немає активних працівників',
             'taskNeedsTitle': 'Введіть назву',
             'taskNeedsClient': 'Оберіть замовника',
-            'taskNeedsReporter': 'Оберіть обліковця з вибраних працівників',
             'taskCreated': 'Завдання створено',
             'hoursEntryTitle': 'Години за роботу',
             'hoursSameAll': 'Усім однаково',
@@ -473,6 +477,14 @@
             'moneyNoInventory': 'Інвентарю на руках немає',
             'payout.accrued': 'нараховано', 'payout.pending': 'очікує', 'payout.paid': 'виплачено',
             'dashTitle': 'Сьогодні',
+            'dashSummary': 'Призначено {a} · Відмітились {b} · Годин {h}',
+            'notCheckedIn': 'Не відмітились',
+            'enterFor': 'Записати за нього',
+            'enterForTitle': 'Години за сьогодні: {name}',
+            'allCheckedIn': 'Всі відмітились',
+            'tasksNewPlus': '+ Нове завдання',
+            'tasksNone': 'Завдань немає.',
+            'tasksCreate': 'Створити завдання',
             'dashWorkers': 'Людей на роботі', 'dashNoHoursTasks': 'Завдань без годин',
             'dashNoHoursWarn': 'Завдання без годин сьогодні: {n}',
             'dashNoHours': 'немає годин',
@@ -500,7 +512,7 @@
             'webapp_not_registered': 'Вас ще немає в системі. Відкрийте бота та надішліть свій номер — після схвалення керівником з\'явиться доступ.',
             'webapp_deactivated': 'Доступ вимкнено. Зверніться до керівника.',
             'open_bot_btn': 'Відкрити бота',
-            'matrixTitle': 'Таблиця годин',
+            'matrixTitle': 'Години по днях',
             'matrixEmpty': 'Немає даних',
             'sumTitle': 'Картка працівника',
             'sumPeriod': 'За період з {d}',
@@ -561,12 +573,10 @@
             'taskDateStart': 'Fecha',
             'taskDateEnd': 'Hasta',
             'taskMultiDay': 'Varios días',
-            'taskReporter': 'Encargado del registro',
             'noLocations': 'Este cliente no tiene ubicaciones',
             'noWorkers': 'No hay empleados activos',
             'taskNeedsTitle': 'Introduzca el título',
             'taskNeedsClient': 'Elija un cliente',
-            'taskNeedsReporter': 'Elija el encargado entre los empleados seleccionados',
             'taskCreated': 'Tarea creada',
             'hoursEntryTitle': 'Horas de trabajo',
             'hoursSameAll': 'Igual para todos',
@@ -695,6 +705,14 @@
             'moneyNoInventory': 'Sin inventario en mano',
             'payout.accrued': 'acumulado', 'payout.pending': 'pendiente', 'payout.paid': 'pagado',
             'dashTitle': 'Hoy',
+            'dashSummary': 'Asignados {a} · Registrados {b} · Horas {h}',
+            'notCheckedIn': 'Sin registrar',
+            'enterFor': 'Registrar por él',
+            'enterForTitle': 'Horas de hoy: {name}',
+            'allCheckedIn': 'Todos han registrado',
+            'tasksNewPlus': '+ Nueva tarea',
+            'tasksNone': 'No hay tareas.',
+            'tasksCreate': 'Crear tarea',
             'dashWorkers': 'Personas en trabajo', 'dashNoHoursTasks': 'Tareas sin horas',
             'dashNoHoursWarn': 'Tareas sin horas hoy: {n}',
             'dashNoHours': 'sin horas',
@@ -722,7 +740,7 @@
             'webapp_not_registered': 'Aún no está en el sistema. Abra el bot y envíe su número — cuando el responsable lo apruebe, tendrá acceso.',
             'webapp_deactivated': 'Acceso desactivado. Contacte al responsable.',
             'open_bot_btn': 'Abrir el bot',
-            'matrixTitle': 'Tabla de horas',
+            'matrixTitle': 'Horas por día',
             'matrixEmpty': 'Sin datos',
             'sumTitle': 'Ficha del empleado',
             'sumPeriod': 'Por el período desde {d}',
@@ -1021,10 +1039,6 @@
             return this.request('/tasks/' + entry_id(taskId) + '/assignments',
                 { method: 'POST', body: { user_id: entry_id(userId) } });
         },
-        createGroup(taskId, reporterId, memberIds) {
-            return this.request('/tasks/' + entry_id(taskId) + '/groups',
-                { method: 'POST', body: { reporter_id: entry_id(reporterId), member_ids: memberIds.map(entry_id) } });
-        },
         createEntry(body) { return this.request('/work-entries', { method: 'POST', body: body }); },
         updateEntry(entryId, body) {
             return this.request('/work-entries/' + entry_id(entryId), { method: 'PATCH', body: body });
@@ -1180,9 +1194,7 @@
         }
         const sub = parts.join(' · ');
         const workers = (task.workers || []).map((w) =>
-            escapeHtml(w.name) + (w.is_reporter
-                ? ' <span class="badge badge--reporter">' + escapeHtml(t('role.reporter')) + '</span>'
-                : '')
+            escapeHtml(w.name)
         ).join(', ');
         const canEnter = opts.canEnter && task.status === 'active';
         const enteredLine = canEnter
@@ -1198,8 +1210,9 @@
             '<div class="card-title">' + escapeHtml(task.title) + '</div>' +
             (sub ? '<div class="card-sub"><span>' + sub + '</span></div>' : '') +
             (workers ? '<div class="card-sub"><span>' + workers + '</span></div>' : '') +
-            '<div class="card-sub"><span class="badge badge--' + escapeHtml(task.status) + '">' +
-            escapeHtml(statusLabel(task.status)) + '</span>' +
+            '<div class="card-sub">' +
+            (opts.hideStatus ? '' : '<span class="badge badge--' + escapeHtml(task.status) + '">' +
+                escapeHtml(statusLabel(task.status)) + '</span>') +
             (hoursToday > 0
                 ? '<span class="card-hours">' + escapeHtml(fmtHours(hoursToday)) + ' ' + escapeHtml(t('hoursUnit')) + '</span>'
                 : '') +
@@ -1252,12 +1265,22 @@
         } else {
             tasks = tasks.filter((tk) => tk.status === 'done');
         }
+        tasks = sortTasksByTitle(tasks);
+        const newBtn = isManager()
+            ? '<button type="button" class="btn btn--primary btn--block tasks-new" data-action="new-task">' +
+              escapeHtml(t('tasksNewPlus')) + '</button>'
+            : '';
         if (!tasks.length) {
             setList('tasksList', '<div class="empty"><div class="empty__text">' +
-                escapeHtml(isManager() ? t('dashEmpty') : t('dashEmptyWorker')) + '</div></div>');
+                escapeHtml(t('tasksNone')) + '</div>' +
+                (isManager()
+                    ? '<button type="button" class="btn btn--primary" data-action="new-task">' +
+                      escapeHtml(t('tasksCreate')) + '</button>'
+                    : '') + '</div>');
             return;
         }
-        setList('tasksList', tasks.map((tk) => taskCardHtml(tk, { canEnter: true })).join(''));
+        setList('tasksList', newBtn + tasks.map((tk) =>
+            taskCardHtml(tk, { canEnter: true, hideStatus: state.tasksSeg === 'active' })).join(''));
     }
 
     /* ========================================================
@@ -1278,13 +1301,10 @@
             const canEnter = manager && task.status === 'active';
 
             const workers = (task.assignments || []).map((a) => {
-                const isRep = (task.groups || []).some(
-                    (g) => g.reporter && g.reporter.id === a.user.id);
                 const su = summary && summary.by_user.find(
                     (u) => u.user_id === a.user.id);
                 return '<div class="row-line">' + avatarHtml(a.user.id, a.user.name) +
                     '<span class="row-line__name">' + escapeHtml(a.user.name) +
-                    (isRep ? ' <span class="badge badge--reporter">' + escapeHtml(t('role.reporter')) + '</span>' : '') +
                     '</span>' +
                     (su ? '<span class="row-line__meta">' + escapeHtml(fmtHoursUnit(su.total_hours)) + '</span>' : '') +
                     '</div>';
@@ -1479,36 +1499,22 @@
         try {
             if (v.same) {
                 if (!(v.value > 0 && v.value <= 24)) throw new Error(t('hoursBad'));
-                // Групповой ввод: одна цифра на бригаду учётчика.
-                // Руководитель вносит индивидуально каждому.
-                if (isManager()) {
-                    const people = (ctx.task.assignments || []).map((a) => a.user);
-                    for (const u of people) {
-                        const was = ctx.existing[u.id];
-                        if (was !== undefined && num(was) !== v.value) {
-                            const mine = (ctx.entries || []).find(
-                                (e) => e.user_id === u.id && e.work_date === date);
-                            await api.updateEntry(mine.id, {
-                                hours: v.value.toFixed(2), reason: reason
-                            });
-                        } else if (was === undefined) {
-                            await api.createEntry({
-                                task_id: ctx.task.id, work_date: date,
-                                hours: v.value.toFixed(2), user_id: u.id
-                            });
-                        }
+                // Руководитель вносит одну цифру каждому назначенному.
+                const people = (ctx.task.assignments || []).map((a) => a.user);
+                for (const u of people) {
+                    const was = ctx.existing[u.id];
+                    if (was !== undefined && num(was) !== v.value) {
+                        const mine = (ctx.entries || []).find(
+                            (e) => e.user_id === u.id && e.work_date === date);
+                        await api.updateEntry(mine.id, {
+                            hours: v.value.toFixed(2), reason: reason
+                        });
+                    } else if (was === undefined) {
+                        await api.createEntry({
+                            task_id: ctx.task.id, work_date: date,
+                            hours: v.value.toFixed(2), user_id: u.id
+                        });
                     }
-                } else {
-                    const group = (ctx.task.groups || []).find(
-                        (g) => g.reporter && g.reporter.id === state.user.id);
-                    if (!group) throw new Error(t('error'));
-                    await api.request('/work-entries/group', {
-                        method: 'POST',
-                        body: {
-                            group_id: group.id, work_date: date,
-                            hours: v.value.toFixed(2)
-                        }
-                    });
                 }
             } else {
                 for (const uid of Object.keys(v.values)) {
@@ -1761,21 +1767,6 @@
             .map((c) => parseInt(c.getAttribute('data-id'), 10));
     }
 
-    function renderReporterChips() {
-        const box = $('#ntReporter');
-        const workerChips = Array.from(
-            document.querySelectorAll('#ntWorkers [data-chip="worker"]'));
-        const selected = workerChips.filter((c) => c.classList.contains('chip--on'));
-        const current = document.querySelector('#ntReporter .chip--on');
-        const currentId = current ? parseInt(current.getAttribute('data-id'), 10) : null;
-        $('#ntReporterField').hidden = !selected.length;
-        box.innerHTML = selected.map((c) => {
-            const id = parseInt(c.getAttribute('data-id'), 10);
-            const name = c.textContent;
-            return chipHtml('reporter', id, name, id === currentId);
-        }).join('');
-    }
-
     async function openNewTask() {
         ntError('');
         showScreen('new-task');
@@ -1799,8 +1790,6 @@
                 : '<p class="screen-message">' + escapeHtml(t('noWorkers')) + '</p>';
             $('#ntLocationsField').hidden = true;
             $('#ntLocations').innerHTML = '';
-            $('#ntReporterField').hidden = true;
-            $('#ntReporter').innerHTML = '';
         } catch (err) {
             ntError(err.message);
         }
@@ -1834,8 +1823,6 @@
 
         const locationIds = chipIds('location');
         const workerIds = chipIds('worker');
-        const repChip = document.querySelector('#ntReporter .chip--on');
-        const reporterId = repChip ? parseInt(repChip.getAttribute('data-id'), 10) : null;
 
         const btn = $('#ntSubmit');
         btn.disabled = true;
@@ -1856,12 +1843,6 @@
             });
             for (const uid of workerIds) {
                 await api.assignUser(task.id, uid);
-            }
-            if (reporterId) {
-                if (!workerIds.includes(reporterId)) {
-                    await api.assignUser(task.id, reporterId);
-                }
-                await api.createGroup(task.id, reporterId, workerIds.filter((w) => w !== reporterId));
             }
             state.tasks = null;
             btn.disabled = false;
@@ -2833,40 +2814,59 @@
         } catch (err) { renderError(err.message); }
     }
 
+    // Часы для строки-итога: «10», «7,5» (разделитель по языку интерфейса).
+    function fmtHoursPlain(v) {
+        return num(v).toLocaleString(localeTag(), { maximumFractionDigits: 2 });
+    }
+
+    function sortTasksByTitle(tasks) {
+        return (tasks || []).slice().sort((x, y) =>
+            String(x.title).localeCompare(String(y.title), 'ru'));
+    }
+
     function renderManagerDash() {
         const d = state.dash;
         const body = $('#managerDashBody');
         if (!d) { showScreen('manager-dash'); return; }
-        // v5 §3.2: «без часов» — люди, у которых нет записи за сегодня
-        const noHoursUsers = [];
-        (d.tasks || []).forEach((tk) => (tk.workers || []).forEach((w) => {
-            const has = w.hours_today !== null && w.hours_today !== undefined && num(w.hours_today) > 0;
-            if (!has && !noHoursUsers.some((u) => u.id === w.user_id)) {
-                noHoursUsers.push({ id: w.user_id, name: w.name });
+        const tasks = sortTasksByTitle(d.tasks);
+        // Люди, назначенные на сегодняшние задания; отметились = есть часы хотя бы на одном.
+        const people = {};
+        const order = [];
+        tasks.forEach((tk) => (tk.workers || []).forEach((w) => {
+            if (!people[w.user_id]) {
+                people[w.user_id] = { id: w.user_id, name: w.name, titles: [], has: false };
+                order.push(w.user_id);
             }
+            const p = people[w.user_id];
+            p.titles.push(tk.title);
+            if (num(w.hours_today) > 0) p.has = true;
         }));
-        const noHoursTasks = d.tasks_no_hours || [];
-        const attItems = [];
-        noHoursUsers.forEach((u) => {
-            attItems.push('<button class="row-line row-line--btn" data-action="open-user-summary" data-user="' + u.id + '">' +
-                '<span><span class="dash-no-hours">●</span> ' +
-                escapeHtml(t('attNoHoursUser', { name: u.name })) + '</span></button>');
+        const assigned = order.length;
+        const checked = order.filter((id) => people[id].has).length;
+        const missing = order.map((id) => people[id]).filter((p) => !p.has);
+        const summary = t('dashSummary', {
+            a: assigned, b: checked, h: fmtHoursPlain(d.hours_today)
         });
-        noHoursTasks.forEach((tid) => {
-            const tk = (d.tasks || []).find((x) => x.id === tid);
-            if (tk) {
-                attItems.push('<button class="row-line row-line--btn" data-action="open-matrix" data-id="' + tk.id + '">' +
-                    '<span><span class="dash-no-hours">●</span> ' +
-                    escapeHtml(t('attNoHoursTask', { title: tk.title })) + '</span></button>');
-            }
-        });
-        // v5 §3.2: активные задания — карточки с chips (зелёный «Имя 8», красный «Имя —»)
-        const cards = (d.tasks || []).map((tk) => {
+        const list = missing.length
+            ? '<h3 class="sheet__h3">' + escapeHtml(t('notCheckedIn')) + '</h3>' +
+              '<div class="card nci" data-testid="not-checked-in">' +
+              missing.map((p) =>
+                  '<div class="nci__row" data-testid="nci-row" data-user="' + p.id + '">' +
+                  '<div class="nci__info"><div class="nci__name">' + escapeHtml(p.name) + '</div>' +
+                  '<div class="nci__tasks">' + escapeHtml(p.titles.join(', ')) + '</div></div>' +
+                  '<button type="button" class="btn btn--primary nci__btn" data-action="enter-for" data-user="' +
+                  p.id + '">' + escapeHtml(t('enterFor')) + '</button></div>').join('') +
+              '</div>'
+            : (assigned
+                ? '<p class="screen-message nci-ok" data-testid="all-checked-in">' +
+                  escapeHtml(t('allCheckedIn')) + '</p>'
+                : '');
+        const cards = tasks.map((tk) => {
             const chips = (tk.workers || []).map((w) => {
-                const has = w.hours_today !== null && w.hours_today !== undefined && num(w.hours_today) > 0;
-                return '<span class="chip chip--static' + (has ? ' chip--ok' : ' chip--miss') + '" data-dash-user="' + w.user_id + '">' +
-                    escapeHtml(w.name) + ' ' +
-                    (has ? escapeHtml(fmtHours(w.hours_today)) : '—') + '</span>';
+                const has = num(w.hours_today) > 0;
+                return '<span class="chip chip--static' + (has ? ' chip--ok' : '') +
+                    '" data-dash-user="' + w.user_id + '">' + escapeHtml(w.name) +
+                    (has ? ' ' + escapeHtml(fmtHoursUnit(w.hours_today)) : '') + '</span>';
             }).join('');
             return '<div class="card card--tap" data-task-id="' + tk.id + '" role="button" tabindex="0">' +
                 '<div class="card-title">' + escapeHtml(tk.title) + '</div>' +
@@ -2877,31 +2877,107 @@
                 '</div>';
         }).join('');
         body.innerHTML =
-            '<div class="stat-row stat-row--3">' +
-            '<div class="stat"><span class="stat__value">' + d.workers_count + '</span>' +
-            '<span class="stat__label">' + escapeHtml(t('dashOnWork')) + '</span></div>' +
-            '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHours(d.hours_today)) + '</span>' +
-            '<span class="stat__label">' + escapeHtml(t('dashHours')) + '</span></div>' +
-            '<div class="stat"><span class="stat__value' + (noHoursUsers.length ? ' dash-warn' : '') + '">' +
-            noHoursUsers.length + '</span>' +
-            '<span class="stat__label">' + escapeHtml(t('dashWithoutHours')) + '</span></div>' +
-            '</div>' +
-            '<h3 class="sheet__h3">' + escapeHtml(t('attTitle')) + '</h3>' +
-            (attItems.length
-                ? '<div class="card">' + attItems.join('') + '</div>'
-                : '<p class="screen-message">' + escapeHtml(t('attOk')) + '</p>') +
+            '<p class="dash-summary" data-testid="dash-summary">' + escapeHtml(summary) + '</p>' +
+            list +
             '<h3 class="sheet__h3">' + escapeHtml(t('dashActiveTasks')) + '</h3>' +
             '<div class="list">' + (cards || '<div class="empty"><div class="empty__text">' +
-                escapeHtml(t('dashNoTasksToday')) + '</div></div>') + '</div>' +
-            '<button class="fab" data-action="new-task" aria-label="' + escapeHtml(t('dashNewTask')) + '">+</button>';
+                escapeHtml(t('dashNoTasksToday')) + '</div></div>') + '</div>';
         showScreen('manager-dash');
+    }
+
+    // «Записать за него»: часы сегодня за человека из списка «Не отметились».
+    function openEnterForSheet(userId) {
+        const d = state.dash;
+        if (!d) return;
+        const tasks = sortTasksByTitle(d.tasks).filter((tk) =>
+            (tk.workers || []).some((w) => w.user_id === userId));
+        if (!tasks.length) return;
+        const who = tasks[0].workers.find((w) => w.user_id === userId);
+        let taskId = tasks[0].id;
+        let picked = '';
+        const sheet = openSheet(
+            '<h3 class="sheet__title">' + escapeHtml(t('enterForTitle', { name: who.name })) + '</h3>' +
+            (tasks.length > 1
+                ? '<div class="chip-row" id="efTasks">' + tasks.map((tk, i) =>
+                    '<button type="button" class="chip' + (i === 0 ? ' chip--on' : '') +
+                    '" data-ef-task="' + tk.id + '">' + escapeHtml(tk.title) + '</button>').join('') + '</div>'
+                : '<p class="muted">' + escapeHtml(tasks[0].title) + '</p>') +
+            '<div class="he-quick" id="whQuick">' +
+            ['4', '6', '8', '10', '12'].map((v) =>
+                '<button type="button" class="chip" data-wh="' + v + '">' + v + '</button>').join('') +
+            '<button type="button" class="chip" data-wh="more">' + escapeHtml(t('hoursMore')) + '</button>' +
+            '</div>' +
+            '<div class="form-field" id="whCustomField" hidden>' +
+            '<span class="form-label">' + escapeHtml(t('hoursCustom')) + '</span>' +
+            '<input type="text" id="whCustom" inputmode="decimal" placeholder="—"></div>' +
+            '<p class="form-error" id="whError" hidden></p>' +
+            '<button type="button" class="btn btn--primary btn--block" id="whSave" disabled>' +
+            escapeHtml(t('save')) + '</button>');
+        const errEl = sheet.querySelector('#whError');
+        const customField = sheet.querySelector('#whCustomField');
+        const custom = sheet.querySelector('#whCustom');
+        const save = sheet.querySelector('#whSave');
+        const value = () => {
+            const raw = customField.hidden ? picked : custom.value.trim().replace(',', '.');
+            return raw === '' ? 0 : parseFloat(raw);
+        };
+        const efTasks = sheet.querySelector('#efTasks');
+        if (efTasks) efTasks.addEventListener('click', (ev) => {
+            const b = ev.target.closest('[data-ef-task]');
+            if (!b) return;
+            taskId = parseInt(b.getAttribute('data-ef-task'), 10);
+            efTasks.querySelectorAll('.chip').forEach((c) => c.classList.toggle('chip--on', c === b));
+        });
+        sheet.querySelector('#whQuick').addEventListener('click', (ev) => {
+            const chip = ev.target.closest('[data-wh]');
+            if (!chip) return;
+            const v = chip.getAttribute('data-wh');
+            if (v === 'more') {
+                customField.hidden = false;
+                custom.focus();
+            } else {
+                customField.hidden = true;
+                picked = v;
+                custom.value = v;
+            }
+            sheet.querySelectorAll('#whQuick .chip').forEach((c) =>
+                c.classList.toggle('chip--on', c.getAttribute('data-wh') === v && v !== 'more'));
+            save.disabled = !(value() > 0);
+        });
+        custom.addEventListener('input', () => { save.disabled = !(value() > 0); });
+        save.addEventListener('click', async () => {
+            errEl.hidden = true;
+            const hours = value();
+            if (!(hours > 0 && hours <= 24)) {
+                errEl.textContent = t('hoursBad');
+                errEl.hidden = false;
+                return;
+            }
+            save.disabled = true;
+            try {
+                await api.createEntry({
+                    task_id: taskId, work_date: d.date || todayIso(),
+                    hours: hours.toFixed(2), user_id: userId
+                });
+                closeSheet();
+                toast(t('recorded'), 'success');
+                state.tasks = null;
+                state.dash = await api.dashboardToday();
+                renderManagerDash();
+            } catch (err) {
+                errEl.textContent = err.message || t('error');
+                errEl.hidden = false;
+                save.disabled = false;
+            }
+        });
     }
 
     /* ========================================================
      * 19e. v4: МАТРИЦА ЗАДАНИЯ (руководитель)
      * ======================================================== */
-    async function openMatrix(taskId) {
+    async function openMatrix(taskId, from) {
         state.matrixTaskId = taskId;
+        state.matrixFrom = from || state.matrixFrom || 'manager-dash';
         const body = $('#matrixBody');
         body.innerHTML = '<div class="skeleton skeleton--card"></div>';
         showScreen('matrix');
@@ -3016,6 +3092,9 @@
                 const action = btn.getAttribute('data-action');
                 const id = btn.getAttribute('data-id');
                 if (action === 'new-task') openNewTask();
+                else if (action === 'enter-for') {
+                    openEnterForSheet(parseInt(btn.getAttribute('data-user'), 10));
+                }
                 else if (action === 'enter-hours') {
                     if (isManager()) openHoursEntry(parseInt(id, 10));
                     else openWorkerHoursSheet(parseInt(id, 10), false);
@@ -3052,7 +3131,9 @@
             // Тап по карточке задания (кроме кнопки внутри)
             const taskCard = ev.target.closest('[data-task-id]');
             if (taskCard && !ev.target.closest('[data-action]')) {
-                openTaskSheet(parseInt(taskCard.getAttribute('data-task-id'), 10));
+                const cardTid = parseInt(taskCard.getAttribute('data-task-id'), 10);
+                if (isManager()) openMatrix(cardTid, state.view);
+                else openTaskSheet(cardTid);
                 return;
             }
             const userCard = ev.target.closest('[data-user-id]');
@@ -3085,7 +3166,10 @@
         });
         // v4: назад из матрицы и карточки
         const backMatrix = $('#btnBackMatrix');
-        if (backMatrix) backMatrix.addEventListener('click', loadManagerDash);
+        if (backMatrix) backMatrix.addEventListener('click', () => {
+            if (state.matrixFrom === 'tasks') loadTasks();
+            else loadManagerDash();
+        });
         const backSummary = $('#btnBackSummary');
         if (backSummary) backSummary.addEventListener('click', () => {
             if (state.matrixTaskId) openMatrix(state.matrixTaskId);
@@ -3097,16 +3181,7 @@
             const chip = ev.target.closest('[data-chip]');
             if (!chip) return;
             const kind = chip.getAttribute('data-chip');
-            if (kind === 'reporter') {
-                // радио: ровно один учётчик
-                const was = chip.classList.contains('chip--on');
-                document.querySelectorAll('#ntReporter [data-chip="reporter"]')
-                    .forEach((c) => c.classList.remove('chip--on'));
-                if (!was) chip.classList.add('chip--on');
-            } else {
-                chip.classList.toggle('chip--on');
-                if (kind === 'worker') renderReporterChips();
-            }
+            chip.classList.toggle('chip--on');
         });
 
         // v5: меню ☰ работника

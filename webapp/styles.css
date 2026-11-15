@@ -931,3 +931,16 @@ body.no-nav .app-content {
 .pay-table tbody tr[data-action] { cursor: pointer; }
 .pay-table tfoot td { font-weight: 700; border-bottom: none; }
 .money-actions { display: flex; flex-direction: column; gap: 10px; }
+
+/* ТЗ 11.11 этап 1: Сегодня и Задания руководителя */
+.dash-summary { font-size: 16px; font-weight: 600; margin: 4px 0 12px; }
+.nci__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; }
+.nci__row + .nci__row { border-top: 1px solid var(--border, rgba(127, 127, 127, .25)); }
+.nci__info { min-width: 0; flex: 1; }
+.nci__name { font-size: 16px; font-weight: 600; }
+.nci__tasks { font-size: 14px; opacity: .75; }
+.nci__btn { flex: none; font-size: 14px; }
+.nci-ok { font-size: 15px; }
+.tasks-new { margin-bottom: 12px; }
+.empty .btn { margin-top: 12px; }
+#sheetRoot #efTasks { margin-bottom: 12px; }
