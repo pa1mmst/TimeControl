@@ -2792,8 +2792,12 @@
 
     function closePayroll() {
         const rows = state.payRows || [];
-        const range = state.payRange;
-        if (!rows.length || !range) { toast(t('moneyCloseEmpty'), 'error'); return; }
+        if (!rows.length || !state.payRange) { toast(t('moneyCloseEmpty'), 'error'); return; }
+        // Будущие дни не закрываем: иначе часы, записанные после закрытия, но до конца
+        // выбранного периода, попали бы в уже закрытый расчёт и не вошли бы ни в одну выплату.
+        const today = todayIso();
+        const range = [state.payRange[0],
+            state.payRange[1] > today ? today : state.payRange[1]];
         const total = rows.reduce((s, r) => s + num(r.net), 0);
         const msg = t('moneyCloseConfirm', {
             period: fmtPayPeriod(range[0], range[1]), n: rows.length, sum: fmtMoney(total)

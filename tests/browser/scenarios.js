@@ -202,6 +202,9 @@ const scenarios = {
   },
 };
 
+// Сценарии этапа 1 ТЗ — в отдельном файле.
+Object.assign(scenarios, require('./stage1')(SEED));
+
 const name = process.argv[2];
 if (!scenarios[name]) {
   console.log(JSON.stringify({ ok: false, error: 'нет сценария ' + name + '; есть: ' + Object.keys(scenarios).join(', ') }));

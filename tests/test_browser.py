@@ -65,6 +65,12 @@ class App:
         with sqlite3.connect(self.db_path) as con:
             return con.execute(sql, params).fetchall()
 
+    def execute(self, sql: str, *params) -> None:
+        """Изменить данные перед сценарием (сервер читает базу на каждый запрос)."""
+        with sqlite3.connect(self.db_path) as con:
+            con.execute(sql, params)
+            con.commit()
+
 
 @pytest.fixture
 def app(tmp_path):
@@ -157,12 +163,57 @@ def test_manager_advance(app):
 
 def test_manager_close(app):
     result = app.run("manager_close")
-    start, end = result["data"]["month"]
+    start, _month_end = result["data"]["month"]
     rows = app.query("SELECT user_id, period_start, period_end, net FROM payouts ORDER BY user_id")
     assert len(rows) == 2, rows
-    assert {(r[1], r[2]) for r in rows} == {(start, end)}, rows
+    # «Этот месяц» закрывается по сегодня, не по конец месяца: будущие дни не закрываются.
+    assert {(r[1], r[2]) for r in rows} == {(start, app.seed["today"])}, rows
     assert sum(float(r[3]) for r in rows) == 90.0, rows
 
 
 def test_manager_reports_menu(app):
     app.run("manager_reports_menu")
+
+
+# ---------- Этап 1 ТЗ: понятность (сценарии в tests/browser/stage1.js) ----------
+
+@pytest.mark.parametrize("scenario", [
+    "header_clean", "readability",
+    "worker_today_money", "worker_coworkers", "worker_history_format", "worker_quick_hours",
+    "manager_dash_summary", "manager_tasks_list", "manager_tasks_empty",
+    "nav_back_manager", "nav_back_worker", "login_steps",
+])
+def test_stage1(app, scenario):
+    app.run(scenario)
+
+
+def test_worker_today_negative(app):
+    # Аванс 100 € сверху: заработано 50,00, авансы 120,00 → минус 70,00.
+    app.execute(
+        "INSERT INTO advances (user_id, amount, date, comment, created_by) VALUES (?, ?, ?, ?, ?)",
+        app.seed["worker"]["id"], "100.00", app.seed["today"], "test", app.seed["manager"]["id"],
+    )
+    app.run("worker_today_negative")
+
+
+def test_manager_enter_for(app):
+    app.run("manager_enter_for")
+    rows = app.query(
+        "SELECT hours, entered_by FROM work_entries WHERE user_id=? AND task_id=? AND work_date=?",
+        app.seed["worker3"]["id"], app.seed["task_harvest"], app.seed["today"],
+    )
+    assert [(float(r[0]), r[1]) for r in rows] == [(8.0, app.seed["manager"]["id"])], rows
+
+
+def test_manager_new_task_no_reporter(app):
+    app.run("manager_new_task_no_reporter")
+    task = app.query("SELECT id FROM tasks WHERE title=?", "Обрезка винограда")
+    assert len(task) == 1, task
+    users = app.query("SELECT user_id FROM task_assignments WHERE task_id=?", task[0][0])
+    assert [r[0] for r in users] == [app.seed["worker"]["id"]], users
+
+
+def test_worker_lang_persist(app):
+    app.run("worker_lang_persist")
+    rows = app.query("SELECT lang FROM users WHERE id=?", app.seed["worker"]["id"])
+    assert rows == [("es",)], rows
