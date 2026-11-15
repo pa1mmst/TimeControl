@@ -12,6 +12,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
@@ -21,6 +22,7 @@ from app.models import (
     Advance,
     AuditLog,
     InventoryItem,
+    Lang,
     Payout,
     Task,
     TaskAssignment,
@@ -263,6 +265,24 @@ def me_money(
     money = _money_for(db, me, start)
     money["inventory"] = _inventory(db, me.id)
     return money
+
+
+# ---------- 3a. Мой язык интерфейса ----------
+
+class LangIn(BaseModel):
+    lang: Lang
+
+
+@router.patch("/api/me/lang")
+def me_set_lang(
+    body: LangIn,
+    db: Session = Depends(get_db),
+    me: User = Depends(require_actor),
+):
+    """Сохраняет язык интерфейса текущего пользователя (любой активный)."""
+    me.lang = body.lang
+    db.commit()
+    return {"lang": body.lang.value}
 
 
 # ---------- 4. Дашборд руководителя ----------

@@ -46,7 +46,8 @@
         histRange: null,    // [from, to] для экрана История
         matrixTaskId: null, // задание открытой матрицы
         summaryUserId: null, // сотрудник открытой карточки
-        teamTab: 'people'   // активный сегмент экрана «Сотрудники»
+        teamTab: 'people',  // активный сегмент экрана «Сотрудники»
+        navStack: []        // стек экранов для Telegram BackButton
     };
 
     /* ========================================================
@@ -61,6 +62,9 @@
             'navMe': 'Я', 'navClients': 'Заказчики',
             'loading': 'Загрузка...',
             'loginTitle': 'Вход',
+            'loginStep1': 'Откройте @{bot}',
+            'loginStep2': 'Нажмите «Отправить номер»',
+            'loginStep3': 'Дождитесь одобрения руководителя',
             'loginSubtitle': 'Проверка данных пользователя...',
             'network.error': 'Ошибка сети. Проверьте подключение.',
             'headerOrg': 'AgroManager',
@@ -299,6 +303,9 @@
             'navMe': 'Я', 'navClients': 'Замовники',
             'loading': 'Завантаження...',
             'loginTitle': 'Вхід',
+            'loginStep1': 'Відкрийте @{bot}',
+            'loginStep2': 'Натисніть «Надіслати номер»',
+            'loginStep3': 'Дочекайтеся схвалення керівника',
             'loginSubtitle': 'Перевірка даних користувача...',
             'network.error': 'Помилка мережі. Перевірте з\'єднання.',
             'headerOrg': 'AgroManager',
@@ -527,6 +534,9 @@
             'navMe': 'Yo', 'navClients': 'Clientes',
             'loading': 'Cargando...',
             'loginTitle': 'Entrar',
+            'loginStep1': 'Abra @{bot}',
+            'loginStep2': 'Pulse «Enviar número»',
+            'loginStep3': 'Espere la aprobación del responsable',
             'loginSubtitle': 'Comprobando datos del usuario...',
             'network.error': 'Error de red. Compruebe la conexión.',
             'headerOrg': 'AgroManager',
@@ -1024,6 +1034,9 @@
             return data;
         },
         getMe() { return this.request('/users/me'); },
+        setLang(lang) {
+            return this.request('/me/lang', { method: 'PATCH', body: { lang: lang } });
+        },
         getTasks() { return this.request('/tasks?status=active'); },
         getAllTasks() { return this.request('/tasks'); },
         getMyEntries() { return this.request('/work-entries'); },
@@ -1114,7 +1127,65 @@
         });
     }
 
+    /* --- Навигация: стек экранов + Telegram BackButton --- */
+    function isRootScreen(name) {
+        return isManager()
+            ? ['manager-dash', 'tasks', 'money'].indexOf(name) !== -1
+            : name === 'today';
+    }
+
+    function navSync() {
+        if (!tg || !tg.BackButton) return;
+        if (state.navStack.length > 1) tg.BackButton.show();
+        else tg.BackButton.hide();
+    }
+
+    function navTrack(name) {
+        if (isRootScreen(name)) {
+            state.navStack = [name];
+            return;
+        }
+        const idx = state.navStack.indexOf(name);
+        if (idx >= 0) state.navStack = state.navStack.slice(0, idx + 1);
+        else state.navStack.push(name);
+    }
+
+    function navReset() {
+        state.navStack = [];
+        navSync();
+    }
+
+    function rerenderScreen(name) {
+        switch (name) {
+            case 'today': return loadToday();
+            case 'manager-dash': return loadManagerDash();
+            case 'tasks': return loadTasks();
+            case 'money': return loadMoney();
+            case 'history': return loadHistory(state.histPreset || 'week');
+            case 'team': return loadTeam();
+            case 'clients': return loadClients();
+            case 'reports': return loadReports();
+            case 'matrix': return openMatrix(state.matrixTaskId);
+            case 'user-summary': return openUserSummary(state.summaryUserId);
+            default: showScreen(name); return null;
+        }
+    }
+
+    // Один «назад» для BackButton и экранных кнопок «← Назад»
+    function navBack() {
+        const stack = state.navStack;
+        if (stack.length < 2) return goBackHome();
+        const leaving = stack.pop();
+        const tid = leaving === 'hours-entry' && state.heCtx ? state.heCtx.task.id : null;
+        if (leaving === 'hours-entry') state.heCtx = null;
+        const done = Promise.resolve(rerenderScreen(stack[stack.length - 1]));
+        return tid ? done.then(() => openTaskSheet(tid)) : done;
+    }
+
     function showScreen(name) {
+        if (['loading', 'login', 'error'].indexOf(name) === -1) navTrack(name);
+        else if (name !== 'loading') state.navStack = [];
+        navSync();
         document.querySelectorAll('.screen').forEach((s) => {
             s.hidden = s.getAttribute('data-screen-name') !== name;
         });
@@ -1153,10 +1224,18 @@
             const dateStr = new Date().toLocaleDateString(loc, {
                 day: 'numeric', month: 'long'
             });
-            meta.textContent = t('headerMetaRole', {
-                role: roleLabel(state.user), date: dateStr
-            });
+            meta.textContent = dateStr;
         }
+        renderLoginSteps();
+    }
+
+    function renderLoginSteps() {
+        const bot = (CONFIG.botUsername || 'agrofirmbot').replace('@', '');
+        const texts = [t('loginStep1', { bot: bot }), t('loginStep2'), t('loginStep3')];
+        texts.forEach((txt, i) => {
+            const li = $('#loginStep' + (i + 1));
+            if (li) li.textContent = txt;
+        });
     }
 
     /* ========================================================
@@ -1697,6 +1776,27 @@
     /* ========================================================
      * 13c. v5: меню ☰ работника (§3.3)
      * ======================================================== */
+    // Смена языка: сохраняем на сервере, затем применяем и перерисовываем экран
+    async function changeLang(value) {
+        const lang = normalizeLang(value);
+        try {
+            await api.setLang(lang);
+        } catch (err) {
+            if (err.status) toast(err.message, 'error');
+        }
+        state.lang = lang;
+        applyI18n();
+        const v = state.view;
+        if (v === 'tasks') renderTasks();
+        else if (v === 'team') renderTeam();
+        else if (v === 'clients') renderClients();
+        else if (v === 'today') renderToday();
+        else if (v === 'money') renderMoney();
+        else if (v === 'manager-dash') renderManagerDash();
+        else if (v === 'reports') renderReportsBody();
+        else rerenderScreen(v);
+    }
+
     function openWorkerMenu() {
         const sheet = openSheet(
             '<h3 class="sheet__title">' + escapeHtml(t('menu')) + '</h3>' +
@@ -1713,11 +1813,7 @@
             '<option value="es">ES</option></select></div>');
         const sel = sheet.querySelector('#menuLang');
         sel.value = state.lang;
-        sel.addEventListener('change', () => {
-            state.lang = normalizeLang(sel.value);
-            applyI18n();
-            if (state.view === 'today') renderToday();
-        });
+        sel.addEventListener('change', () => changeLang(sel.value));
     }
 
     /* --- v5 §3.3: меню ☰ руководителя (sheet снизу) --- */
@@ -1737,13 +1833,7 @@
             '<option value="es">ES</option></select></div>');
         const sel = sheet.querySelector('#menuLang');
         sel.value = state.lang;
-        sel.addEventListener('change', () => {
-            state.lang = normalizeLang(sel.value);
-            applyI18n();
-            if (state.view === 'manager-dash') renderManagerDash();
-            else if (state.view === 'tasks') renderTasks();
-            else if (state.view === 'money') renderMoney();
-        });
+        sel.addEventListener('change', () => changeLang(sel.value));
     }
 
     /* ========================================================
@@ -3057,6 +3147,7 @@
      * 20. Events
      * ======================================================== */
     function bindEvents() {
+        if (tg && tg.BackButton) tg.BackButton.onClick(navBack);
         document.querySelectorAll('.bottom-nav__item[data-nav-target]').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const target = btn.getAttribute('data-nav-target');
@@ -3166,15 +3257,9 @@
         });
         // v4: назад из матрицы и карточки
         const backMatrix = $('#btnBackMatrix');
-        if (backMatrix) backMatrix.addEventListener('click', () => {
-            if (state.matrixFrom === 'tasks') loadTasks();
-            else loadManagerDash();
-        });
+        if (backMatrix) backMatrix.addEventListener('click', navBack);
         const backSummary = $('#btnBackSummary');
-        if (backSummary) backSummary.addEventListener('click', () => {
-            if (state.matrixTaskId) openMatrix(state.matrixTaskId);
-            else loadManagerDash();
-        });
+        if (backSummary) backSummary.addEventListener('click', navBack);
 
         // Чипы формы нового задания
         document.addEventListener('click', (ev) => {
@@ -3243,12 +3328,7 @@
         $('#heDateBtn').addEventListener('click', () => $('#heDate').showPicker && $('#heDate').showPicker());
         $('#heSave').addEventListener('click', submitHoursEntry);
         const backHe = $('#btnBackHoursEntry');
-        if (backHe) backHe.addEventListener('click', () => {
-            const tid = state.heCtx ? state.heCtx.task.id : null;
-            state.heCtx = null;
-            if (tid) openTaskSheet(tid);
-            else goBackHome();
-        });
+        if (backHe) backHe.addEventListener('click', navBack);
 
         // Форма нового задания
         const form = $('#newTaskForm');
@@ -3287,7 +3367,7 @@
         const newTaskBtn = $('#btnNewTask');
         if (newTaskBtn) newTaskBtn.addEventListener('click', openNewTask);
         const backNew = $('#btnBackNewTask');
-        if (backNew) backNew.addEventListener('click', loadTasks);
+        if (backNew) backNew.addEventListener('click', navBack);
         const addWorkerBtn = $('#btnAddWorker');
         if (addWorkerBtn) addWorkerBtn.addEventListener('click', () => {
             const f = $('#teamAddForm');
@@ -3310,18 +3390,6 @@
         const invForm = $('#invAddForm');
         if (invForm) invForm.addEventListener('submit', submitItemAdd);
 
-        const lang = $('#langSelect');
-        if (lang) lang.addEventListener('change', () => {
-            state.lang = normalizeLang(lang.value);
-            applyI18n();
-            if (state.view === 'tasks') renderTasks();
-            else if (state.view === 'team') renderTeam();
-            else if (state.view === 'clients') renderClients();
-            else if (state.view === 'today') renderToday();
-            else if (state.view === 'money') renderMoney();
-            else if (state.view === 'manager-dash') renderManagerDash();
-            else if (state.view === 'reports') renderReportsBody();
-        });
     }
 
     async function doFinishTask(taskId) {
@@ -3411,6 +3479,7 @@
             $('#errorMessage').textContent = message || t('network.error');
             const nav = $('#bottomNav');
             if (nav) nav.hidden = true;
+            navReset();
             return;
         }
         $('#screenLoading').hidden = true;
@@ -3420,6 +3489,9 @@
         // Кнопка «Открыть бота» — только для незарегистрированных (заявка через бота)
         const btn = $('#btnOpenBot');
         if (btn) btn.hidden = code !== 'not_registered';
+        const steps = $('#loginSteps');
+        if (steps) steps.hidden = code !== 'not_registered';
+        navReset();
     }
 
     /* ========================================================
@@ -3455,8 +3527,6 @@
             if (state.user.lang) {
                 state.lang = normalizeLang(state.user.lang);
                 applyI18n();
-                const lang = $('#langSelect');
-                if (lang) lang.value = state.lang;
             }
             renderNav();
             await (isManager() ? loadManagerDash() : loadToday());

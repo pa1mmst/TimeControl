@@ -11,10 +11,10 @@
     --surface: #F6F7F8;
     --surface-2: #ECEEF0;
     --border: rgba(0, 0, 0, .08);
-    --accent: #16A34A;
+    --accent: #15803D;
     --accent-ink: #FFFFFF;
     --text: #111827;
-    --muted: #6B7280;
+    --muted: #566070;
     --danger: #DC2626;
     --warn: #B45309;
     --r-lg: 20px;
@@ -96,7 +96,7 @@ h3 { font-size: 16px; }
 }
 
 .app-header__meta {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--muted);
     line-height: 1.3;
     white-space: nowrap;
@@ -110,7 +110,7 @@ h3 { font-size: 16px; }
     border: none;
     border-radius: var(--r-sm);
     padding: 8px 10px;
-    font-size: 13px;
+    font-size: 14px;
     font-family: inherit;
 }
 
@@ -138,7 +138,7 @@ h3 { font-size: 16px; }
     gap: 10px;
     flex-wrap: wrap;
     align-items: center;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--muted);
 }
 .card-hours {
@@ -178,7 +178,7 @@ h3 { font-size: 16px; }
 }
 
 .stat__label {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--muted);
 }
 
@@ -189,7 +189,7 @@ h3 { font-size: 16px; }
     display: inline-block;
     padding: 3px 10px;
     border-radius: 999px;
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 600;
     line-height: 1.4;
     text-transform: uppercase;
@@ -233,7 +233,7 @@ h3 { font-size: 16px; }
 .dash-warn { color: var(--danger); }
 .dash-warn-text {
     color: var(--danger);
-    font-size: 13px;
+    font-size: 14px;
     margin: 0 0 12px;
 }
 .dash-no-hours { color: var(--danger); }
@@ -241,7 +241,7 @@ h3 { font-size: 16px; }
 .matrix {
     border-collapse: collapse;
     width: 100%;
-    font-size: 13px;
+    font-size: 14px;
     font-variant-numeric: tabular-nums;
 }
 .matrix th, .matrix td {
@@ -296,9 +296,10 @@ h3 { font-size: 16px; }
 .btn--block { width: 100%; }
 
 .btn-small {
-    height: 36px;
+    min-height: 44px;
+    height: 44px;
     padding: 0 14px;
-    font-size: 13px;
+    font-size: 14px;
     border-radius: 10px;
     background: var(--surface-2);
     color: var(--text);
@@ -311,6 +312,7 @@ h3 { font-size: 16px; }
 .btn-back {
     background: transparent;
     color: var(--accent);
+    min-height: 44px;
     height: auto;
     padding: 6px 0;
     justify-content: flex-start;
@@ -358,7 +360,7 @@ h3 { font-size: 16px; }
 }
 
 .row-line__meta {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--muted);
     white-space: nowrap;
     flex-shrink: 0;
@@ -369,7 +371,7 @@ h3 { font-size: 16px; }
     height: 36px;
     border-radius: 50%;
     color: #FFFFFF;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     display: inline-flex;
     align-items: center;
@@ -379,7 +381,7 @@ h3 { font-size: 16px; }
 
 .muted { color: var(--muted); }
 .my-hours {
-    font-size: 12px;
+    font-size: 14px;
     text-align: center;
     margin: 16px 0 0;
 }
@@ -457,7 +459,7 @@ h3 { font-size: 16px; }
 
 .form-label {
     display: block;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--muted);
     margin-bottom: 6px;
 }
@@ -555,8 +557,8 @@ h3 { font-size: 16px; }
    v5: работник — один экран
    ============================================================ */
 .icon-btn {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     border: none;
     background: var(--surface-2);
     border-radius: var(--r-md);
@@ -610,7 +612,7 @@ body.no-nav .fab { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 }
 .today-done__hint {
     margin: 2px 0 0;
-    font-size: 13px;
+    font-size: 14px;
     color: var(--muted, #8a8a8a);
 }
 
@@ -722,7 +724,7 @@ body.no-nav .app-content {
 .he-input:focus { border-color: var(--accent); }
 
 .he-unit {
-    font-size: 12px;
+    font-size: 14px;
     color: var(--muted);
     align-self: flex-end;
     padding-bottom: 8px;
@@ -771,12 +773,14 @@ body.no-nav .app-content {
     flex-direction: column;
     align-items: center;
     gap: 2px;
+    justify-content: center;
+    min-height: 56px;
     padding: 8px 2px;
     border: none;
     background: transparent;
     color: var(--muted);
     font-family: inherit;
-    font-size: 10px;
+    font-size: 14px;
     cursor: pointer;
     -webkit-user-select: none;
     user-select: none;
@@ -926,7 +930,7 @@ body.no-nav .app-content {
     border-bottom: 1px solid rgba(128, 128, 128, .25);
     vertical-align: top;
 }
-.pay-table th { color: var(--muted); font-weight: 600; font-size: 12px; }
+.pay-table th { color: var(--muted); font-weight: 600; font-size: 14px; }
 .pay-table .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .pay-table tbody tr[data-action] { cursor: pointer; }
 .pay-table tfoot td { font-weight: 700; border-bottom: none; }
@@ -938,9 +942,18 @@ body.no-nav .app-content {
 .nci__row + .nci__row { border-top: 1px solid var(--border, rgba(127, 127, 127, .25)); }
 .nci__info { min-width: 0; flex: 1; }
 .nci__name { font-size: 16px; font-weight: 600; }
-.nci__tasks { font-size: 14px; opacity: .75; }
+.nci__tasks { font-size: 14px; color: var(--muted); }
 .nci__btn { flex: none; font-size: 14px; }
 .nci-ok { font-size: 15px; }
 .tasks-new { margin-bottom: 12px; }
 .empty .btn { margin-top: 12px; }
 #sheetRoot #efTasks { margin-bottom: 12px; }
+
+/* Экран входа: три шага */
+.login-steps {
+    margin: 12px 0 16px;
+    padding-left: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}

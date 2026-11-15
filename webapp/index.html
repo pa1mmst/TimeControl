@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgroManager</title>
     <meta name="theme-color" content="#FFFFFF">
 
@@ -17,7 +17,7 @@
     <div id="app">
 
         <!-- ============================================= -->
-        <!-- ШАПКА: лого-марка + название фирмы + роль/дата -->
+        <!-- ШАПКА: лого-марка + название фирмы + дата -->
         <!-- ============================================= -->
         <header class="app-header">
             <div class="header-left">
@@ -26,13 +26,6 @@
                     <div id="headerOrg" class="app-header__org"></div>
                     <div id="headerMeta" class="app-header__meta"></div>
                 </div>
-            </div>
-            <div class="header-right">
-                <select id="langSelect" class="lang-select" title="Язык / Language">
-                    <option value="ru" selected>РУ</option>
-                    <option value="uk">УК</option>
-                    <option value="es">ES</option>
-                </select>
             </div>
         </header>
 
@@ -54,6 +47,11 @@
             <section class="screen" id="screenLogin" data-screen-name="login" hidden>
                 <h2 data-i18n="loginTitle">Вход</h2>
                 <p data-i18n="loginSubtitle">Проверка данных пользователя...</p>
+                <ol class="login-steps" data-testid="login-steps" id="loginSteps" hidden>
+                    <li id="loginStep1"></li>
+                    <li id="loginStep2"></li>
+                    <li id="loginStep3"></li>
+                </ol>
                 <button class="btn btn--primary" id="btnOpenBot" data-i18n="open_bot_btn" hidden>Открыть бота</button>
             </section>
 
