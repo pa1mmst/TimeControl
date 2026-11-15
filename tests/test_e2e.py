@@ -11,6 +11,7 @@ import pytest
 
 from app.db import SessionLocal
 from app.models import TaskLocation, User
+from app.tz import today_local
 from tests.conftest import init_for, seed_manager
 
 D1, D2 = date(2026, 8, 24), date(2026, 8, 25)
@@ -188,7 +189,8 @@ def scenario(fresh_db, client, fake_telegram):
         headers=init_for(w1))
 
     # ---------- 9. Дашборд руководителя ----------
-    TODAY = date.today().isoformat()
+    # «Сегодня» сервера — по Europe/Madrid (app/tz.py), а не по часовому поясу машины с тестами.
+    TODAY = today_local().isoformat()
     st["TODAY"] = TODAY
     task2 = client.post("/api/tasks", json={
         "title": "Дашборд-тест", "client_id": cl["id"],
