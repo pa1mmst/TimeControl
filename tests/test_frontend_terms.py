@@ -1,7 +1,8 @@
 """Единый словарь (ТЗ 11.11.2026, этап 1, п. 4.1): в интерфейсе и в боте нет старых слов.
 
 Проверяются русские тексты, которые реально видит пользователь:
-- значения ключей словаря Mini App, которые код запрашивает литералом t('...');
+- значения ключей словаря Mini App (webapp/i18n.json), которые код (webapp/src/*.js,
+  index.html) запрашивает литералом t('...'), через data-i18n или динамическим префиксом;
 - видимый текст index.html;
 - тексты бота app/i18n/ru.json.
 """
@@ -10,8 +11,10 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-APP_JS = (ROOT / "webapp" / "app.js").read_text(encoding="utf-8")
+SRC = "".join(p.read_text(encoding="utf-8")
+              for p in sorted((ROOT / "webapp" / "src").glob("*.js")))
 INDEX = (ROOT / "webapp" / "index.html").read_text(encoding="utf-8")
+APP_RU = json.loads((ROOT / "webapp" / "i18n.json").read_text(encoding="utf-8"))["ru"]
 BOT_RU = json.loads((ROOT / "app" / "i18n" / "ru.json").read_text(encoding="utf-8"))
 
 # Старое слово -> каким должно быть (для сообщения об ошибке).
@@ -32,18 +35,14 @@ OLD_TERMS = {
 }
 
 
-def _ru_block() -> str:
-    start = APP_JS.index("        ru: {")
-    return APP_JS[start:APP_JS.index("\n        }", start)]
-
-
 def _used_ru_texts() -> dict[str, str]:
-    pairs = dict(re.findall(r"'([A-Za-z0-9_.]+)'\s*:\s*'((?:[^'\\]|\\.)*)'", _ru_block()))
-    used = set(re.findall(r"\bt\('([A-Za-z0-9_.]+)'", APP_JS))
-    used |= set(re.findall(r'data-i18n(?:-placeholder)?="([A-Za-z0-9_.]+)"', APP_JS + INDEX))
-    dynamic_prefixes = set(re.findall(r"\bt\('([A-Za-z0-9_]+\.)'\s*\+", APP_JS))
-    return {k: v for k, v in pairs.items()
-            if k in used or any(k.startswith(p) for p in dynamic_prefixes)}
+    used = set(re.findall(r"\bt\('([A-Za-z0-9_.]+)'", SRC))
+    used |= set(re.findall(r'data-i18n(?:-placeholder)?="([A-Za-z0-9_.]+)"', SRC + INDEX))
+    dynamic_prefixes = set(re.findall(r"\bt\('([A-Za-z0-9_]+\.)'\s*\+", SRC))
+    texts = {k: v for k, v in APP_RU.items()
+             if k in used or any(k.startswith(p) for p in dynamic_prefixes)}
+    assert texts, "не найдено ни одного используемого ключа — сломан разбор исходников"
+    return texts
 
 
 def _visible_html_text() -> str:

@@ -20,7 +20,10 @@ jobs:
           pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Lint (ruff)
-        run: ruff check app tests
+        run: ruff check app tools tests
+
+      - name: Frontend build is fresh (webapp/app.js = webapp/src + i18n.json)
+        run: python tools/build_webapp.py --check
 
       - name: Tests (pytest)
         run: pytest -q

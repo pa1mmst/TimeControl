@@ -11,16 +11,22 @@ Telegram-бот и Telegram Mini App.
   `services/` (бизнес-логика: часы, выплаты, журнал), `bot/` (Telegram-бот), `i18n/` (ru/uk/es).
 - `app/routers/aggregates.py` — сводные запросы для экранов Mini App v4.
 - `webapp/` — Mini App (`index.html`, `app.js`, `styles.css`), отдаётся на `/` и `/app`.
+  Исходники фронта — `webapp/src/*.js` (фрагменты одного IIFE по экранам, склеиваются
+  по порядку имён) и `webapp/i18n.json` (тексты ru/uk/es). `webapp/app.js` из них
+  собирается и лежит в git (его отдаёт сервер): **руками не править**, после правки
+  исходников — `python tools/build_webapp.py`; `--check` (и тест
+  `tests/test_frontend_build.py`) ловит несобранный app.js.
 - `tests/` — pytest-тесты: `test_e2e.py` (сквозной сценарий, 43), `test_bot_flow.py` (поток
   доступа бота, 18), `test_me_401.py` (коды /api/users/me, 4), `test_authz.py` (авторизация
   401/403, 14). Общие фикстуры — `tests/conftest.py`.
-- `tools/` — служебные скрипты: `audit_probe_authz.py` (проба авторизации, запускается
+- `tools/` — служебные скрипты: `build_webapp.py` (сборка `webapp/app.js`),
+  `audit_probe_authz.py` (проба авторизации, запускается
   и напрямую, и из `test_authz.py` как subprocess), `backup_db.py` (бэкап SQLite),
   браузерные сценарии живут в `tests/browser/` (запуск: `BROWSER_TESTS=1 pytest tests/test_browser.py`).
 - `docs/` — `screenshots/` (скриншоты интерфейса), `design/` (макет v5 и референсы).
 - `_prompts/` — задания исполнителю по UI v3/v5 (история разработки).
 - `deploy/` — примеры конфигурации продакшена (Caddyfile: rate-limit, security headers).
-- `.github/` — CI (ruff → pytest → pip-audit) и Dependabot (ежемесячные обновления зависимостей).
+- `.github/` — CI (ruff → сборка фронта `--check` → pytest → pip-audit) и Dependabot (ежемесячные обновления зависимостей).
 - `migrations/` — Alembic: `alembic upgrade head` создаёт/обновляет схему
   (baseline `6d41b18de2d6` + индексы/уникальность `af675026fb58`); URL базы —
   из `app.db` (окружение), не из `alembic.ini`.
@@ -65,7 +71,7 @@ HTTP-запрос не ждёт Telegram. При остановке сервер
 ## Проверка
 `check.bat` — запускает `pytest -q` (79 тестов на временной базе `_pytest_run.db`, сама
 создаётся и игнорируется git), печатает `CHECK: OK` или `CHECK: FAILED`.
-CI (GitHub Actions, `.github/workflows/ci.yml`) на каждый push: ruff → pytest → pip-audit,
+CI (GitHub Actions, `.github/workflows/ci.yml`) на каждый push: ruff → `build_webapp.py --check` → pytest → pip-audit,
 отдельной задачей — браузерные сценарии.
 
 Браузерные сценарии Mini App (`tests/test_browser.py`, `tests/browser/`): настоящий сервер
