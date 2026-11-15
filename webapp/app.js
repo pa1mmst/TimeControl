@@ -199,6 +199,9 @@
             'payCardTitle': 'К выплате за {m}',
             'payCardEarnedAdv': 'начислено {e} · аванс {a}',
             'todayHistoryTitle': 'История',
+            'todayCoworkers': 'С вами: {names}',
+            'payRowEarned': 'Заработано', 'payRowAdvances': 'Авансы', 'payRowToPay': 'К выплате',
+            'payNegativeNote': 'Аванс больше заработка на {sum}',
             'allHistory': 'Вся история',
             'myMoney': 'Мне причитается',
             'myInventory': 'Мой инвентарь',
@@ -418,6 +421,9 @@
             'payCardTitle': 'До виплати за {m}',
             'payCardEarnedAdv': 'нараховано {e} · аванс {a}',
             'todayHistoryTitle': 'Історія',
+            'todayCoworkers': 'З вами: {names}',
+            'payRowEarned': 'Зароблено', 'payRowAdvances': 'Аванси', 'payRowToPay': 'До виплати',
+            'payNegativeNote': 'Аванс більший за заробіток на {sum}',
             'allHistory': 'Вся історія',
             'myMoney': 'Мені належить',
             'myInventory': 'Мій інвентар',
@@ -637,6 +643,9 @@
             'payCardTitle': 'A pagar por {m}',
             'payCardEarnedAdv': 'acumulado {e} · adelanto {a}',
             'todayHistoryTitle': 'Historial',
+            'todayCoworkers': 'Con usted: {names}',
+            'payRowEarned': 'Ganado', 'payRowAdvances': 'Adelantos', 'payRowToPay': 'A pagar',
+            'payNegativeNote': 'El adelanto supera lo ganado en {sum}',
             'allHistory': 'Todo el historial',
             'myMoney': 'Me deben',
             'myInventory': 'Mi inventario',
@@ -1554,7 +1563,7 @@
             '<h3 class="sheet__title">' +
             escapeHtml(fix ? t('hoursSheetFixTitle') : t('hoursSheetTitle')) + '</h3>' +
             '<div class="he-quick" id="whQuick">' +
-            ['6', '8', '10'].map((v) =>
+            ['4', '6', '8', '10', '12'].map((v) =>
                 '<button type="button" class="chip' + (picked === v ? ' chip--on' : '') +
                 '" data-wh="' + v + '">' + v + '</button>').join('') +
             '<button type="button" class="chip" data-wh="more">' +
@@ -2409,12 +2418,18 @@
         // --- карточки заданий на сегодня ---
         const cards = data.tasks.map((tk) => {
             const entered = num(tk.my_hours_today) > 0;
-            const workers = (tk.workers || []).map((w) =>
+            const workers = isManager() ? (tk.workers || []).map((w) =>
                 '<span class="chip chip--static">' + escapeHtml(w.name) +
                 (w.hours_today !== null && w.hours_today !== undefined
                     ? ' ' + escapeHtml(fmtHours(w.hours_today)) + escapeHtml(t('hoursUnit'))
                     : '') + '</span>'
-            ).join('');
+            ).join('') : '';
+            const others = isManager() ? [] : (tk.workers || []).filter((w) =>
+                !(state.user && w.user_id === state.user.id)).map((w) => w.name);
+            const coworkers = others.length
+                ? '<div class="today-coworkers" data-testid="coworkers">' +
+                  escapeHtml(t('todayCoworkers', { names: others.join(', ') })) + '</div>'
+                : '';
             const action = entered
                 ? (isManager()
                     ? '<button class="btn btn--ghost btn--block card__enter today-done" data-action="fix-hours" data-id="' + tk.id + '">' +
@@ -2431,6 +2446,7 @@
                 [tk.client_name, (tk.location_names || []).join(', ')]
                     .filter(Boolean).map(escapeHtml).join(' · ') + '</span></div>' +
                 (workers ? '<div class="chip-row">' + workers + '</div>' : '') +
+                coworkers +
                 action +
                 '</div>';
         }).join('');
@@ -2473,16 +2489,33 @@
             : today.toLocaleDateString(
                 state.lang === 'uk' ? 'uk-UA' : state.lang === 'es' ? 'es-ES' : 'ru-RU',
                 { month: 'long' });
+        const row = (k, label, v) =>
+            '<div class="pay-row" data-testid="pay-' + k + '"><span class="pay-row__label">' +
+            escapeHtml(label) + '</span><span class="pay-row__sum">' +
+            escapeHtml(fmtMoney(v)) + '</span></div>';
         slot.innerHTML =
             '<div class="card card--tap" data-action="open-money" role="button" tabindex="0">' +
             '<div class="card-sub"><span>' +
             escapeHtml(t('payCardTitle', { m: monthLabel })) + '</span></div>' +
-            '<div class="stat__value">' + escapeHtml(fmtMoney(m.to_pay)) + '</div>' +
-            '<div class="card-sub"><span class="muted">' +
-            escapeHtml(t('payCardEarnedAdv', {
-                e: fmtMoney(m.earned), a: fmtMoney(m.advances)
-            })) + '</span></div>' +
+            row('earned', t('payRowEarned'), m.earned) +
+            row('advances', t('payRowAdvances'), m.advances) +
+            row('topay', t('payRowToPay'), m.to_pay) +
+            (num(m.to_pay) < 0
+                ? '<div class="pay-note" data-testid="pay-negative-note">' +
+                  escapeHtml(t('payNegativeNote', { sum: fmtMoney(Math.abs(num(m.to_pay))) })) + '</div>'
+                : '') +
             '</div>';
+    }
+
+    function historyRowHtml(r) {
+        const text = [fmtDateHuman(r.date), r.task_title, r.location, fmtHoursUnit(r.hours)]
+            .filter(Boolean).join(' · ');
+        return '<div class="history-row-wrap"><div class="history-row" data-testid="history-row">' +
+            escapeHtml(text) + '</div>' +
+            (r.corrected
+                ? '<div class="history-row__note" title="' + escapeHtml(r.corrected_reason || '') + '">' +
+                  escapeHtml(t('histCorrected')) + '</div>'
+                : '') + '</div>';
     }
 
     /* --- v5: последние ~5 записей истории на главном экране --- */
@@ -2497,18 +2530,7 @@
                     escapeHtml(t('histEmpty')) + '</p>';
                 return;
             }
-            box.innerHTML = recent.map((r) =>
-                '<div class="row-line"><span>' +
-                escapeHtml(fmtDateHuman(r.date)) + ' · ' +
-                escapeHtml(r.location || r.task_title || '—') +
-                (r.corrected
-                    ? ' <span class="badge badge--warn" title="' +
-                      escapeHtml(r.corrected_reason || '') + '">' +
-                      escapeHtml(t('histCorrected')) + '</span>'
-                    : '') + '</span>' +
-                '<span class="row-line__meta">' + escapeHtml(fmtHours(r.hours)) + ' ' +
-                escapeHtml(t('hoursUnit')) + '</span></div>'
-            ).join('');
+            box.innerHTML = recent.map(historyRowHtml).join('');
         } catch (err) {
             box.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
         }
@@ -2547,25 +2569,7 @@
                     escapeHtml(t('histEmpty')) + '</div></div>';
                 return;
             }
-            // группировка по датам
-            const byDate = {};
-            rows.forEach((r) => {
-                (byDate[r.date] = byDate[r.date] || []).push(r);
-            });
-            box.innerHTML = Object.keys(byDate).sort().reverse().map((d) =>
-                '<div class="card">' +
-                '<div class="card-title">' + escapeHtml(fmtDateHuman(d)) + '</div>' +
-                byDate[d].map((r) =>
-                    '<div class="row-line"><span>' + escapeHtml(r.task_title || '—') +
-                    (r.location ? ' · ' + escapeHtml(r.location) : '') +
-                    (r.corrected
-                        ? ' <span class="badge badge--warn" title="' + escapeHtml(r.corrected_reason || '') + '">' +
-                          escapeHtml(t('histCorrected')) + '</span>'
-                        : '') + '</span>' +
-                    '<span class="row-line__meta">' + escapeHtml(fmtHours(r.hours)) + ' ' +
-                    escapeHtml(t('hoursUnit')) + '</span></div>'
-                ).join('') + '</div>'
-            ).join('');
+            box.innerHTML = '<div class="card">' + rows.map(historyRowHtml).join('') + '</div>';
         } catch (err) {
             box.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
         }

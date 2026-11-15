@@ -900,6 +900,17 @@ body.no-nav .app-content {
     .card-sub { gap: 6px; }
 }
 
+/* ТЗ 11.11 этап 1: Сегодня работника */
+.today-coworkers { font-size: 16px; color: var(--text); margin: 4px 0 8px; }
+.pay-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 16px; padding: 4px 0; color: var(--text); }
+.pay-row__label { color: var(--text); }
+.pay-row__sum { font-weight: 600; font-variant-numeric: tabular-nums; }
+.pay-row[data-testid="pay-topay"] { border-top: 1px solid rgba(128, 128, 128, .3); margin-top: 4px; padding-top: 8px; }
+.pay-note { font-size: 14px; color: var(--text); opacity: .85; margin-top: 4px; }
+.history-row-wrap { padding: 8px 0; }
+.history-row { font-size: 16px; color: var(--text); }
+.history-row__note { font-size: 14px; color: var(--muted); margin-top: 2px; }
+
 /* ТЗ 11.11 этап 0: Деньги руководителя */
 .money-period { margin-top: 4px; }
 .money-period__dates { font-size: 14px; margin: 0 0 10px; text-align: center; }
