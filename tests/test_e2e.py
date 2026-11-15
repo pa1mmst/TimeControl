@@ -283,7 +283,8 @@ def test_04c_reporter_told_is_reporter(scenario):
     w1 = scenario["w1"]
     sent = scenario["sent_after_active"]
     msg_reporter = next(t for c, t, _ in sent if c == 100000 + w1["id"])
-    assert "учётчик" in msg_reporter.lower()
+    # Роли «учётчик» в интерфейсе нет (решение владельца 15.11.2026), смысл сообщения тот же.
+    assert "за всех участников" in msg_reporter.lower()
 
 
 def test_04d_member_no_location(scenario):
