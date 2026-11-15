@@ -23,34 +23,8 @@ async function cardTitles(page, screenSel) {
   return page.$$eval(screenSel + ' .card-title', (els) => els.map((e) => e.innerText.trim()));
 }
 
-module.exports = (SEED) => ({
-  /* ---------- 4.2 Шапка + 4.4 читаемость ---------- */
-
-  // Шапка: в ней нет выбора языка и подписи роли; ☰ на каждом главном экране; язык — в меню ☰.
-  async header_clean(data) {
-    for (const who of ['worker', 'manager']) {
-      const { page } = await openApp(SEED[who].tg_id);
-      expect(!(await page.isVisible('#langSelect')), who + ': выбор языка виден в шапке');
-      const meta = await text(page, '.app-header');
-      data[who + '_header'] = meta;
-      expect(!ROLE_WORDS.test(meta), who + ': в шапке подпись роли: ' + meta);
-      const screens = who === 'worker'
-        ? [[null, 'screenToday']]
-        : [[null, 'screenManagerDash'], ['tasks', 'screenTasks'], ['money', 'screenMoney']];
-      for (const [tab, screen] of screens) {
-        if (tab) await gotoTab(page, tab);
-        const n = await page.locator('#' + screen + ' .screen-header .icon-btn:visible').count();
-        expect(n >= 1, who + ': нет ☰ на ' + screen);
-      }
-      await page.locator('.screen:not([hidden]) .screen-header .icon-btn:visible').first().click();
-      await page.waitForTimeout(400);
-      expect(await page.locator('.sheet #menuLang, #menuLang').count() >= 1, who + ': в меню ☰ нет выбора языка');
-    }
-  },
-
-  // 4.4: основной текст от 16 px, кнопки от 44 px, второстепенный текст контрастный (>= 4.5:1).
-  async readability(data) {
-    const { page } = await openApp(SEED.worker.tg_id);
+async function readabilityCheck(data, scheme) {
+    const { page } = await openApp(SEED_REF.worker.tg_id, { colorScheme: scheme });
     const r = await page.evaluate(() => {
       const lum = (c) => {
         const [r, g, b] = (c.match(/[\d.]+/g) || [255, 255, 255]).slice(0, 3).map(Number).map((v) => {
@@ -85,13 +59,68 @@ module.exports = (SEED) => ({
         .filter((e) => e.offsetParent !== null)
         .map((e) => ({ t: e.innerText.trim().slice(0, 30), h: e.getBoundingClientRect().height }))
         .filter((x) => x.h < 44);
-      return { body, small, lowContrast, lowButtons };
+      const bgLum = Math.round(lum(bgOf(document.body)) * 1000) / 1000;
+      return { body, small, lowContrast, lowButtons, bgLum };
     });
     Object.assign(data, r);
     expect(r.body >= 16, 'шрифт body ' + r.body + 'px < 16');
     expect(r.small.length === 0, 'текст мельче 14px: ' + JSON.stringify(r.small));
     expect(r.lowContrast.length === 0, 'контраст < 4.5:1: ' + JSON.stringify(r.lowContrast));
     expect(r.lowButtons.length === 0, 'кнопки ниже 44px: ' + JSON.stringify(r.lowButtons));
+}
+
+let SEED_REF = null;
+
+module.exports = (SEED) => (SEED_REF = SEED, {
+  /* ---------- 4.2 Шапка + 4.4 читаемость ---------- */
+
+  // Шапка: в ней нет выбора языка и подписи роли; ☰ на каждом главном экране; язык — в меню ☰.
+  async header_clean(data) {
+    for (const who of ['worker', 'manager']) {
+      const { page } = await openApp(SEED[who].tg_id);
+      expect(!(await page.isVisible('#langSelect')), who + ': выбор языка виден в шапке');
+      const meta = await text(page, '.app-header');
+      data[who + '_header'] = meta;
+      expect(!ROLE_WORDS.test(meta), who + ': в шапке подпись роли: ' + meta);
+      const screens = who === 'worker'
+        ? [[null, 'screenToday']]
+        : [[null, 'screenManagerDash'], ['tasks', 'screenTasks'], ['money', 'screenMoney']];
+      for (const [tab, screen] of screens) {
+        if (tab) await gotoTab(page, tab);
+        const n = await page.locator('#' + screen + ' .screen-header .icon-btn:visible').count();
+        expect(n >= 1, who + ': нет ☰ на ' + screen);
+      }
+      await page.locator('.screen:not([hidden]) .screen-header .icon-btn:visible').first().click();
+      await page.waitForTimeout(400);
+      expect(await page.locator('.sheet #menuLang, #menuLang').count() >= 1, who + ': в меню ☰ нет выбора языка');
+    }
+  },
+
+  // 4.4: основной текст от 16 px, кнопки от 44 px, второстепенный текст контрастный (>= 4.5:1).
+  async readability(data) { return readabilityCheck(data, 'light'); },
+
+  // 4.4: тёмная тема Telegram (colorScheme=dark): тёмный фон и те же требования к тексту.
+  async readability_dark(data) {
+    await readabilityCheck(data, 'dark');
+    expect(data.bgLum < 0.2, 'в тёмной теме фон не тёмный, яркость ' + data.bgLum);
+  },
+
+  // 4.3: первый запуск — 2–3 подсказки на роль; «Понятно» их убирает, после перезапуска их нет.
+  async first_run_hints(data) {
+    for (const who of ['worker', 'manager']) {
+      const { page } = await openApp(SEED[who].tg_id);
+      const hints = page.locator('.screen:not([hidden]) [data-testid="hint"]');
+      const n = await hints.count();
+      data[who] = n;
+      expect(n >= 2 && n <= 3, who + ': подсказок ' + n + ', ждём 2–3');
+      await page.locator('.screen:not([hidden]) [data-action="hint-dismiss"]').first().click();
+      await page.waitForTimeout(400);
+      expect(await hints.count() === 0, who + ': «Понятно» не убрал подсказки');
+      await page.reload({ waitUntil: 'load' });
+      await page.waitForFunction(() => document.getElementById('screenLoading').hidden, null, { timeout: 10000 });
+      await page.waitForTimeout(500);
+      expect(await page.locator('[data-testid="hint"]').count() === 0, who + ': подсказки вернулись после перезапуска');
+    }
   },
 
   /* ---------- 4.2 Работник, «Сегодня» ---------- */

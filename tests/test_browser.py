@@ -178,7 +178,7 @@ def test_manager_reports_menu(app):
 # ---------- Этап 1 ТЗ: понятность (сценарии в tests/browser/stage1.js) ----------
 
 @pytest.mark.parametrize("scenario", [
-    "header_clean", "readability",
+    "header_clean", "readability", "readability_dark", "first_run_hints",
     "worker_today_money", "worker_coworkers", "worker_history_format", "worker_quick_hours",
     "manager_dash_summary", "manager_tasks_list", "manager_tasks_empty",
     "nav_back_manager", "nav_back_worker", "login_steps",
