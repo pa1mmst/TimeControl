@@ -38,14 +38,17 @@
         const box = $('#repData');
         box.innerHTML = '<div class="skeleton skeleton--card"></div>';
         try {
-            const [tasks, entries] = await Promise.all([
-                api.getAllTasks(), api.getEntries('date_from=' + start + '&date_to=' + end)
+            const [tasks, entries, payRows] = await Promise.all([
+                api.getAllTasks(), api.getEntries('date_from=' + start + '&date_to=' + end),
+                api.payPreview(start, end)
             ]);
             const total = tasks.length;
             const active = tasks.filter((tk) => tk.status === 'active').length;
             const done = tasks.filter((tk) => tk.status === 'done').length;
             const hours = entries.reduce((s, e) => s + num(e.hours), 0);
-            const payroll = entries.reduce((s, e) => s + num(e.hours) * num(e.rate_snapshot), 0);
+            // Деньги считает бэкенд (/payroll/preview: часы × ставка по каждому человеку);
+            // общего итога за период API не отдаёт — складываем готовые суммы по людям.
+            const payroll = (payRows || []).reduce((s, r) => s + num(r.gross), 0);
 
             const byUser = {};
             const byClient = {};

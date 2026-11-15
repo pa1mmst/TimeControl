@@ -1404,6 +1404,7 @@
             }).join('');
 
             const totalHours = summary ? summary.total_hours : 0;
+            // Суммы по людям посчитал бэкенд; итога по заданию API не отдаёт — складываем.
             const totalEarned = summary
                 ? summary.by_user.reduce((s, u) => s + num(u.total_amount), 0) : 0;
 
@@ -2017,14 +2018,17 @@
         const box = $('#repData');
         box.innerHTML = '<div class="skeleton skeleton--card"></div>';
         try {
-            const [tasks, entries] = await Promise.all([
-                api.getAllTasks(), api.getEntries('date_from=' + start + '&date_to=' + end)
+            const [tasks, entries, payRows] = await Promise.all([
+                api.getAllTasks(), api.getEntries('date_from=' + start + '&date_to=' + end),
+                api.payPreview(start, end)
             ]);
             const total = tasks.length;
             const active = tasks.filter((tk) => tk.status === 'active').length;
             const done = tasks.filter((tk) => tk.status === 'done').length;
             const hours = entries.reduce((s, e) => s + num(e.hours), 0);
-            const payroll = entries.reduce((s, e) => s + num(e.hours) * num(e.rate_snapshot), 0);
+            // Деньги считает бэкенд (/payroll/preview: часы × ставка по каждому человеку);
+            // общего итога за период API не отдаёт — складываем готовые суммы по людям.
+            const payroll = (payRows || []).reduce((s, r) => s + num(r.gross), 0);
 
             const byUser = {};
             const byClient = {};
@@ -2821,6 +2825,7 @@
                 box.innerHTML = '<p class="screen-message">' + escapeHtml(t('moneyEmptyPeriod')) + '</p>';
                 return;
             }
+            // Суммы по людям посчитал бэкенд; итога за период API не отдаёт — складываем.
             let h = 0, g = 0, a = 0, n = 0;
             state.payRows.forEach((r) => {
                 h += num(r.hours); g += num(r.gross); a += num(r.advances_total); n += num(r.net);
@@ -2903,6 +2908,7 @@
         const today = todayIso();
         const range = [state.payRange[0],
             state.payRange[1] > today ? today : state.payRange[1]];
+        // Итог к выплате = сумма готовых net по людям из /payroll/preview.
         const total = rows.reduce((s, r) => s + num(r.net), 0);
         const msg = t('moneyCloseConfirm', {
             period: fmtPayPeriod(range[0], range[1]), n: rows.length, sum: fmtMoney(total)

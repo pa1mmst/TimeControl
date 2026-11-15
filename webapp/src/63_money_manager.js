@@ -93,6 +93,7 @@
                 box.innerHTML = '<p class="screen-message">' + escapeHtml(t('moneyEmptyPeriod')) + '</p>';
                 return;
             }
+            // Суммы по людям посчитал бэкенд; итога за период API не отдаёт — складываем.
             let h = 0, g = 0, a = 0, n = 0;
             state.payRows.forEach((r) => {
                 h += num(r.hours); g += num(r.gross); a += num(r.advances_total); n += num(r.net);
@@ -175,6 +176,7 @@
         const today = todayIso();
         const range = [state.payRange[0],
             state.payRange[1] > today ? today : state.payRange[1]];
+        // Итог к выплате = сумма готовых net по людям из /payroll/preview.
         const total = rows.reduce((s, r) => s + num(r.net), 0);
         const msg = t('moneyCloseConfirm', {
             period: fmtPayPeriod(range[0], range[1]), n: rows.length, sum: fmtMoney(total)

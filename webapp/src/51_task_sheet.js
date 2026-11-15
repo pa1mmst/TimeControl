@@ -23,6 +23,7 @@
             }).join('');
 
             const totalHours = summary ? summary.total_hours : 0;
+            // Суммы по людям посчитал бэкенд; итога по заданию API не отдаёт — складываем.
             const totalEarned = summary
                 ? summary.by_user.reduce((s, u) => s + num(u.total_amount), 0) : 0;
 
