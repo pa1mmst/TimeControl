@@ -57,6 +57,13 @@
                 <button class="btn btn--primary" id="btnOpenBot" data-i18n="open_bot_btn" hidden>Открыть бота</button>
             </section>
 
+            <!-- Экран: ошибка загрузки (сеть/сервер) -->
+            <section class="screen" id="screenError" data-screen-name="error" hidden>
+                <h2 data-i18n="errorTitle">Не удалось загрузить</h2>
+                <p id="errorMessage"></p>
+                <button class="btn btn--primary" id="btnRetry" data-i18n="retry">Повторить</button>
+            </section>
+
             <!-- Экран: список заданий -->
             <section class="screen" id="screenTasks" data-screen-name="tasks" hidden>
                 <div class="screen-header">

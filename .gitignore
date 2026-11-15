@@ -105,3 +105,6 @@ _manager_crash_test.js
 
 # npm (браузерные тесты ставят playwright локально)
 node_modules/
+
+# Рабочие копии агентов Claude Code
+.claude/worktrees/

@@ -129,6 +129,10 @@
             'alreadyEntered': 'уже внесено {n} ч',
             'today': 'Сегодня',
             'hoursUnit': 'ч',
+            'todayFixByManager': 'Ошиблись? Исправить может руководитель.',
+            'fixNoReason': 'Укажите причину исправления',
+            'errorTitle': 'Не удалось загрузить',
+            'retry': 'Повторить',
             'hoursBad': 'Часы должны быть от 0.25 до 24',
             // --- отчёты ---
             'reportsTitle': 'Отчёты',
@@ -350,6 +354,10 @@
             'alreadyEntered': 'вже внесено {n} год',
             'today': 'Сьогодні',
             'hoursUnit': 'год',
+            'todayFixByManager': 'Помилились? Виправити може керівник.',
+            'fixNoReason': 'Вкажіть причину виправлення',
+            'errorTitle': 'Не вдалося завантажити',
+            'retry': 'Повторити',
             'hoursBad': 'Години мають бути від 0.25 до 24',
             'reportsTitle': 'Звіти',
             'tabSummary': 'Зведення', 'tabPayouts': 'Виплати', 'tabReports': 'Звіти',
@@ -565,6 +573,10 @@
             'alreadyEntered': 'ya registrado {n} h',
             'today': 'Hoy',
             'hoursUnit': 'h',
+            'todayFixByManager': '¿Error? Lo puede corregir el responsable.',
+            'fixNoReason': 'Indique el motivo de la corrección',
+            'errorTitle': 'No se pudo cargar',
+            'retry': 'Reintentar',
             'hoursBad': 'Las horas deben ser de 0.25 a 24',
             'reportsTitle': 'Informes',
             'tabSummary': 'Resumen', 'tabPayouts': 'Pagos', 'tabReports': 'Informes',
@@ -1265,8 +1277,7 @@
                     '<span class="row-line__name">' + escapeHtml(a.user.name) +
                     (isRep ? ' <span class="badge badge--reporter">' + escapeHtml(t('role.reporter')) + '</span>' : '') +
                     '</span>' +
-                    (su ? '<span class="row-line__meta">' + escapeHtml(fmtHours(su.total_hours)) + ' ' +
-                        escapeHtml(t('hoursUnit')) + '</span>' : '') +
+                    (su ? '<span class="row-line__meta">' + escapeHtml(fmtHoursUnit(su.total_hours)) + '</span>' : '') +
                     '</div>';
             }).join('');
 
@@ -1293,9 +1304,9 @@
                 (workers || '<p class="screen-message">' + escapeHtml(t('empty')) + '</p>') +
                 '<div class="sheet__totals">' +
                 '<div class="row-line"><span>' + escapeHtml(t('totalHours')) + '</span>' +
-                '<span class="row-line__meta">' + escapeHtml(fmtHours(totalHours)) + ' ' + escapeHtml(t('hoursUnit')) + '</span></div>' +
+                '<span class="row-line__meta">' + escapeHtml(fmtHoursUnit(totalHours)) + '</span></div>' +
                 '<div class="row-line"><span>' + escapeHtml(t('totalEarned')) + '</span>' +
-                '<span class="row-line__meta">' + escapeHtml(totalEarned.toFixed(2)) + '</span></div>' +
+                '<span class="row-line__meta">' + escapeHtml(fmtMoney(totalEarned)) + '</span></div>' +
                 '</div>' +
                 '<div class="sheet__actions">' +
                 (canEnter
@@ -2229,6 +2240,30 @@
     // v5: «Мой инвентарь» из меню ☰ работника — фильтр по держателю=я
     // (API: /inventory?holder_id=..., app/routers/inventory.py:47).
     async function loadInventoryMine() {
+        if (!isManager()) {
+            const sheet = openSheet('<div data-testid="my-inventory"><p class="screen-message">' +
+                escapeHtml(t('loading')) + '</p></div>');
+            try {
+                // /inventory доступен только руководителю; свой список — в /me/money
+                const mine = await api.meMoney();
+                const items = (mine && mine.inventory) || [];
+                const list = (items || []).length
+                    ? items.map((i) =>
+                        '<div class="row-line"><span>' + escapeHtml(i.name) + '</span></div>').join('')
+                    : '<p class="screen-message">' + escapeHtml(t('moneyNoInventory')) + '</p>';
+                sheet.innerHTML = '<div class="sheet__handle"></div><div data-testid="my-inventory">' +
+                    '<div class="card-title sheet__title">' + escapeHtml(t('myInventory')) + '</div>' +
+                    list +
+                    '<button class="btn btn--ghost btn--block" data-action="close-sheet">' +
+                    escapeHtml(t('close')) + '</button></div>';
+            } catch (err) {
+                sheet.innerHTML = '<div class="sheet__handle"></div><div data-testid="my-inventory">' +
+                    '<p class="screen-message">' + escapeHtml(err.message) + '</p>' +
+                    '<button class="btn btn--ghost btn--block" data-action="close-sheet">' +
+                    escapeHtml(t('close')) + '</button></div>';
+            }
+            return;
+        }
         showScreen('team');
         setTeamTab('inventory');
         const list = $('#inventoryList');
@@ -2381,9 +2416,13 @@
                     : '') + '</span>'
             ).join('');
             const action = entered
-                ? '<button class="btn btn--ghost btn--block card__enter today-done" data-action="fix-hours" data-id="' + tk.id + '">' +
-                  '✓ ' + escapeHtml(t('todayEntered', { n: fmtHours(tk.my_hours_today) })) +
-                  ' · ' + escapeHtml(t('editTask')) + '</button>'
+                ? (isManager()
+                    ? '<button class="btn btn--ghost btn--block card__enter today-done" data-action="fix-hours" data-id="' + tk.id + '">' +
+                      '✓ ' + escapeHtml(t('todayEntered', { n: fmtHours(tk.my_hours_today) })) +
+                      ' · ' + escapeHtml(t('editTask')) + '</button>'
+                    : '<div class="today-done today-done--plaque" data-testid="today-done">✓ ' +
+                      escapeHtml(t('todayEntered', { n: fmtHours(tk.my_hours_today) })) + '</div>' +
+                      '<p class="today-done__hint">' + escapeHtml(t('todayFixByManager')) + '</p>')
                 : '<button class="btn btn--primary btn--block card__enter" data-action="enter-hours" data-id="' + tk.id + '">' +
                   escapeHtml(t('todayEnterHours')) + '</button>';
             return '<div class="card">' +
@@ -2438,10 +2477,10 @@
             '<div class="card card--tap" data-action="open-money" role="button" tabindex="0">' +
             '<div class="card-sub"><span>' +
             escapeHtml(t('payCardTitle', { m: monthLabel })) + '</span></div>' +
-            '<div class="stat__value">' + escapeHtml(num(m.to_pay).toFixed(2)) + '</div>' +
+            '<div class="stat__value">' + escapeHtml(fmtMoney(m.to_pay)) + '</div>' +
             '<div class="card-sub"><span class="muted">' +
             escapeHtml(t('payCardEarnedAdv', {
-                e: num(m.earned).toFixed(2), a: num(m.advances).toFixed(2)
+                e: fmtMoney(m.earned), a: fmtMoney(m.advances)
             })) + '</span></div>' +
             '</div>';
     }
@@ -2553,24 +2592,24 @@
         body.innerHTML =
             '<p class="muted my-hours">' + escapeHtml(t('moneyPeriod', { d: fmtDateHuman(m.period_start) })) + '</p>' +
             '<div class="stat-row stat-row--2">' +
-            '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHours(m.hours)) + '</span>' +
+            '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHoursUnit(m.hours)) + '</span>' +
             '<span class="stat__label">' + escapeHtml(t('moneyHours')) + '</span></div>' +
-            '<div class="stat"><span class="stat__value">' + escapeHtml(num(m.earned).toFixed(2)) + '</span>' +
+            '<div class="stat"><span class="stat__value">' + escapeHtml(fmtMoney(m.earned)) + '</span>' +
             '<span class="stat__label">' + escapeHtml(t('moneyEarned')) + '</span></div>' +
             '</div>' +
             '<div class="stat-row stat-row--2">' +
-            '<div class="stat"><span class="stat__value">' + escapeHtml(num(m.advances).toFixed(2)) + '</span>' +
+            '<div class="stat"><span class="stat__value">' + escapeHtml(fmtMoney(m.advances)) + '</span>' +
             '<span class="stat__label">' + escapeHtml(t('moneyAdvances')) + '</span></div>' +
-            '<div class="stat"><span class="stat__value">' + escapeHtml(num(m.to_pay).toFixed(2)) + '</span>' +
+            '<div class="stat"><span class="stat__value">' + escapeHtml(fmtMoney(m.to_pay)) + '</span>' +
             '<span class="stat__label">' + escapeHtml(t('moneyToPay')) + '</span></div>' +
             '</div>' +
             '<div class="card">' +
             '<div class="row-line"><span>' + escapeHtml(t('moneyRate')) + '</span>' +
-            '<span class="row-line__meta">' + escapeHtml(num(m.rate).toFixed(2)) + '</span></div>' +
+            '<span class="row-line__meta">' + escapeHtml(fmtMoney(m.rate) + '/' + t('hoursUnit')) + '</span></div>' +
             '<div class="row-line"><span>' + escapeHtml(t('moneyLastPayout')) + '</span>' +
             (lp
                 ? '<span class="row-line__meta">' + escapeHtml(fmtDateHuman(lp.date)) + ' · ' +
-                  escapeHtml(num(lp.amount).toFixed(2)) + ' · ' +
+                  escapeHtml(fmtMoney(lp.amount)) + ' · ' +
                   escapeHtml(t('payout.' + lp.status)) + '</span>'
                 : '<span class="row-line__meta muted">' + escapeHtml(t('moneyNoPayout')) + '</span>') +
             '</div></div>' +
@@ -2900,14 +2939,14 @@
                 '<span class="row-line__meta">' + escapeHtml(roleLabel(s)) + '</span></div>' +
                 '<p class="muted my-hours">' + escapeHtml(t('sumPeriod', { d: fmtDateHuman(s.period_start) })) + '</p>' +
                 '<div class="stat-row stat-row--2">' +
-                '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHours(s.hours_period)) + '</span>' +
+                '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHoursUnit(s.hours_period)) + '</span>' +
                 '<span class="stat__label">' + escapeHtml(t('moneyHours')) + '</span></div>' +
-                '<div class="stat"><span class="stat__value">' + escapeHtml(num(s.earned_period).toFixed(2)) + '</span>' +
+                '<div class="stat"><span class="stat__value">' + escapeHtml(fmtMoney(s.earned_period)) + '</span>' +
                 '<span class="stat__label">' + escapeHtml(t('moneyEarned')) + '</span></div>' +
                 '</div>' +
                 '<div class="card">' +
                 '<div class="row-line"><span>' + escapeHtml(t('moneyRate')) + '</span>' +
-                '<span class="row-line__meta">' + escapeHtml(num(s.rate).toFixed(2)) + '</span></div>' +
+                '<span class="row-line__meta">' + escapeHtml(fmtMoney(s.rate) + '/' + t('hoursUnit')) + '</span></div>' +
                 '<div class="row-line"><span>' + escapeHtml(t('profile.role')) + '</span>' +
                 '<span class="row-line__meta">' +
                 escapeHtml(s.is_active ? t('profile.active') : t('profile.inactive')) + '</span></div>' +
@@ -2950,6 +2989,8 @@
         });
 
         // Кнопка «Открыть бота» на экране логина (незарегистрированный пользователь)
+        const btnRetry = $('#btnRetry');
+        if (btnRetry) btnRetry.addEventListener('click', () => { location.reload(); });
         const btnOpenBot = $('#btnOpenBot');
         if (btnOpenBot) {
             btnOpenBot.addEventListener('click', () => {
@@ -3279,7 +3320,16 @@
         }
     }
 
-    function renderError(message, code) {
+    function renderError(message, code, forceLogin) {
+        if (!forceLogin && code !== 'not_registered' && code !== 'deactivated') {
+            document.querySelectorAll('.screen').forEach((sc) => { sc.hidden = true; });
+            const errScreen = $('#screenError');
+            errScreen.hidden = false;
+            $('#errorMessage').textContent = message || t('network.error');
+            const nav = $('#bottomNav');
+            if (nav) nav.hidden = true;
+            return;
+        }
         $('#screenLoading').hidden = true;
         const login = $('#screenLogin');
         login.hidden = false;
@@ -3301,7 +3351,7 @@
         showScreen('loading');
 
         if (!tg || !tg.initData) {
-            renderError('Откройте приложение через меню бота в Telegram.');
+            renderError('Откройте приложение через меню бота в Telegram.', null, true);
             return;
         }
 

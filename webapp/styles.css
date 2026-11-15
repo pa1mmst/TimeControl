@@ -605,6 +605,14 @@ body.no-nav .fab { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
     color: var(--accent);
     font-weight: 600;
 }
+.today-done--plaque {
+    padding: 12px 0 2px;
+}
+.today-done__hint {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--muted, #8a8a8a);
+}
 
 /* Работник без нижней навигации: контент до низа */
 body.no-nav .app-content {
