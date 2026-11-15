@@ -1282,9 +1282,12 @@
         const stack = state.navStack;
         if (stack.length < 2) return goBackHome();
         const leaving = stack.pop();
-        const tid = leaving === 'hours-entry' && state.heCtx ? state.heCtx.task.id : null;
+        const prev = stack[stack.length - 1];
+        // с экрана задания (матрицы) лист задания не нужен — он сам итоговый
+        const tid = leaving === 'hours-entry' && state.heCtx && prev !== 'matrix'
+            ? state.heCtx.task.id : null;
         if (leaving === 'hours-entry') state.heCtx = null;
-        const done = Promise.resolve(rerenderScreen(stack[stack.length - 1]));
+        const done = Promise.resolve(rerenderScreen(prev));
         return tid ? done.then(() => openTaskSheet(tid)) : done;
     }
 
@@ -1560,15 +1563,18 @@
      * 12. ЭКРАН «ВВЕСТИ ЧАСЫ» (полноэкранный; v5 — только руководитель,
      *     у работника ввод в bottom sheet, см. 13b)
      * ======================================================== */
-    async function openHoursEntry(taskId) {
+    async function openHoursEntry(taskId, opts) {
         if (!isManager()) { openWorkerHoursSheet(taskId, false); return; }
         closeSheet();
         showScreen('hours-entry');
         $('#heError').hidden = true;
         $('#heReasonField').hidden = true;
         $('#heSame').checked = false;
-        $('#heDate').value = todayIso();
-        $('#heDateBtn').textContent = t('today') + ', ' + fmtDateHuman(todayIso());
+        opts = opts || {};
+        const heDay = opts.date || todayIso();
+        $('#heDate').value = heDay;
+        $('#heDateBtn').textContent = (heDay === todayIso() ? t('today') + ', ' : '') +
+            fmtDateHuman(heDay);
         $('#heTaskTitle').textContent = '...';
 
         try {
@@ -1576,7 +1582,7 @@
                 api.request('/tasks/' + entry_id(taskId)),
                 api.taskEntries(taskId)
             ]);
-            state.heCtx = { task: task, entries: entries };
+            state.heCtx = { task: task, entries: entries, onlyUser: opts.userId || null };
             $('#heTaskTitle').textContent = task.title;
             renderHoursEntry();
         } catch (err) {
@@ -1596,7 +1602,8 @@
         });
         ctx.existing = existing;
 
-        const people = (ctx.task.assignments || []).map((a) => a.user);
+        const people = (ctx.task.assignments || []).map((a) => a.user)
+            .filter((u) => !ctx.onlyUser || u.id === ctx.onlyUser);
         const box = $('#hePeople');
         if (!people.length) {
             box.innerHTML = '<p class="screen-message">' + escapeHtml(t('empty')) + '</p>';
@@ -1725,12 +1732,13 @@
             toast(t('hoursSaved'), 'success');
             state.entries = null;
             state.tasks = null;
-            // Возврат в лист задания, итоги обновятся сразу
-            const tid = ctx.task.id;
+            // Возврат туда, откуда пришли (экран задания или список); экран
+            // перерисовывается и только потом, если нужно, открывается лист
+            // задания — без гонки с showScreen -> closeSheet.
+            const stack = state.navStack;
+            if (stack[stack.length - 1] === 'hours-entry') await navBack();
+            else { state.heCtx = null; await Promise.resolve(goBackHome()); }
             state.heCtx = null;
-            if (state.view === 'hours-entry') goBackHome();
-            else showScreen(state.view);
-            await openTaskSheet(tid);
         } catch (err) {
             errEl.textContent = err.message;
             errEl.hidden = false;
@@ -2115,7 +2123,7 @@
             const users = state.users || await api.getUsers();
             state.users = users;
             const nameOf = (id) => {
-                const u = users.find((x) => x.id === id);
+                const u = users.find((x) => x.id === Number(id));
                 return u ? u.name : '#' + id;
             };
 
@@ -2128,24 +2136,24 @@
                 statCell(t('repTasksTotal'), total, 0) +
                 statCell(t('repTasksActive'), active, 0) +
                 statCell(t('repTasksDone'), done, 0) +
-                '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHours(hours)) + '</span>' +
+                '<div class="stat"><span class="stat__value">' + escapeHtml(fmtHoursUnit(hours)) + '</span>' +
                 '<span class="stat__label">' + escapeHtml(t('repHoursTotal')) + '</span></div>' +
                 '</div>' +
-                '<div class="stat"><span class="stat__value">' + payroll.toFixed(2) + '</span>' +
+                '<div class="stat"><span class="stat__value">' + escapeHtml(fmtMoney(payroll)) + '</span>' +
                 '<span class="stat__label">' + escapeHtml(t('repPayroll')) + '</span></div>' +
                 '<h3 class="sheet__h3">' + escapeHtml(t('repByWorker')) + '</h3>' +
                 (Object.keys(byUser).length
                     ? Object.keys(byUser).map((uid) =>
                         '<div class="row-line"><span>' + escapeHtml(nameOf(uid)) + '</span>' +
-                        '<span class="row-line__meta">' + escapeHtml(fmtHours(byUser[uid])) + ' ' +
-                        escapeHtml(t('hoursUnit')) + '</span></div>').join('')
+                        '<span class="row-line__meta">' + escapeHtml(fmtHoursUnit(byUser[uid])) +
+                        '</span></div>').join('')
                     : '<p class="screen-message">' + escapeHtml(t('repEmpty')) + '</p>') +
                 '<h3 class="sheet__h3">' + escapeHtml(t('repByClient')) + '</h3>' +
                 (Object.keys(byClient).length
                     ? Object.keys(byClient).map((cn) =>
                         '<div class="row-line"><span>' + escapeHtml(cn) + '</span>' +
-                        '<span class="row-line__meta">' + escapeHtml(fmtHours(byClient[cn])) + ' ' +
-                        escapeHtml(t('hoursUnit')) + '</span></div>').join('')
+                        '<span class="row-line__meta">' + escapeHtml(fmtHoursUnit(byClient[cn])) +
+                        '</span></div>').join('')
                     : '<p class="screen-message">' + escapeHtml(t('repEmpty')) + '</p>') +
                 (myHours > 0
                     ? '<p class="muted my-hours">' + escapeHtml(t('repMyHours', { n: fmtHours(myHours) })) + '</p>'
@@ -2180,12 +2188,18 @@
                 box.innerHTML = '<p class="screen-message">' + escapeHtml(t('payrollEmpty')) + '</p>';
                 return;
             }
-            box.innerHTML = rows.map((r) =>
-                '<div class="row-line"><span>' + escapeHtml(r.name) + '</span>' +
+            const kv = (label, val, strong) =>
+                '<div class="row-line"><span class="muted">' + escapeHtml(label) + '</span>' +
                 '<span class="row-line__meta">' +
-                escapeHtml(fmtHours(r.hours)) + ' ' + escapeHtml(t('hoursUnit')) + ' · ' +
-                num(r.gross).toFixed(2) + ' − ' + num(r.advances_total).toFixed(2) +
-                ' = <strong>' + num(r.net).toFixed(2) + '</strong></span></div>'
+                (strong ? '<strong>' + escapeHtml(val) + '</strong>' : escapeHtml(val)) +
+                '</span></div>';
+            box.innerHTML = rows.map((r) =>
+                '<div class="card"><div class="card-title">' + escapeHtml(r.name) + '</div>' +
+                kv(t('moneyHours'), fmtHoursUnit(r.hours)) +
+                kv(t('payRowEarned'), fmtMoney(r.gross)) +
+                kv(t('payRowAdvances'), fmtMoney(r.advances_total)) +
+                kv(t('payRowToPay'), fmtMoney(r.net), true) +
+                '</div>'
             ).join('');
         } catch (err) {
             box.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
@@ -3178,7 +3192,9 @@
         body.innerHTML = '<div class="skeleton skeleton--card"></div>';
         showScreen('matrix');
         try {
-            const m = await api.taskMatrix(taskId);
+            const [m, task] = await Promise.all([
+                api.taskMatrix(taskId), api.request('/tasks/' + entry_id(taskId))
+            ]);
             if (!m.rows.length || !m.dates.length) {
                 body.innerHTML = '<div class="empty"><div class="empty__text">' +
                     escapeHtml(t('matrixEmpty')) + '</div></div>';
@@ -3190,14 +3206,24 @@
                 '<tr><th>' + escapeHtml(r.name) + '</th>' +
                 m.dates.map((d) => {
                     const v = r.cells[d];
+                    const tap = d <= todayIso()
+                        ? ' matrix-cell--tap" data-mx-user="' + r.user_id + '" data-mx-date="' + d
+                        : '';
                     return v === null || v === undefined
-                        ? '<td class="matrix-cell matrix-cell--empty">·</td>'
-                        : '<td class="matrix-cell">' + escapeHtml(fmtHours(v)) + '</td>';
+                        ? '<td class="matrix-cell matrix-cell--empty' + tap + '">·</td>'
+                        : '<td class="matrix-cell' + tap + '">' + escapeHtml(fmtHours(v)) + '</td>';
                 }).join('') + '</tr>').join('');
             body.innerHTML =
                 '<p class="muted my-hours">' + escapeHtml(m.title) + '</p>' +
                 '<div class="matrix-wrap"><table class="matrix">' +
-                '<thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div>';
+                '<thead>' + head + '</thead><tbody>' + rows + '</tbody></table></div>' +
+                (task.status === 'active'
+                    ? '<div class="sheet__actions">' +
+                      '<button class="btn btn--primary btn--block he-save" data-action="mx-enter-hours" data-id="' +
+                      task.id + '">' + escapeHtml(t('enterHours')) + '</button>' +
+                      '<button class="btn btn--ghost btn--block" data-action="mx-finish" data-id="' +
+                      task.id + '">' + escapeHtml(t('finishTask')) + '</button></div>'
+                    : '');
         } catch (err) {
             body.innerHTML = '<p class="screen-message">' + escapeHtml(err.message) + '</p>';
         }
@@ -3308,6 +3334,8 @@
                 else if (action === 'open-clients') { closeSheet(); loadClients(); }
                 else if (action === 'open-reports') { closeSheet(); loadReports(); }
                 else if (action === 'pay-advance-open') openAdvanceSheet();
+                else if (action === 'mx-enter-hours') openHoursEntry(parseInt(id, 10));
+                else if (action === 'mx-finish') finishTaskFromScreen(parseInt(id, 10));
                 else if (action === 'finish-task') finishTask(parseInt(id, 10));
                 else if (action === 'finish-task-yes') doFinishTask(parseInt(id, 10));
                 else if (action === 'edit-task') editTaskSheet(parseInt(id, 10));
@@ -3329,6 +3357,15 @@
                 return;
             }
 
+            // Тап по ячейке «человек × день» на экране задания
+            const mxCell = ev.target.closest('[data-mx-user]');
+            if (mxCell && state.matrixTaskId) {
+                openHoursEntry(state.matrixTaskId, {
+                    date: mxCell.getAttribute('data-mx-date'),
+                    userId: parseInt(mxCell.getAttribute('data-mx-user'), 10)
+                });
+                return;
+            }
             // Тап по карточке задания (кроме кнопки внутри)
             const taskCard = ev.target.closest('[data-task-id]');
             if (taskCard && !ev.target.closest('[data-action]')) {
@@ -3516,6 +3553,24 @@
             closeSheet();
             toast(err.message, 'error');
         }
+    }
+
+    // Завершение задания с экрана задания: подтверждение Telegram -> «Задания»
+    function finishTaskFromScreen(taskId) {
+        const msg = t('finishConfirm');
+        const run = async (ok) => {
+            if (!ok) return;
+            try {
+                await api.updateTask(taskId, { status: 'done' });
+                toast(t('taskFinished'), 'success');
+                state.tasks = null;
+                await loadTasks();
+            } catch (err) {
+                toast(err.message, 'error');
+            }
+        };
+        if (tg && typeof tg.showConfirm === 'function') tg.showConfirm(msg, run);
+        else run(window.confirm(msg));
     }
 
     function editTaskSheet(taskId) {

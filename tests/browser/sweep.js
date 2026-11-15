@@ -427,6 +427,48 @@ module.exports = (SEED) => {
       await page.waitForSelector('#screenTasks:not([hidden])', { timeout: 4000 });
     },
 
+    // Экран задания: тап по ячейке Петра за сегодня -> ввод часов (4 -> 5 с причиной) -> назад на экран задания.
+    async manager_task_cell_edit(data) {
+      const { page } = await openApp(SEED.manager.tg_id);
+      await managerTab(page, 'tasks');
+      await page.click('#tasksList [data-task-id="' + SEED.task_water + '"] .card-title');
+      await waitVisible(page, '#screenMatrix table.matrix');
+      const cell = '#matrixBody td[data-mx-user="' + SEED.worker.id + '"][data-mx-date="' + SEED.today + '"]';
+      expect((await text(page, cell)).trim() === '4', 'в ячейке Петра за сегодня не 4');
+      await page.click(cell);
+      const inp = '#hePeople .he-input[data-user="' + SEED.worker.id + '"]';
+      await waitVisible(page, inp);
+      expect(await page.locator('#hePeople .he-input').count() === 1, 'в форме не только Пётр');
+      await page.fill(inp, '5');
+      await page.dispatchEvent(inp, 'input');
+      await waitVisible(page, '#heReasonField');
+      await page.fill('#heReason', 'Ошибся при записи');
+      await page.dispatchEvent('#heReason', 'input');
+      await page.click('#heSave');
+      await waitVisible(page, '#screenMatrix table.matrix');
+      await page.waitForFunction((c) => {
+        const el = document.querySelector(c);
+        return el && el.innerText.trim() === '5';
+      }, cell, { timeout: 5000 });
+      await page.waitForTimeout(800);
+      expect(await page.locator('.sheet').count() === 0, 'после правки открылся лист');
+      expect((await visibleScreens(page)).includes('screenMatrix'), 'не вернулись на экран задания');
+    },
+
+    // Экран задания: «Завершить задание» -> подтверждение Telegram -> задание завершено, список «Задания».
+    async manager_task_finish_screen(data) {
+      const { page } = await openApp(SEED.manager.tg_id);
+      await managerTab(page, 'tasks');
+      await page.click('#tasksList [data-task-id="' + SEED.task_water + '"] .card-title');
+      await waitVisible(page, '#screenMatrix [data-action="mx-enter-hours"]');
+      await page.click('#screenMatrix [data-action="mx-finish"]');
+      await page.waitForSelector('#screenTasks:not([hidden])', { timeout: 5000 });
+      await page.waitForFunction((id) => !document.querySelector('#tasksList [data-task-id="' + id + '"]'),
+        SEED.task_water, { timeout: 5000 });
+      const calls = await page.evaluate(() => window.__tgCalls.filter((c) => c.name === 'showConfirm').length);
+      expect(calls === 1, 'showConfirm вызван ' + calls + ' раз');
+    },
+
     // Правка часов Петра на «Поливе» 4 -> 5: без причины кнопка заблокирована, с причиной — сохраняется
     // и открывается лист задания с итогом 11 ч (БД и аудит проверяет pytest).
     async manager_edit_hours(data) {
@@ -449,6 +491,9 @@ module.exports = (SEED) => {
       await page.click('#heSave');
       await page.waitForFunction(() => /Часы сохранены/.test(document.getElementById('toastRoot').innerText),
         null, { timeout: 5000 });
+      // после сохранения теперь стабильно открыт лист задания — закрываем его
+      await waitVisible(page, '.sheet [data-action="close-sheet"]');
+      await page.click('.sheet [data-action="close-sheet"]');
       // новое значение видно в матрице задания
       await managerTab(page, 'tasks');
       await page.click('#tasksList [data-task-id="' + SEED.task_water + '"] .card-title');

@@ -263,6 +263,25 @@ def test_manager_edit_hours(app):
     assert actor == app.seed["manager"]["id"], audit
 
 
+def test_manager_task_cell_edit(app):
+    app.run("manager_task_cell_edit")
+    rows = _water_entry(app)
+    assert [float(r[1]) for r in rows] == [5.0], rows
+    audit = app.query(
+        "SELECT field, old_value, new_value, reason FROM audit_log "
+        "WHERE entity='work_entries' AND entity_id=?", rows[0][0],
+    )
+    assert len(audit) == 1, audit
+    assert (audit[0][0], float(audit[0][1]), float(audit[0][2]), audit[0][3]) == (
+        "hours", 4.0, 5.0, "Ошибся при записи"), audit
+
+
+def test_manager_task_finish_screen(app):
+    app.run("manager_task_finish_screen")
+    rows = app.query("SELECT status FROM tasks WHERE id=?", app.seed["task_water"])
+    assert str(rows[0][0]).lower().endswith("done"), rows
+
+
 def test_manager_edit_hours_no_reason(app):
     app.run("manager_edit_hours_no_reason")
     rows = _water_entry(app)
@@ -283,25 +302,14 @@ def test_manager_money_since_close(app):
     assert app.query("SELECT count(*) FROM payouts") == [(2,)]
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "отчёты руководителя показывают деньги без «€» и с точкой вместо запятой "
-    "(«50.00 − 20.00 = 30.00» во вкладке «Выплаты», «100.00» в «Отчётах»): "
-    "refreshPayPreview/refreshManagerSummary не используют fmtMoney"))
 def test_manager_reports_money_format(app):
     app.run("manager_reports_money_format")
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "в «Отчёты» → «По людям» вместо имён показаны «#2», «#3»: renderManagerSummary ищет "
-    "пользователя по ключу-строке из Object.keys (x.id === '2'), строгое сравнение не находит"))
 def test_manager_reports_names(app):
     app.run("manager_reports_names")
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "после сохранения правки часов лист задания с новыми итогами закрывается сразу: "
-    "submitHoursEntry открывает его сразу после goBackHome(), а асинхронный "
-    "renderManagerDash() вызывает showScreen() -> closeSheet()"))
 def test_manager_edit_hours_sheet(app):
     app.run("manager_edit_hours_sheet")
 
