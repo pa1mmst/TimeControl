@@ -701,9 +701,27 @@
         return isNaN(n) ? 0 : n;
     }
 
+    // Число часов без единицы, с точкой: для value полей ввода и для API.
     function fmtHours(v) {
         const n = num(v);
         return (n % 1 === 0) ? String(n) : n.toFixed(2).replace(/0$/, '');
+    }
+
+    function localeTag() {
+        return state.lang === 'uk' ? 'uk-UA' : state.lang === 'es' ? 'es-ES' : 'ru-RU';
+    }
+
+    // Деньги для показа: «1 234,50 €» (разделители по языку интерфейса).
+    function fmtMoney(v) {
+        return num(v).toLocaleString(localeTag(), {
+            minimumFractionDigits: 2, maximumFractionDigits: 2
+        }) + ' €';
+    }
+
+    // Часы для показа: «8 ч», «7,5 ч».
+    function fmtHoursUnit(v) {
+        return num(v).toLocaleString(localeTag(), { maximumFractionDigits: 2 }) +
+            ' ' + t('hoursUnit');
     }
 
     function todayIso() {
