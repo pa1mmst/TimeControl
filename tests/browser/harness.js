@@ -81,7 +81,7 @@ async function openApp(tgId, opts) {
   opts = opts || {};
   const user = { id: Number(tgId), first_name: 'Test', language_code: opts.lang || 'ru' };
   const browser = await chromium.launch();
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, locale: 'ru-RU' });
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, locale: 'ru-RU', timezoneId: 'Europe/Madrid' });
   await ctx.route('**/telegram-web-app.js', (r) =>
     r.fulfill({ status: 200, contentType: 'application/javascript', body: '/* stub */' }));
   await ctx.addInitScript(tgStub(signedInitData(user), user, opts.colorScheme));

@@ -217,3 +217,108 @@ def test_worker_lang_persist(app):
     app.run("worker_lang_persist")
     rows = app.query("SELECT lang FROM users WHERE id=?", app.seed["worker"]["id"])
     assert rows == [("es",)], rows
+
+
+# ---------- Этап 2 ТЗ: сеть безопасности перед рефакторингом (tests/browser/sweep.js) ----------
+
+@pytest.mark.parametrize("scenario", [
+    "manager_team", "manager_clients", "manager_reports_tabs", "manager_task_matrix",
+    "manager_money_periods", "worker_history", "worker_my_money",
+    "lang_worker_uk", "lang_worker_es", "lang_manager_uk", "lang_manager_es",
+])
+def test_sweep(app, scenario):
+    app.run(scenario)
+
+
+def test_manager_inventory_handover(app):
+    app.run("manager_inventory_handover")
+    rows = app.query("SELECT holder_id FROM inventory_items WHERE name=?", "Секатор №3")
+    assert rows == [(app.seed["worker2"]["id"],)], rows
+
+
+def test_manager_inventory_return(app):
+    app.run("manager_inventory_return")
+    rows = app.query("SELECT holder_id FROM inventory_items WHERE name=?", "Секатор №3")
+    assert rows == [(None,)], rows
+
+
+def _water_entry(app):
+    return app.query(
+        "SELECT id, hours FROM work_entries WHERE user_id=? AND task_id=? AND work_date=?",
+        app.seed["worker"]["id"], app.seed["task_water"], app.seed["today"],
+    )
+
+
+def test_manager_edit_hours(app):
+    app.run("manager_edit_hours")
+    rows = _water_entry(app)
+    assert [float(r[1]) for r in rows] == [5.0], rows
+    audit = app.query(
+        "SELECT field, old_value, new_value, reason, actor_id FROM audit_log "
+        "WHERE entity='work_entries' AND entity_id=?", rows[0][0],
+    )
+    assert len(audit) == 1, audit
+    field, old, new, reason, actor = audit[0]
+    assert (field, float(old), float(new), reason) == ("hours", 4.0, 5.0, "Ошибся при записи"), audit
+    assert actor == app.seed["manager"]["id"], audit
+
+
+def test_manager_edit_hours_no_reason(app):
+    app.run("manager_edit_hours_no_reason")
+    rows = _water_entry(app)
+    assert [float(r[1]) for r in rows] == [4.0], rows
+    assert app.query("SELECT count(*) FROM audit_log WHERE entity='work_entries'") == [(0,)]
+
+
+def test_manager_finish_task(app):
+    app.run("manager_finish_task")
+    rows = app.query("SELECT status FROM tasks WHERE id=?", app.seed["task_water"])
+    assert str(rows[0][0]).lower().endswith("done"), rows
+    other = app.query("SELECT status FROM tasks WHERE id=?", app.seed["task_harvest"])
+    assert str(other[0][0]).lower().endswith("active"), other
+
+
+def test_manager_money_since_close(app):
+    app.run("manager_money_since_close")
+    assert app.query("SELECT count(*) FROM payouts") == [(2,)]
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "отчёты руководителя показывают деньги без «€» и с точкой вместо запятой "
+    "(«50.00 − 20.00 = 30.00» во вкладке «Выплаты», «100.00» в «Отчётах»): "
+    "refreshPayPreview/refreshManagerSummary не используют fmtMoney"))
+def test_manager_reports_money_format(app):
+    app.run("manager_reports_money_format")
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "в «Отчёты» → «По людям» вместо имён показаны «#2», «#3»: renderManagerSummary ищет "
+    "пользователя по ключу-строке из Object.keys (x.id === '2'), строгое сравнение не находит"))
+def test_manager_reports_names(app):
+    app.run("manager_reports_names")
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "после сохранения правки часов лист задания с новыми итогами закрывается сразу: "
+    "submitHoursEntry открывает его сразу после goBackHome(), а асинхронный "
+    "renderManagerDash() вызывает showScreen() -> closeSheet()"))
+def test_manager_edit_hours_sheet(app):
+    app.run("manager_edit_hours_sheet")
+
+
+def _harvest_hours(app):
+    rows = app.query(
+        "SELECT hours FROM work_entries WHERE user_id=? AND task_id=? AND work_date=?",
+        app.seed["worker"]["id"], app.seed["task_harvest"], app.seed["today"],
+    )
+    return [float(r[0]) for r in rows]
+
+
+def test_worker_offline_queue(app):
+    app.run("worker_offline_queue")
+    assert _harvest_hours(app) == [8.0]
+
+
+def test_worker_offline_reload(app):
+    app.run("worker_offline_reload")
+    assert _harvest_hours(app) == [8.0]

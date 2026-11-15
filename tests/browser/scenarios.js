@@ -204,6 +204,8 @@ const scenarios = {
 
 // Сценарии этапа 1 ТЗ — в отдельном файле.
 Object.assign(scenarios, require('./stage1')(SEED));
+// Этап 2 ТЗ: сеть безопасности перед рефакторингом (обход экранов, офлайн, языки).
+Object.assign(scenarios, require('./sweep')(SEED));
 
 const name = process.argv[2];
 if (!scenarios[name]) {

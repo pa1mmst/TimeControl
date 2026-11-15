@@ -16,7 +16,7 @@ Telegram-бот и Telegram Mini App.
   401/403, 14). Общие фикстуры — `tests/conftest.py`.
 - `tools/` — служебные скрипты: `audit_probe_authz.py` (проба авторизации, запускается
   и напрямую, и из `test_authz.py` как subprocess), `backup_db.py` (бэкап SQLite),
-  `_*.js`/`_*.py` — разовые браузерные пробы (Playwright, не нужны в проде).
+  браузерные сценарии живут в `tests/browser/` (запуск: `BROWSER_TESTS=1 pytest tests/test_browser.py`).
 - `docs/` — `screenshots/` (скриншоты интерфейса), `design/` (макет v5 и референсы).
 - `_prompts/` — задания исполнителю по UI v3/v5 (история разработки).
 - `deploy/` — примеры конфигурации продакшена (Caddyfile: rate-limit, security headers).
